@@ -33,6 +33,18 @@ Choose one primary route:
 
 Read [runtime-surfaces.md](references/runtime-surfaces.md) for routes 4–9. Read [prompt-architecture.md](references/prompt-architecture.md) for every prompt-writing or repair task. Read [songcraft-and-originality.md](references/songcraft-and-originality.md) when writing lyrics, adapting references, scoring picture, or diagnosing musical weakness. Read [examples.md](references/examples.md) only when a concrete payload or formatting pattern is useful.
 
+## Applicability Gate
+
+Before building a package, record a compact contract:
+
+- selected surface and route;
+- vocal/instrumental state and active inputs;
+- hard constraints, exclusions, and provider fields;
+- the audible result that would count as success;
+- any observed defect from a prior render.
+
+Keep a successful package's architecture tied to the tested surface and context. Do not transfer controls from Suno, Music 2.6, TTS, or another runtime merely because the concepts sound similar. On repair, classify the failure first—representation, field routing, lyrics/tag parsing, guidance misapplied, runtime/material failure, or missing listening/validation evidence—then change one causal layer and rerun the linter or audition check.
+
 ## Build the brief
 
 Extract what is known without interrogating the user unnecessarily:

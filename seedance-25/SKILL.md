@@ -42,6 +42,20 @@ A supplied-result audit is not a fourth generation operation. Require the result
 - For reference-led kinetic action, dense VFX, reciprocal combat, action-driven travel, pseudo-one-take transitions, or a supplied standout prompt whose control patterns should be reused, read [references/desk-prompt-patterns.md](references/desk-prompt-patterns.md). These Clip-desk craft heuristics are not first-party limits.
 - When revising or auditing this skill, read [references/source-coverage.md](references/source-coverage.md) and run `scripts/validate_coverage.py`.
 
+## Applicability Gate
+
+Before drafting, create a compact execution contract:
+
+- primary operation: generation, editing, or extension;
+- active reference materials and the exact role of each;
+- hard provider limits and locked parameters;
+- surface: Dreamina UI, ModelArk, or another documented runtime;
+- observable success check and any known result defect.
+
+Do not widen the operation because a reference looks superficially similar. Reuse a confirmed prompt architecture only for the surface and context where it was observed, and keep its assumptions visible. If a core identity, master video, extension direction, or anchor role is unresolved, stop and ask the one decision that changes the contract.
+
+After generation or repair, classify the outcome before editing the prompt: reference not operationalized, guidance ignored, guidance misapplied, incompatible context, execution/material failure, or missing verification. Change one causal layer at a time, run the linter again, and preserve the evidence that motivated the change.
+
 ## Core workflow
 
 ### 1. Establish the factual and creative contract

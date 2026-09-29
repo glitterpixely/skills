@@ -21,6 +21,12 @@ Turn a request into an original, production-aware song package. Treat Suno as a 
 4. Read [references/songcraft.md](references/songcraft.md) for reference mapping, lyrics, scoring, prompt construction, variation, and diagnosis.
 5. Read [references/suno-controls.md](references/suno-controls.md) when specifying Suno fields or settings, discussing current features, diagnosing a Suno render, or operating the live product.
 
+## Applicability Gate
+
+Before building, record the active surface, deliverable, vocal/instrumental state, hard constraints, supplied references, and the listening or field-level check that defines success. Keep a confirmed arrangement tied to the tested Suno mode and context; do not generalize one render into a provider guarantee.
+
+When repairing a result, classify the failure before rewriting: composition/representation, field routing, lyrics or prosody, guidance misapplied, performance/mix, runtime/material failure, or missing audition evidence. Change one causal layer at a time and preserve the strongest confirmed element. A prompt that was selected or followed but produced a weak song is not automatically a retrieval failure.
+
 ## Build the song
 
 1. Write a one-sentence creative thesis containing:

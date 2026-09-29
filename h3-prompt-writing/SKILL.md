@@ -21,6 +21,20 @@ Use this order when instructions appear to conflict:
 
 The August 11, 2026 H3 showcase, its official hosted user guide, and MiniMax's native-ComfyUI templates use freeform natural-language examples. The provider's official H3 skill supplies the structured Context-IR-style grammar. These are separate official surfaces, not competing model contracts. Preserve the structured grammar exactly when selected; use the hosted or raw-freeform profile only for a surface documented to accept it.
 
+## Applicability Gate
+
+Before following any reference profile, write a small execution contract:
+
+- **surface**: structured provider, native ComfyUI, or hosted freeform;
+- **mode**: T2VA, I2VA, FL2VA, L2VA, or Ref2VA;
+- **asset roles**: endpoint, reusable subject, edit/continuation source, or audio reference;
+- **hard constraints**: media counts, durations, crop/frame rules, and literal copy;
+- **oracle**: what the rendered result must visibly or audibly prove.
+
+If a prior prompt or result is available, preserve its confirmed architecture and record the observed mismatch before changing it. A successful pattern is evidence for its tested surface and context, not a license to remove its assumptions. If a missing surface or core asset role would materially change the mode or serialization and cannot be safely inferred, ask only that decision before drafting. Otherwise use the explicit default below and state the assumption outside the prompt.
+
+During execution, re-check assumptions at each asset binding, timeline handoff, and final verification. If a result fails, classify the failure before rewriting: wrong surface/profile, reference not operationalized, guidance misapplied, incompatible context, execution/environment failure, or missing verification. Change one causal layer and re-lint.
+
 ## Workflow
 
 ### 1. Establish The Deliverable
@@ -34,7 +48,8 @@ Extract the requested output, target H3 surface, duration, aspect ratio, resolut
 
 After choosing the surface:
 
-- Default to one final H3 prompt, not several alternatives.
+- Choose the production topology: **single generation** for one coherent timeline, or **staged multi-clip assembly** when distinct stages need separate approval stills, generations, retained edit ranges, and final stitching. For staged work, read Pattern D in `references/candidate-motion-design-patterns.md`; do not describe the assembly as one H3 generation.
+- Within a single-generation topology, default to one final H3 prompt, not several alternatives.
 - When the user supplies a prompt or result known to work, record the successful surface, hierarchy, timeline architecture, reference strategy, and literal-copy behavior before proposing changes. Do not replace observed capability with generic caution.
 - Keep upload mapping, settings, assumptions, and warnings outside the paste-ready prompt.
 - Do not embed aspect ratio, resolution, or other UI settings in the prompt unless the user requests them there or they materially affect composition.
@@ -78,6 +93,9 @@ Narrow exception: when the user explicitly targets the audited `ComfyUI-H3-Motio
 - For MiniMax Design, Hailuo, or another hosted surface that follows the August 11 guide, read `references/official-hosted-prompt-guide.md`. Use its three-part planning formula and its upload-order `@Image N`, `@Video N`, and `@Audio N` handles only when that surface exposes them.
 - For a dense character trailer, title sequence, motion-design reel, game-interface flow, or a clip whose plot is a material transformation (line art becoming a scene, stitches becoming motion, paint leaking from a prop, type becoming matter), also read `references/proven-dense-motion-design.md`. Use its empirical planning patterns only on a compatible freeform surface or translate them into the selected official structured grammar.
 - For cursor-, hand-, tool-, or machine-driven construction, an exact count of pose/state locks, BPM-synchronized choreography, or a complex one-take camera route, read the matching sections of `references/edge-case-playbook.md`. These are planning safeguards for untested concepts, not provider grammar or proof of model capability.
+- For motion graphics, kinetic typography, brand films, or product transformations, read `references/motion-design-fundamentals.md` before drafting. Apply its state, motion, timing, typography, camera, and audio checks within the governing surface profile.
+- For experimental flat-graphic systems, product-to-type transformations, multi-reference ensembles, or staged clip assembly, also read `references/candidate-motion-design-patterns.md`. Keep prompt-only examples and screenshot observations distinct from inspected render evidence.
+- For an explicitly requested or surface-confirmed JSON-shaped creative brief, read `references/hosted-creative-director-json.md`. This optional organization format never replaces the official hosted guide, structured grammar, or actual media-handle syntax.
 - For a named community extension, also read only its section in `references/community-runtime-extensions.md`. Keep its graph controls and caveats outside the prompt.
 - Do not normalize the three keyframe alignment templates. Their angle brackets and square brackets intentionally differ.
 - Scope dialogue punctuation rules correctly: preserve user-supplied dialogue punctuation verbatim in base modes; only Ref2VA dialogue or lyrics transcribed or reperformed from source audio use the normalization rule in `ref-en.txt`.
@@ -104,11 +122,17 @@ Only model-fed audio receives `<Audio N>`. Keep latent initialization, generated
 
 ### 6. Build A Feasible Timeline
 
-Convert the request into visible and audible state changes that fit the duration.
+Convert the request into visible and audible state changes that fit the duration. For motion-design work, first apply the compiler in `references/motion-design-fundamentals.md`: lock the visual rules, inventory before/during/after states, assign primary/secondary/accent motion, describe anticipation/travel/impact/settle/hold, name the transition operator, protect readable typography, separate camera from graphic motion, and map visual events to sound.
+
+For a continuous mechanism-driven piece, define the governing interaction as **condition -> local mapping -> boundary behavior -> synchronization rule**. Bind motion-only references without importing their identity, clothing, scene, or rendering style. Treat exact masking, per-pixel inversion, frame timing, and zero-lag coupling as priorities requiring measurement or deterministic post-production, not guaranteed model behavior.
 
 - Use an opening anchor, action onset, intermediate causal states, payoff, and final hold when relevant.
 - For the official hosted profile, establish one core-concept sentence, then write chronological shot or time-range blocks. Each block names what is visible, camera/framing, performance, dialogue, physical sound, and any referenced asset. Read `references/official-hosted-prompt-guide.md` for the full formula.
 - Make every edit causal: name the source state, transition, target state, and what remains unchanged.
+- Distinguish shots from phases: increment `[Shot N]` only at an actual cut in the structured profile. Keep continuous transformations inside one shot; hosted freeform may use phases or beats.
+- Name the transformation operator and forbidden substitutes: continuous contour morph, hard material cut, wipe, mask, split, stack, or replacement. Track consumed source objects, inherited attributes, and what must be absent in the final state.
+- Distinguish a clean hero hold, where everything freezes for legibility, from a living lockup hold, where the layout stays fixed while one bounded detail continues.
+- Inventory exact visible strings, language, script direction, hierarchy, entry, readable hold, and exit. Preserve grapheme integrity and map each referenced subject feature to an inspected source.
 - Treat a declared exact count as a contract. Define whether the counted unit is an instantaneous event or a held state, label each occurrence once, distinguish transitions from counted events, and do not introduce extra unnumbered occurrences anywhere in the chronology or ending.
 - For procedural creation, write each change as actuator, visible input, tool-consistent effect, and retained result. Direct marks follow the active tool path; fills, undo, toggles, and other discrete operations occur only after their visible trigger. Do not impose a direct-pixel rule that contradicts the selected tool.
 - When BPM is load-bearing, declare the beat origin, calculate `60 / BPM` seconds per beat, and make beat labels agree with any second timestamps. State whether the tempo belongs to audible music, a click track, synchronized physical sounds, or a silent choreography grid.
@@ -169,6 +193,8 @@ For structured Ref2VA, create retention rows for standalone tracked labels, not 
 The native-ComfyUI profile uses one freeform block: visual style and scene anchor, one explicit job per connected reference, causal timed beats, camera/performance, dialogue and synchronized sound, preservation/exclusion rules, and a final hold. In I2VA/L2VA/FL2VA, use only the connected `<Picture N>` endpoint tags described above. In Ref2VA, use exact `<Picture N>`, `<Video N>`, and `<Audio N>` tags. Do not wrap the raw prompt in the six structured field headings or invent `<Subject N>` media handles.
 
 The official hosted-freeform profile defaults to three semantic parts: `Reference Asset Instructions`, `Core Concept`, and `Shot-by-Shot Description`. It uses upload-order `@Image N`, `@Video N`, and `@Audio N` handles when the live surface exposes them. A compact `PARAMETERS` dictionary, contiguous numbered-cut grid, named macro-stage timeline, and global editing/audio/exclusion blocks remain optional freeform conveniences supported by a compatible surface or a user-confirmed result; they do not become structured-provider fields. Keep unresolved placeholders only in templates and use supplied final values for production prompts.
+
+For a compatible hosted surface, the optional creative-director JSON profile organizes the same content into concept, reference contract, camera, typography, visual style, motion, sound, storyboard, and continuity fields. Use it only when requested or supported by surface evidence; it is not an API payload or a new provider schema. Read `references/hosted-creative-director-json.md` for compilation and separate JSON/timeline checks.
 
 ### 8. Validate
 
@@ -272,6 +298,9 @@ Stop and request the missing asset or decision only when it materially changes t
 - `references/media-inspection.md`: exhaustive media/frame/audio inspection workflow.
 - `references/showcase-patterns.md`: all 58 current page demonstrations, the two prompt-guide examples, and their durable prompting lessons.
 - `references/proven-dense-motion-design.md`: user-validated high-density editorial-montage, causal-UI, and material-transformation planning patterns.
+- `references/motion-design-fundamentals.md`: sourced motion-design procedure, typography, timing, sound, and render-review checks.
+- `references/candidate-motion-design-patterns.md`: explicitly evidence-bounded experimental patterns and staged production workflow.
+- `references/hosted-creative-director-json.md`: optional hosted creative-brief organization, not an official provider schema.
 - `references/edge-case-playbook.md`: practical resolution rules for ambiguous modes, tool-causal creation, counted beat-mapped performance, and other fragile requests.
 - `scripts/lint_h3_prompt.py`: deterministic structural and timing validator.
 - `scripts/validate_coverage.py`: maintenance validator for required files, official-source invariants, grammar hashes, and August 11 showcase coverage.
