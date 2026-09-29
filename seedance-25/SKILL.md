@@ -40,6 +40,7 @@ A supplied-result audit is not a fourth generation operation. Require the result
 - For source-derived patterns and examples, read [references/examples.md](references/examples.md).
 - For visual-output evidence, artifacts, and lessons from all 51 images and 22 videos in the BytePlus page, read [references/media-evidence.md](references/media-evidence.md).
 - For reference-led kinetic action, continuous-action prompting (including single-reference noncombat chases), dense VFX, reciprocal combat, action-driven travel, pseudo-one-take transitions, or a supplied standout prompt whose control patterns should be reused, read [references/desk-prompt-patterns.md](references/desk-prompt-patterns.md). These Clip-desk craft heuristics are not first-party limits; continuous action is optional and does not require longer prompts or removal of timestamps.
+- For untimed, rule-led prompts, everyday worldbuilding, observational multi-cut vignettes, or a user-supplied style example meant for learning rather than adaptation, read [the rule-led worldbuilding pattern](references/desk-prompt-patterns.md#untimed-rule-led-worldbuilding-vignettes). Keep it distinct from continuous-action choreography; do not force it onto the preceding task.
 - When revising or auditing this skill, read [references/source-coverage.md](references/source-coverage.md) and run `scripts/validate_coverage.py`.
 
 ## Applicability Gate
@@ -128,7 +129,7 @@ Use <shot size, target subject, camera path, and cuts>.
 Audio includes <dialogue, ambience, and sound effects>.
 ```
 
-For several events, use consecutive stages. Give each stage one primary state change and an observable end state. Carry forward identities, clothing, prop ownership, blocking, axis, camera direction, and audio state.
+For several prescribed events, use consecutive stages. Give each stage one primary state change and an observable end state. Carry forward identities, clothing, prop ownership, blocking, axis, camera direction, and audio state. For a requested untimed, rule-led vignette, define moment-selection and continuity rules instead of inventing a staged plot; follow the optional worldbuilding pattern in `references/desk-prompt-patterns.md`.
 
 `Shot N` is also valid for ordinary shot sequencing when elapsed time is not important. Treat `Shot 45` as an identifier, never as a 45-degree camera angle unless the user explicitly says degrees.
 

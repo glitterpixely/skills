@@ -162,7 +162,9 @@ If the diagram's identities or directions conflict with the user's text, the use
 
 ## Long scenes and timestamps
 
-Prefer stateful stages for several events:
+For untimed, rule-led observational montages, use [the worldbuilding-vignette pattern](desk-prompt-patterns.md#untimed-rule-led-worldbuilding-vignettes): define the cut structure, moment-selection rules, continuity, camera and sound while leaving individual moments open. Do not automatically expand that request into timestamps, a shot-by-shot screenplay or one escalating plot. Use explicit stages instead when the user supplies exact events or requires causal handoffs.
+
+Prefer stateful stages for several prescribed events:
 
 ```text
 [Generation Goal]
