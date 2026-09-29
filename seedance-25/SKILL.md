@@ -39,7 +39,7 @@ A supplied-result audit is not a fourth generation operation. Require the result
 - For ambiguous, missing, unreadable, or numerous materials; novels; mapping confidence; or exact delivery rules, read [references/optimizer-runtime.md](references/optimizer-runtime.md).
 - For source-derived patterns and examples, read [references/examples.md](references/examples.md).
 - For visual-output evidence, artifacts, and lessons from all 51 images and 22 videos in the BytePlus page, read [references/media-evidence.md](references/media-evidence.md).
-- For reference-led kinetic action, dense VFX, reciprocal combat, action-driven travel, pseudo-one-take transitions, or a supplied standout prompt whose control patterns should be reused, read [references/desk-prompt-patterns.md](references/desk-prompt-patterns.md). These Clip-desk craft heuristics are not first-party limits.
+- For reference-led kinetic action, continuous-action prompting (including single-reference noncombat chases), dense VFX, reciprocal combat, action-driven travel, pseudo-one-take transitions, or a supplied standout prompt whose control patterns should be reused, read [references/desk-prompt-patterns.md](references/desk-prompt-patterns.md). These Clip-desk craft heuristics are not first-party limits; continuous action is optional and does not require longer prompts or removal of timestamps.
 - When revising or auditing this skill, read [references/source-coverage.md](references/source-coverage.md) and run `scripts/validate_coverage.py`.
 
 ## Applicability Gate

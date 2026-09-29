@@ -144,6 +144,8 @@ Named techniques or effect names can be useful as shorthand, but define their vi
 
 For reciprocal exchanges, combat-driven travel, aerial propulsion, pseudo-one-take bridges, and contact visibility during dense effects, apply the conditional craft guidance in [desk-prompt-patterns.md](desk-prompt-patterns.md#reciprocal-combat-and-action-driven-travel). Preserve the requested balance of power, location scope, ending, and prohibitions on slow motion or pauses.
 
+For uninterrupted reactive movement, including a single-reference noncombat chase, use the optional [continuous-action pattern](desk-prompt-patterns.md#continuous-action-prompting): carry momentum between actions and overlap aftermath without obscuring the dominant event. It works with continuous prose or timed stages; it does not require longer prompts, combat, or removal of timestamps. This is a craft heuristic supported by a user-reported result, not independently inspected rendering evidence.
+
 ## Space and blocking diagrams
 
 Use stable objects to describe blocking: inside/outside a counter, in front of/behind a table, facing a door, on the road side of a barrier. Record facing direction, distance, and any separating structure. Screen-left/right alone is fragile because the camera can reverse.

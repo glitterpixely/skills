@@ -64,6 +64,36 @@ Give each shot one dominant exchange or state change. Keep connected sub-beats o
 
 For an unresolved ending, retain a readable final position and an active threat or renewed approach when requested. A stable, trackable boundary does not require a motionless pose. Specify contact sounds and environmental audio when useful; preserve the no-music default. Keep failure guards specific to identity, geography, contact, effects, and the requested outcome rather than copying an exhaustive negative list.
 
+## Continuous-action prompting
+
+Use when the user wants uninterrupted kinetic flow, reactive choreography, or adaptation of a successful action prompt. It also applies to a single-reference chase or playful physical sequence; combat, multiple references, and dense VFX are not prerequisites. Do not impose it on a quiet performance, product demonstration, or an explicitly paced scene with pauses.
+
+Evidence boundary: this pattern is distilled from a user-supplied painterly action prompt reported to work well. The resulting video was not inspected. The mechanisms below are craft hypotheses, not proven causes of model performance, provider claims, or evidence that every named maneuver was generated. The example below is newly written, not a reproduction of the supplied prompt.
+
+### Build connected motion
+
+1. **Open on a concrete disruption.** Name the incoming obstacle, force, or movement that demands an immediate response. For a playful scene, this may be a companion rushing past rather than an attack. Respect any required opening frame; begin the disruption from that state instead of replacing it.
+2. **Make the response feed the next action.** Write `incoming force or obstacle -> response/contact -> redirected momentum -> next action -> new spatial problem`. A pivot becomes a sprint, a landing becomes a bank, or a deflection becomes a counter. Avoid neutral-pose resets unless the user requests a pause.
+3. **Overlap aftermath and anticipation.** Keep one dominant action readable while the previous action's residue persists and the next obstacle becomes visible. Leaves may still be falling as the subject approaches a turn. Do not treat overlap as permission for several unrelated actions per second.
+4. **Give each subject a physical vocabulary.** Choose a few compatible behaviors, such as elastic bounds and low banking turns versus quick footwork and running vaults. Tie behavior to the requested character and observed design; do not import the source prompt's weapons, aggression, abilities, or outcome into another world.
+5. **Make the camera follow a cause.** Follow the bank, landing, or approach with a move that reveals its path or contact. A brief wide reframe can restore geography while the subjects keep moving. An aggressive camera is not an instruction to scramble the action axis or add arbitrary cuts.
+6. **Translate the artwork into motion.** Specify how the reference's medium depicts speed and impact: broken painted strokes following fur, flattened graphic leaves displaced by a landing, or ink-like wakes behind movement. Keep effects attached to physical triggers. Do not introduce magical energy merely because another prompt used it.
+7. **Escalate toward a readable payoff.** Increase consequence or spatial difficulty, not merely the number of moves. Protect silhouettes, spacing, screen direction, contact visibility, and an observable final state. The final state may remain in motion if the requested ending allows it.
+
+### Form and transfer example
+
+Continuous prose is useful when connective language carries the choreography. Timed stages are equally valid when timing matters: carry momentum, positions, and aftermath across their boundaries. A stage boundary is not a compulsory stop. Follow the canonical timing rules in [prompt-architecture.md](prompt-architecture.md#long-scenes-and-timestamps); this pattern is not a blanket preference for longer prompts or for removing timestamps.
+
+Illustrative motion passage, not a complete reference-bound submission:
+
+> A gust drives a curtain of reeds across the runner's path, forcing a low sidestep that flows directly into a turn around the next tree. The camera tracks the turn from the outside, keeping the approaching root visible. Before the reeds spring upright, the runner clears the root and lands into the next stride; loose leaves rise from the footfall while the route ahead opens into view.
+
+### Verification and pitfalls
+
+Before submission, check that each transition has a physical bridge, each effect has an origin, the reference's visual language survives the action, and no neutral reset was accidentally inserted. Preserve subject counts, ownership, geography, requested outcome, and audio preferences. Run the normal generation prompt linter; passing establishes prompt checks, not rendered success.
+
+When a render is supplied, inspect the opening motion, action-to-action continuity, readable contacts, subject/style stability, camera geography, and ending. Record missed instructions separately from inferred causes. If comparing prompt variants, keep references, story, settings, and budget matched; vary the connective choreography rather than adding length and extra techniques at the same time. Long move catalogs, prestige adjectives, and repetition are not demonstrated explanations for success.
+
 ## Split references by job
 
 Give each active asset one primary job. Typical winning split:
