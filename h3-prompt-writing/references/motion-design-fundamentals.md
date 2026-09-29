@@ -309,12 +309,12 @@ Before linting the provider grammar, check:
 [12] https://www.cs.cmu.edu/~joonhwan/documents/p41-lee.pdf — Using Kinetic Typography to Convey Emotion (DIS 2006)
 [13] https://support.apple.com/guide/motion/audio-parameter-behavior-motn1872e265/mac — Apple Motion: Audio Parameter Behavior
 [14] https://brooke-francesi-qcqu.squarespace.com/s/TemporalType_BrookeFrancesi_MFA-Thesis2015.pdf — Temporal Typography (CCA MFA Thesis, 2015)
-[15] https://www.evl.uic.edu/ralph/508S99/staging.html — The Principles of Animation: Staging
-[16] https://www.evl.uic.edu/ralph/508S99/anticipa.html — The Principles of Animation: Anticipation
-[17] https://www.evl.uic.edu/ralph/508S99/squash.html — The Principles of Animation: Squash and Stretch
-[18] https://www.evl.uic.edu/ralph/508S99/follow.html — The Principles of Animation: Follow Through and Overlapping Action
-[19] https://www.evl.uic.edu/ralph/508S99/arcs.html — The Principles of Animation: Arcs
-[20] https://www.evl.uic.edu/ralph/508S99/straight.html — The Principles of Animation: Straight Ahead and Pose-to-Pose Action
+[15] https://www.adobe.com/creativecloud/animation/discover/principles-of-animation.html#staging — Adobe: Understanding the 12 Principles of Animation, Staging
+[16] https://www.adobe.com/creativecloud/animation/discover/principles-of-animation.html#anticipation — Adobe: Understanding the 12 Principles of Animation, Anticipation
+[17] https://www.adobe.com/creativecloud/animation/discover/principles-of-animation.html#squash-and-stretch — Adobe: Understanding the 12 Principles of Animation, Squash and Stretch
+[18] https://www.adobe.com/creativecloud/animation/discover/principles-of-animation.html#follow-through-and-overlapping-action — Adobe: Understanding the 12 Principles of Animation, Follow Through and Overlapping Action
+[19] https://www.adobe.com/creativecloud/animation/discover/principles-of-animation.html#arcs — Adobe: Understanding the 12 Principles of Animation, Arcs
+[20] https://www.adobe.com/creativecloud/animation/discover/principles-of-animation.html#straight-ahead-action-and-pose-to-pose — Adobe: Understanding the 12 Principles of Animation, Straight Ahead and Pose-to-Pose Action
 [21] https://m3.material.io/blog/motion-research-container-transform — Choosing the Right Transitions
 [22] https://www.adobe.com/creativecloud/video/post-production/cuts-in-film/match-cut.html — Match cut: What is a match cut in film and how to create one
 [23] https://www.adobe.com/creativecloud/animation/discover/morphing-in-animation.html — What is Morphing in Animation? Morphing vs Tweening
