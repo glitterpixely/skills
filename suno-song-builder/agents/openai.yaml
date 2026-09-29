@@ -1,0 +1,4 @@
+interface:
+  display_name: "Suno Song Builder"
+  short_description: "Build original songs and Suno prompt packages"
+  default_prompt: "Use $suno-song-builder to turn my idea into an original, paste-ready Suno song package."

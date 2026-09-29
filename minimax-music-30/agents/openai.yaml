@@ -1,0 +1,4 @@
+interface:
+  display_name: "MiniMax Music 3.0"
+  short_description: "Create production-ready MiniMax Music prompts"
+  default_prompt: "Use $minimax-music-30 to turn my idea, lyrics, and references into a production-ready MiniMax Music 3.0 package."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kling 4 Prompting"
+  short_description: "Direct Kling 4 and Flash video prompts precisely"
+  default_prompt: "Use $kling-4-prompting to turn my idea and references into a ready-to-paste Kling prompt with the right model settings."
