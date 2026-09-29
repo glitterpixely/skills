@@ -116,6 +116,37 @@ Evidence boundary: distilled from a user-supplied written example, not an inspec
 - Keep duration outside the creative prompt. A dense cut count does not establish a suitable duration or make every moment readable; check against the requested runtime without silently changing an explicit count. This multi-cut video pattern is not a supplied storyboard grid, so do not apply the storyboard-panel recommendation as a cut-count limit.
 - Run the normal generation prompt linter. A clean result verifies prompt checks only. If a render is supplied, inspect the actual cut count, reference/style continuity, diversity of routine moments, active background life, observational camera, lack of dramatic-plot drift, and diegetic-only sound. Record omissions rather than claiming successful execution from the written prompt.
 - Transfer check: a supplied gentle character and a supplied feared antagonist should yield different social responses under the same observational architecture; neither should automatically become a hero montage or a fight. A quiet single-take request should not acquire 19 cuts merely because this pattern exists.
+- Do not let human-default wording override a non-human design. Words such as "people" can pull a yokai, creature, or alien design toward ordinary human social life. Name the intended kind of inhabitant when the reference is not human, and keep that distinction in the selection rules.
+- The source author later noted that cut count should change with the model and requested duration. Keep an explicit count when the user requires it, but do not treat 19 as portable to every runtime.
+
+## Curiosity-driven character vignettes
+
+Use when the user wants a short character study built from connected discoveries rather than either a scripted plot or an everyday-routine montage. This mode conflicts with everyday worldbuilding: it needs one underlying situation, visual cause and effect, and a payoff, and it should avoid generic daily routines. Do not combine the two unless the user explicitly asks for a hybrid.
+
+Evidence boundary: distilled from a user-supplied written prompt example, not an inspected generated video. Its 10–15 cut range is an example constraint, not a provider limit or a default. Summarize the method; do not reproduce the source prompt.
+
+1. **Open on a question.** The first image should create one simple unanswered situation. Later cuts answer it through discovery, reaction, progression, and small consequences. Done when a viewer can follow one situation without dialogue.
+2. **Reveal character through behavior.** Use movement, instincts, habits, abilities, limitations, and interaction with the world. Do not explain the character, and do not force familiar human behavior onto a design that does not support it. Done when identity is shown rather than narrated.
+3. **Make early details pay off.** Each cut adds a distinct visual idea while advancing the same situation. A detail introduced early should gain meaning later. End on a reveal, reversal, transformation, emotional beat, or satisfying visual payoff. Done when the ending depends on something already seen.
+4. **Vary the view without breaking continuity.** Change scale, framing, environment, movement, tension, or information often enough that the cuts do not repeat. Keep objective third-person observation, readable handheld imperfection, and motivated camera movement. Use diegetic sound only unless the user requests otherwise. Done when variety serves the same story.
+5. **Keep it separate from routine worldbuilding.** If the request is ordinary lived experience without a question or payoff, use the worldbuilding pattern instead. If the user supplies exact events, script those events rather than inviting invention. Done when the selected mode matches the requested outcome.
+
+## Literal multi-shot control
+
+Use when studying or writing a reference-led, multi-shot Seedance sequence where continuity, prop state, and readable action matter more than adjective density. These mechanisms are distilled from reviewed public Seedance 2.5 prompts and prompting notes. The corresponding videos were not inspected, so none of this is evidence of rendered fidelity or a provider guarantee. Do not reproduce those prompts, and do not name their authors in this skill. If a public example conflicts with [source-boundaries.md](source-boundaries.md) or [prompt-architecture.md](prompt-architecture.md), follow the canonical file.
+
+Observed examples repeatedly separate reference jobs in prose: identity and style from one image, environment from another, and explicit exclusions for background, text, layout, and reference poses. They then give one premise and rhythm, followed by shots or beats that carry prop ownership, geography, and momentum across cuts. Useful mechanisms:
+
+1. **Describe the transition, not only the destination.** A later view from behind does not by itself make a character turn. Name the turn, crossing, landing, or handoff that connects the states. The author reports that 2.5 can morph into an undescribed rear view; treat that as a reported failure mode, not a universal rule.
+2. **Let action quantity control pace.** Too many actions in one short beat can read as sped up; too much time for a quick action can read as slow motion. This applies to untimed shot lists as well as timestamps. Do not compress a multi-minute story into one clip by adding more beats. Use integer-second ranges only when timing is required; do not copy decimal timestamps from public examples.
+3. **Override a likely still misread before the action.** If a pictured object is alive, already worn, concealed, or must not transform, say so in the opening state. Equipment used later should already exist when the story requires it.
+4. **Keep a prop and target ledger.** State exact counts, owners, one-time damage, and where each object remains. Give similar opponents one durable visual difference, and do not retarget or restore one after its stated outcome.
+5. **Repeat a route only to change it.** A recurring escape, attack lane, or destination landmark should stay readable, then close, redirect, or pay off through a visible path change.
+6. **Show speed through overlap.** Let the camera lose and reacquire a fast subject while earlier debris is still moving. Do not explain speed with clones, teleportation, or extra instances unless requested.
+7. **Order cause before body response.** For an impact, show the strike, then the fold, slide, or recoil. Keep attached equipment attached through the fall unless the story removes it.
+8. **End in a legible carried state.** Spectacle can resolve into an ordinary action, or the action can still be moving. Name which, and do not default to a victory pose.
+
+Do not import these example habits: duration or aspect ratio written inside the prompt, placeholder handles such as `@[ref image]`, `Image1`, or `Image #1` instead of the active runtime's labels, angle-bracket character names in a prompt that also uses `<>` for sound effects, or a claimed universal prompt-character limit. The author reported rewriting one dense English dialogue scene in Chinese to fit more detail; the supplied provider documents do not establish a universal character cap, so do not state one.
 
 ## Split references by job
 

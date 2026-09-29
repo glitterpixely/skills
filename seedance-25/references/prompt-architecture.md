@@ -162,7 +162,9 @@ If the diagram's identities or directions conflict with the user's text, the use
 
 ## Long scenes and timestamps
 
-For untimed, rule-led observational montages, use [the worldbuilding-vignette pattern](desk-prompt-patterns.md#untimed-rule-led-worldbuilding-vignettes): define the cut structure, moment-selection rules, continuity, camera and sound while leaving individual moments open. Do not automatically expand that request into timestamps, a shot-by-shot screenplay or one escalating plot. Use explicit stages instead when the user supplies exact events or requires causal handoffs.
+For untimed, rule-led observational montages, use [the worldbuilding-vignette pattern](desk-prompt-patterns.md#untimed-rule-led-worldbuilding-vignettes): define the cut structure, moment-selection rules, continuity, camera and sound while leaving individual moments open. Do not automatically expand that request into timestamps, a shot-by-shot screenplay or one escalating plot. A curiosity-driven vignette is the separate pattern in [desk-prompt-patterns.md](desk-prompt-patterns.md#curiosity-driven-character-vignettes): it needs one question, causal progression, and a payoff, and it should not become an everyday-routine montage. Use explicit stages instead when the user supplies exact events or requires causal handoffs.
+
+For scripted multi-shot action, describe the transition between states and keep each beat's action quantity realistic. Public prompt practice can suggest prop ledgers and literal motion, but follow [the literal-control study notes](desk-prompt-patterns.md#literal-multi-shot-control) only where they do not conflict with the timestamp, parameter, and reference-handle rules in this file.
 
 Prefer stateful stages for several prescribed events:
 
