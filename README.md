@@ -65,6 +65,22 @@ Replace `seedance-25` with any skill folder listed above. Copy the **entire fold
 
 To update your downloaded copy, run `git pull --ff-only` in the cloned repository. Review the changes and back up any customized installed skill before copying the updated folder. Pulling this repository does not automatically update your installed skills.
 
+### Use with Hermes (Git-backed)
+
+For a single working copy that Hermes can load and Git can track, clone the complete repository inside the active profile's skills directory:
+
+```bash
+hermes_home="${HERMES_HOME:-$HOME/.hermes}"
+mkdir -p "$hermes_home/skills/creative"
+git clone https://github.com/glitterpixely/skills.git \
+  "$hermes_home/skills/creative/glitterpixely-skills"
+hermes skills list --source local --enabled-only
+```
+
+If any of these five skills are already installed elsewhere in that profile, compare and back up those folders **outside the skills directory** before retiring the duplicate installations. Preserve local customizations for review; do not overwrite them blindly. Start a fresh Hermes chat after installation.
+
+The checkout is the installed library: edits to its skill files are immediately local Git changes, and pulling reviewed upstream changes updates the installed files without another copy step. Use authenticated Git access to push owner-authorized updates. Review changes, run the relevant validators, commit only the intended files, push, and verify the remote commit. See [AGENTS.md](AGENTS.md) for the maintenance workflow. This does not create a background auto-push service or update separate Codex installations or other Hermes profiles.
+
 ### Use as a reference library
 
 You can also read the Markdown files directly or provide a skill and its relevant reference files to another assistant. The workflows are written in plain text; assistant-specific discovery and tool integration may differ.
