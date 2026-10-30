@@ -8,7 +8,7 @@ Video direction · Reference workflows · Songwriting · Prompt validation
 
 A personal collection by [glitterpixely](https://github.com/glitterpixely), built for working with creative AI tools through an assistant.
 
-[Explore the skills](#choose-a-skill) · [Install](#installation) · [Try a brief](#example-briefs) · [Contribute](CONTRIBUTING.md)
+[Explore the skills](#choose-a-skill) · [Seedance 2.5 guide](#seedance-25-summary) · [Install](#installation) · [Try a brief](#example-briefs) · [Contribute](CONTRIBUTING.md)
 
 </div>
 
@@ -34,6 +34,52 @@ Five focused skills for turning ideas, scripts, images, and audio references int
 | **[Suno Song Builder](suno-song-builder/SKILL.md)** | Original songs, hooks, lyrics, instrumental scores, and iteration | Songcraft guidance and Suno controls reference |
 
 Start with the tool you plan to generate in. Open its `SKILL.md` for the workflow, then follow the references relevant to your task.
+
+## Seedance 2.5 summary
+
+The [`seedance-25`](seedance-25/SKILL.md) skill combines first-party capability rules ([`source-boundaries.md`](seedance-25/references/source-boundaries.md), [`prompt-architecture.md`](seedance-25/references/prompt-architecture.md), [`task-contracts.md`](seedance-25/references/task-contracts.md), [`optimizer-runtime.md`](seedance-25/references/optimizer-runtime.md)) with field-tested directing craft and architecture notes ([`desk-prompt-patterns.md`](seedance-25/references/desk-prompt-patterns.md)).
+
+### Core envelope and duration rules
+
+- **Duration:** **30 seconds** by default (`Standard` mode, 4–30s single-pass generation). Dreamina web also exposes a **Long Video** mode (**30–180 seconds**) when explicitly requested (`--long-video` in `prompt_lint.py`). Multi-clip segmentation plans remain available for multi-call workflows above 30s.
+- **Multimodal references:** Up to **50 total assets** per request (up to 30 images, 10 videos totaling $\le$30s, and 10 audio clips totaling $\le$30s) bound with explicit roles (`@Image 1`, `@Video 1`, `@Audio 1`) and `[Unused Materials]` exclusions.
+- **Primary operations:** One operation per prompt—**Generation** (including keyframes, storyboards, 3D blockouts, one-click, and seamless transitions), **Editing** (`@Video 1 is the sole editing master`), or **Extension** (`Extend @Video 1 forward/backward`). Never phrase an editing master or extension source as `"Reference @Video 1"` (`参考 <视频1>`), which misroutes the job to ordinary reference generation.
+- **Cost-aware workflow:** Validate multi-shot blocking in **Draft Mode** (`draft=true` / 480p preview) before promoting the seed to 1080p/4K (`draft=false`), and use **localized time-window editing (`局部重拍`)** to repair a 2–4s flaw rather than re-rolling a full 30s clip.
+
+### ByteDance Seed research lineage & prompting implications
+
+| Paper | arXiv ID | Core mechanism | What it means for prompts |
+| --- | --- | --- | --- |
+| **Seedance 1.0** | [`2506.09113`](https://arxiv.org/abs/2506.09113) | Decoupled spatial/temporal DiT + **Multi-Shot MM-RoPE** + native cut-boundary pre-training | Explicit `Shot N` labels and cut counts (`受控多段序列`) trigger learned hard-cut transitions inside a single pass. |
+| **Seedance 1.5 Pro** | [`2512.13507`](https://arxiv.org/abs/2512.13507) | **Dual-Branch MMDiT** joint audio-video co-denoising + >10$\times$ distillation | Sound effects (`<...>`), ambience, and lip phonemes denoise simultaneously with video frames; concrete sound cues tighten visual timing. |
+| **Seedance 2.0** | [`2604.14148`](https://arxiv.org/abs/2604.14148) | Unified multi-modal backbone across text, `@image`, `@video`, and `@audio` | Give each reference asset one non-overlapping job (`identity` vs. `environment` vs. `motion` vs. `voice`). |
+| **Phantom** | [`2502.11079`](https://arxiv.org/abs/2502.11079) | Cross-modal alignment on non-frame text-image-video triplets (`Phantom-Data`) | Exclude both background and static pose on portrait references (`do not copy its background or static standing pose`) to prevent pose leakage. |
+| **HuMo** & **OmniHuman-1** | [`2509.08519`](https://arxiv.org/abs/2509.08519), [`2502.01061`](https://arxiv.org/abs/2502.01061) | **Time-Adaptive CFG** (layout/camera early; `@Image` identity & `@Audio` lip-sync late) | Front-load the 180° stage map and camera move in clause 1; allow `0–1s` for geometry to settle; add **rhythm carriers** (breathing, weight shift) so speaking bodies do not freeze. |
+| **RewardDance** & **VideoReward** | [`2509.08826`](https://arxiv.org/abs/2509.08826), [`2501.13918`](https://arxiv.org/abs/2501.13918) | 26B VLM reward judge with Chain-of-Thought verification & Flow-DPO | Write beats as verifiable state checklists (`entry state -> physical action -> observable exit state`) rather than mood adjectives. |
+| **Tarsier2** | [`2501.07888`](https://arxiv.org/abs/2501.07888) | 40M fine-grained chronological video captioner | Keep actions in strict forward chronological order (`[camera] + [actor + action] + [environment response]`); avoid literary metaphors (`意识流`). |
+| **Seaweed-7B**, **APT**, & **AAPT** | [`2504.08685`](https://arxiv.org/abs/2504.08685), [`2501.08316`](https://arxiv.org/abs/2501.08316), [`2506.09350`](https://arxiv.org/abs/2506.09350) | Causal 3D VAE, 1-step Adversarial Post-Training, and KV-cached sliding-window attention | Powers low-cost `Draft` previews and 30s horizon stability; re-tag characters (`Name, 2-word trait`) after cuts or heavy occlusion so they re-bind inside the active attention window. |
+
+### 6-part multi-shot continuity formula
+
+For complex multi-shot clips, [`desk-prompt-patterns.md`](seedance-25/references/desk-prompt-patterns.md#multi-shot-continuity-craft) codifies a reusable 6-part structure:
+
+1. **Reference & character header:** Visual traits + limb/accessory left-right asymmetry locks (`white mechanical right arm; hip holster stays empty`) + starting hand/inventory state (`arrives empty-handed`).
+2. **Visual style + energy/physics locks:** Medium and palette (keeping 2D layer grammar free of live-action bokeh/DOF terms), anti-slide footwork (`feet always plant, push, leap, or roll, never slide`), and sub-object material physics.
+3. **Avoid block:** Concise hard exclusions (`no subtitles, no BGM, no extra foreground characters, no fade-out`) checked for self-contradiction against the body.
+4. **Global premise & 180° stage map:** 1-sentence story summary + `screen left / screen right` landmark coordinates + `air between bodies` depth separation.
+5. **Scene header:** Continuity mode, speed/time state, and scene-scoped visual/audio shifts.
+6. **Shot breakdown (`Shot N`):** Camera framing & move in clause 1 $\rightarrow$ per-shot prop state restatement $\rightarrow$ causal `A -> B -> C` action chain with 2-word character anchors (`Kira, lilac buns`) $\rightarrow$ isolated speaker + closed-mouth listeners ($\le$2.5 words/s) $\rightarrow$ kinetic `Cut as <active motion>` trigger.
+
+### Automated checks in `seedance-25/scripts/prompt_lint.py`
+
+In addition to material limits, reference role bindings, timeline gaps/overlaps, and mode contracts, `prompt_lint.py` checks for:
+
+- `DIALOGUE_DENSITY` — warns when a timed shot exceeds $\ge$3.0 spoken Latin-script words per second.
+- `NEGATION_CONFLICT` — catches contradictions between `Avoid` bans (`no freeze frames`, `no slow motion`) and body instructions (`hit-stop`, `定格`, `speed ramp`, `子弹时间`).
+- `EDIT_REFERENCE_TRAP` — warns if an edit or extension prompt phrases the master/source video as `Reference @Video N` (`参考 <视频N>`).
+- `MORPH_TOKEN_RISK` — flags non-negated `变形` / `morph into` / `shape-shift into` in generation prompts in favor of `闪切` (`flash-cut`).
+- `STYLE_2D_LENS_CONFLICT` — flags 2D cel/hand-drawn/gouache prompts mixed with live-action bokeh or shallow-DOF lens terms.
+- `UNSUPPORTED_HANDLE_SYNTAX` — catches un-normalized wrapper/dump tokens (`<<<Image1>>>`, `@[ref]`, `<视频1>`).
 
 ## Installation
 

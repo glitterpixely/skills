@@ -56,6 +56,7 @@ Rules:
 - State which part of an asset is used when only one attribute matters.
 - Give one active material one primary job. A material may supply closely related attributes for the same entity, but do not let it become an uncontrolled source for identity, scene, motion, style, and audio at once.
 - Prefer a job split when several images exist: one identity or multi-view appearance lock, one world / silhouette / environment lock. State exclusions on every line.
+- When an identity reference image shows a rigid portrait or static turnaround pose that should not carry into an active scene, explicitly exclude its pose as well as its background (`Do not use its background or static standing pose`).
 - If several images show the same entity, label front, left, right, rear, or attribute views and state the output count.
 - If a video already defines motion, camera, and sequence correctly, name those dimensions and do not re-narrate every micro-action.
 - If the user supplies exact dialogue and a voice reference, written text controls the words; audio controls voice traits unless reuse of the original audio dialogue is explicit.
@@ -254,6 +255,7 @@ Language + user-requested regional variety/accent + delivery + speaker + {exact 
 - Add a regional accent only when the user requests it.
 - If the user has not specified a spoken language, do not infer Mandarin, a dialect, nationality, or regional variety from the script, speaker appearance, or reference filename.
 - In multi-speaker scenes, state who speaks and that listeners keep their mouths naturally closed.
+- Give speaking characters subtle body rhythm carriers (`shoulders rise with breath, slight weight shift, small hand gesture, natural head tilt`) so simultaneous identity and lip-sync conditioning does not freeze the torso into a motionless posture.
 - Preserve a dialogue ledger internally: speaker, vocal state, exact words, audio reference, language, delivery, and on/off-screen state.
 - Do not expand a quoted fragment into new lines or turn a speaking intention into invented dialogue.
 - If a character must speak using a bound audio reference but no reliable dialogue text is available, state that the character vocalizes using the spoken content from that audio reference. Do not invent words, and do not convert the stage to silence.
