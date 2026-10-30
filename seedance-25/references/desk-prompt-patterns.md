@@ -4,6 +4,15 @@ Clip-desk production heuristics distilled from public and user-supplied action a
 
 Honor the user's standing clip-desk defaults unless they override them: beauty-first (ethereal, regal, romantic celestial / anime — not grotesque); no music or BGM unless they ask; paste-ready prompt body only.
 
+## Action mechanics and framing
+
+Use these user-supplied directing lessons for a leap, evasion, connected movement, or finishing strike when relevant. They also apply to simple action shots without requiring the dense kinetic-action mode below. Preserve the requested choreography, pace, camera restrictions, and outcome; railings, walls, and swords are examples, not required scene elements.
+
+- **Load before release.** For an explosive grounded leap, show the body lowering deeply, hips and knees flexing over planted feet, then the legs driving against the ground before takeoff. Make the support contact and launch direction visible. Keep anticipation compact at a fast pace; a deep compression does not require a long pause or slow motion.
+- **Make the defense feed the next move.** When the action should continue, connect evasion to an available environmental contact: a hand catches an established railing and pulls the body around it, or a foot plants against a wall and pushes off into the next trajectory. Specify contact -> force/redirection -> release -> next movement. Carry momentum and position forward without an unexplained reset. Check that the surface is reachable and the gripping hand is free without changing weapon ownership.
+- **Frame the near miss.** Let the camera rapidly follow the evading face, arriving at an angle that shows the face, passing sword, and narrow visible gap together at closest approach. Preserve readable separation through focus, silhouettes, and restrained blur; camera speed alone does not communicate how close the miss was. Continue with the movement without inserting unrequested slow motion or a freeze.
+- **Reveal the final strike's reach.** Trigger a strong pullback or motivated cut to a much wider view as the finishing attack travels. Keep its origin, path, and farthest affected point legible against established environmental landmarks. Widen the framing, not the aspect ratio, and reveal the attack's existing reach without inventing extra power or destruction. Preserve a locked camera or continuous-shot requirement when supplied.
+
 ## Reference-led kinetic action
 
 Use this mode only when the user wants a supplied prompt's dense, cinematic control pattern for a fight, chase, transformation, destruction, or effects-led sequence. Reuse the mechanics of the prompt, not its characters, world, unsupported render settings, or story outcome.
