@@ -166,17 +166,18 @@ def check_roles(issues: list[Issue], text: str, handles: dict[str, set[int]]) ->
                 )
 
 
-def timeline_ranges(text: str) -> list[tuple[float, float]]:
+def timeline_matches(text: str) -> list[re.Match[str]]:
     """Extract documented timeline forms without treating every numeric range as time.
 
     BytePlus supports both labeled blocks (`0-3s: ...`) and compact inline
-    sequences (`0-3 seconds...3-7 seconds...` or `[1s-4s]....`). A lone
-    prose range such as "a 5-10 seconds reference clip" is not an event
-    timeline and must not participate in gap/overlap checks.
+    sequences (`0-3 seconds...3-7 seconds...` or `[1s-4s]....`). Shot headers
+    such as `Shot 2 (3-6s):` are also accepted. A lone prose range such as
+    "a 5-10 seconds reference clip" is not an event timeline and must not
+    participate in gap/overlap checks.
     """
 
     candidates = list(RANGE_RE.finditer(text))
-    accepted: list[tuple[float, float]] = []
+    accepted: list[re.Match[str]] = []
     for match in candidates:
         line_prefix = text[text.rfind("\n", 0, match.start()) + 1 : match.start()]
         suffix = text[match.end() : match.end() + 12]
@@ -184,9 +185,93 @@ def timeline_ranges(text: str) -> list[tuple[float, float]]:
         starts_line = re.fullmatch(r"\s*(?:[-*]\s*)?(?:[*_\"'“‘]\s*)?", line_prefix) is not None
         timeline_punctuation = re.match(r"\s*(?:\]|:|—|–|\.{2,})", suffix) is not None
         preceded_by_inline_separator = re.search(r"(?:\.{2,}|\])\s*(?:\[\s*)?$", line_prefix) is not None
-        if bracketed or starts_line or timeline_punctuation or preceded_by_inline_separator:
-            accepted.append((float(match.group("start")), float(match.group("end"))))
+        shot_header = (
+            re.search(r"\bShot\s+\d+\s*[(\[]\s*$", line_prefix, re.IGNORECASE) is not None
+            and re.match(r"\s*[)\]]", suffix) is not None
+        )
+        if bracketed or starts_line or timeline_punctuation or preceded_by_inline_separator or shot_header:
+            accepted.append(match)
     return accepted
+
+
+def timeline_ranges(text: str) -> list[tuple[float, float]]:
+    return [(float(m.group("start")), float(m.group("end"))) for m in timeline_matches(text)]
+
+
+# Dialogue introduced as `<Name>'s line (tone): "..."`, `says: "..."`, or the
+# documented `{...}` dialogue syntax. Bare quotes are not treated as speech.
+DIALOGUE_RE = re.compile(
+    r"(?:\b(?:line|lines|says|said|asks|shouts|whispers|dialogue)\b[^\n:\"“]{0,60}:\s*[\"“](?P<quoted>[^\"”\n]+)[\"”])"
+    r"|\{(?P<braced>[^{}\n]+)\}",
+    re.IGNORECASE,
+)
+LATIN_WORD_RE = re.compile(r"[A-Za-z0-9]+(?:['’][A-Za-z]+)?")
+DIALOGUE_WPS_WARN = 3.0
+
+
+def check_dialogue_density(issues: list[Issue], text: str) -> None:
+    """Warn when timed shots carry more spoken Latin-script words than fit naturally.
+
+    Craft heuristic from desk-prompt-patterns.md, not a first-party limit.
+    CJK dialogue is not counted.
+    """
+
+    matches = timeline_matches(text)
+    for index, match in enumerate(matches):
+        start, end = float(match.group("start")), float(match.group("end"))
+        duration = end - start
+        if duration <= 0:
+            continue
+        block_end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        block = text[match.end() : block_end]
+        words = 0
+        for dialogue in DIALOGUE_RE.finditer(block):
+            spoken = dialogue.group("quoted") or dialogue.group("braced") or ""
+            words += len(LATIN_WORD_RE.findall(spoken))
+        if words and words / duration >= DIALOGUE_WPS_WARN:
+            add(
+                issues,
+                "warning",
+                "DIALOGUE_DENSITY",
+                f"{start:g}-{end:g}s carries {words} spoken words ({words / duration:.1f} words/s). "
+                "Aim for about 2.5 words/s or less, fewer when the shot also carries several actions.",
+            )
+
+
+NEGATED_EFFECT_RE = {
+    "freeze frames": re.compile(
+        r"(?:\bno\b|\bnot\b|\bwithout\b|\bavoid\b|不要|没有|不是|非|无|禁止|避免)[^\n.。;；]{0,30}?"
+        r"(?:freeze[- ]?frames?|freezes?|定格)",
+        re.IGNORECASE,
+    ),
+    "slow motion": re.compile(
+        r"(?:\bno\b|\bnot\b|\bwithout\b|\bavoid\b|不要|没有|不是|非|无|禁止|避免)[^\n.。;；]{0,30}?"
+        r"(?:slow[- ]?motion|slow[- ]?mo\b|慢动作|慢镜头)",
+        re.IGNORECASE,
+    ),
+}
+POSITIVE_EFFECT_RE = {
+    "freeze frames": re.compile(r"hit[- ]?stop|freeze[- ]?frames?|定格", re.IGNORECASE),
+    "slow motion": re.compile(r"slow[- ]?motion|slow[- ]?mo\b|speed[- ]?ramp|bullet[- ]?time|慢动作|慢镜头|子弹时间", re.IGNORECASE),
+}
+
+
+def check_negation_conflicts(issues: list[Issue], text: str) -> None:
+    """Warn when an Avoid-style negation is contradicted elsewhere in the prompt."""
+
+    for effect, negated in NEGATED_EFFECT_RE.items():
+        if not negated.search(text):
+            continue
+        remainder = negated.sub(" ", text)
+        positive = POSITIVE_EFFECT_RE[effect].search(remainder)
+        if positive:
+            add(
+                issues,
+                "warning",
+                "NEGATION_CONFLICT",
+                f"The prompt excludes {effect} but also asks for '{positive.group(0)}'. "
+                "Remove one side, or rewrite the effect as an impact flash plus a camera jolt.",
+            )
 
 
 def check_timeline(issues: list[Issue], text: str) -> None:
@@ -344,6 +429,8 @@ def lint(
     check_target_duration(issues, target_duration)
     check_roles(issues, text, handles)
     check_timeline(issues, text)
+    check_dialogue_density(issues, text)
+    check_negation_conflicts(issues, text)
     check_anchor_syntax(issues, text, anchor_mode)
     check_mode(issues, text, selected_mode)
     check_content(issues, text, allow_music, allow_template_placeholders)
@@ -420,6 +507,34 @@ The white lamp inherits every appearance timing, motion, and occlusion of the re
 
     _, issues = lint("A complete but segmented story prompt.", target_duration=31)
     assert {"TARGET_DURATION_LIMIT", "TARGET_DURATION_SEGMENTATION"}.issubset({i.code for i in issues}), issues
+
+    shot_headers = "Shot 1 (0-3s): A walks in.\nShot 2 (4-6s): A sits down."
+    _, issues = lint(shot_headers)
+    assert "TIMELINE_GAP" in {i.code for i in issues}, issues
+
+    crowded = 'Shot 1 (0-3s): Sasha lifts the bag.\nSasha\'s line (excited): "Oh my god, look at this! Should we get it?"\nShot 2 (3-8s): Kira squints.\nKira\'s line (unsure): "Hmm, you think she\'ll like it?"'
+    _, issues = lint(crowded)
+    density = [i for i in issues if i.code == "DIALOGUE_DENSITY"]
+    assert len(density) == 1 and "0-3s" in density[0].message, issues
+
+    braced = "0-2s: The guard speaks. {Halt, who goes there, stranger, at this hour?}"
+    _, issues = lint(braced)
+    assert "DIALOGUE_DENSITY" in {i.code for i in issues}, issues
+
+    bare_quotes = 'Shot 1 (0-2s): A sign reads "Grand Opening Sale Today Only Everything Must Go Now".'
+    _, issues = lint(bare_quotes)
+    assert "DIALOGUE_DENSITY" not in {i.code for i in issues}, issues
+
+    freeze_conflict = "Avoid: no slow motion, no freeze frames. Each blast gets a two-frame hit-stop."
+    _, issues = lint(freeze_conflict)
+    assert "NEGATION_CONFLICT" in {i.code for i in issues}, issues
+    _, issues = lint("Avoid: no freeze frames.\n反应堆炸开，两帧定格，然后镜头加速。")
+    assert "NEGATION_CONFLICT" in {i.code for i in issues}, issues
+    _, issues = lint("Avoid: no slow motion. Speed ramp on every blast.")
+    assert "NEGATION_CONFLICT" in {i.code for i in issues}, issues
+    clean = "Avoid: no freeze frames. Each hit lands with an impact flash and a camera jolt. 两帧冲击停顿（不是定格）。"
+    _, issues = lint(clean)
+    assert "NEGATION_CONFLICT" not in {i.code for i in issues}, issues
     print("prompt_lint self-test: PASS")
 
 

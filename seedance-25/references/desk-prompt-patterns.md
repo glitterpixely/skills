@@ -198,6 +198,24 @@ When a sequel or forward extension is likely, land the last beat on:
 
 The extension prompt restates the **observed** source-boundary state, then adds new action. It does not re-narrate the whole source clip.
 
+## Multi-shot continuity craft
+
+Source: three user-supplied written prompts studied on 2026-10-30 (a boutique comedy, a slow-motion/rewind gunslinger duel, and a cyborg hangar brawl). These are prompt-reading hypotheses. No generated result was reviewed. Use them for any `Shot N` prompt with recurring characters, props, or dialogue, in any genre.
+
+- **Restate prop state in every shot.** Declare the starting state and the single instance once: "hangs alone on a hook from the start"; "her only gun, always in her right hand; her hip holster stays empty". Then restate location and holder in each shot where the prop is visible, also when nothing changed: "still hangs on its hook", "strap not yet on her shoulder", "still on her right shoulder", "holster empty". Give hands a declared entry state: "arrives empty-handed, arms free". This extends item 4 of [Literal multi-shot control](#literal-multi-shot-control) from a ledger to a per-shot restatement.
+- **Tag each character on every mention.** Use the name plus one visible trait, and keep the same tag: "Kira, lilac buns"; "Dana, black bob"; "Kai, black mechanical arm". In a bilingual prompt, write the tag in the shot's language: `Kai，黑色机械臂`.
+- **Isolate the speaker.** In a shot with several visible faces and one line, write "<Name> alone speaks" and give each listener a closed-mouth action: "Dana stays silent, lips pressed shut, one eyebrow twitching". This adds an observable performance to the listener rule in [prompt-architecture.md](prompt-architecture.md).
+- **Keep air between bodies.** When two characters are close, ask for visible separation: "a clear gap between them"; "one body nearer the camera, the other clearly behind it with air between".
+- **Keep the screen map and eyelines.** Anchor each character and set element to a fixed object and its screen side together: "the bag shelf at screen left". Screen side alone is fragile when the camera reverses; see [prompt-architecture.md](prompt-architecture.md#space-and-blocking-diagrams). Keep each character on the same side across shots. Point every offscreen look toward the place where the target was last shown. If the target has moved during a cut (a comic ellipsis), say so in the same sentence. For a reverse angle, say what stays hidden and refer back: "same side as Shot 5, his face hidden".
+- **Cut on an action.** End each shot with "Cut as <observable action>" and open the next shot on its continuation. End the clip on a cut, not a fade: "the clip cuts mid-turn"; "the picture stays bright, no fade-out". This prevents a default fade or a settling pose.
+- **Use one camera move per shot.** Name its direction and speed. Lock the camera for dialogue shots. Break this only under a stated global energy rule.
+- **Scope rules to scenes.** Define a look (slow motion, grade, afterimages, sound treatment) once at scene level. Turn it off explicitly in the scene that drops it: "no afterimages". For a callback, cite the earlier framing: "framed as Shot 1".
+- **Define an effect by contrast.** State what it is and what it is not: "five or six distinct see-through copies of her whole body, not speed lines".
+- **Stylize damage to match the medium.** When the user excludes gore, replace it with a style-native material and keep the exclusion: "the back of his head bursts into pale lavender paint and black ink" with "no realistic gore, no blood". This follows the user's content choice. It does not change platform moderation.
+- **Budget dialogue.** Keep spoken words to about 2.5 words per second of shot time. Use fewer when the same shot carries several physical actions. At 3 or more words per second, lengthen the shot or cut words. `prompt_lint.py` warns with `DIALOGUE_DENSITY`.
+- **Check the Avoid list against the body.** "No freeze frames" conflicts with "hit-stop" or `定格` (literally a freeze frame). "No slow motion" conflicts with a speed ramp or `子弹时间`. Remove one side or rewrite the effect as an impact flash plus a camera jolt. `prompt_lint.py` warns with `NEGATION_CONFLICT`.
+- **Mark must-hit beats.** In dense action, mark three or four exchanges per shot as required. Apply [Stage density](#stage-density) and item 2 of [Literal multi-shot control](#literal-multi-shot-control) before adding more.
+
 ## Do not import from public dumps
 
 Leave these out of the creative prompt unless the user explicitly requires them:
