@@ -58,7 +58,7 @@ Treat `Seedance 2.5` as the model family, but do not flatten all surfaces into o
 
 Seedance 2.5 is documented as supporting:
 
-- one generated video up to 30 seconds;
+- one generated video up to 30 seconds by default (Standard 4–30 seconds; Dreamina web also exposes a Long Video mode for 30–180 seconds when explicitly selected);
 - up to 50 combined image, video, and audio reference assets;
 - text-only generation and multimodal reference-to-video generation;
 - native generation in more than 10 languages;
@@ -91,7 +91,7 @@ Hard request limits:
 | Audio | Up to 10; combined duration at most 30 seconds |
 | Total | Up to 50 image, video, and audio assets combined |
 
-The 30-second capability is per generated video. A request for a longer finished program requires multiple generation calls; segment it using the continuity workflow in [prompt-architecture.md](prompt-architecture.md#programs-longer-than-30-seconds). Do not present multi-call assembly as a single documented model request.
+The 30-second capability is the default per generated video (Standard mode, 4–30 seconds; at 30 seconds or under, always default to Standard). For a longer finished program on standard 30-second surfaces, segment it into multiple generation calls using the continuity workflow in [prompt-architecture.md](prompt-architecture.md#programs-longer-than-30-seconds). When the user explicitly targets Dreamina web's Long Video mode (30–180 seconds), a single continuous-prose or staged prompt up to 180 seconds is supported on that surface; do not present Long Video mode as a universal ModelArk or standard-mode limit.
 
 Recommendations for stability, not capability limits:
 

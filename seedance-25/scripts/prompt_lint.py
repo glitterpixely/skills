@@ -337,23 +337,32 @@ def check_anchor_syntax(issues: list[Issue], text: str, anchor_mode: str) -> Non
         )
 
 
-def check_target_duration(issues: list[Issue], target_duration: float | None) -> None:
+def check_target_duration(issues: list[Issue], target_duration: float | None, long_video: bool = False) -> None:
     if target_duration is None:
         return
+    max_duration = 180.0 if long_video else 30.0
     if target_duration <= 0:
         add(issues, "error", "TARGET_DURATION_VALUE", "Target duration must be greater than zero seconds.")
-    elif target_duration > 30:
-        add(
-            issues,
-            "error",
-            "TARGET_DURATION_LIMIT",
-            f"Target duration {target_duration:g}s exceeds the documented 30s single-video maximum; segment the story into multiple generated clips.",
-        )
+    elif target_duration > max_duration:
+        if long_video:
+            add(
+                issues,
+                "error",
+                "TARGET_DURATION_LIMIT",
+                f"Target duration {target_duration:g}s exceeds the 180s Dreamina Long Video maximum; segment the story into multiple clips.",
+            )
+        else:
+            add(
+                issues,
+                "error",
+                "TARGET_DURATION_LIMIT",
+                f"Target duration {target_duration:g}s exceeds the default 30s single-video maximum; segment the story into multiple clips or pass --long-video for Dreamina 30-180s Long Video mode.",
+            )
         add(
             issues,
             "warning",
             "TARGET_DURATION_SEGMENTATION",
-            "Build a multi-clip plan with each generated segment at or below 30 seconds, then join the approved clips.",
+            f"Build a multi-clip plan with each generated segment at or below {max_duration:g} seconds, then join the approved clips.",
         )
 
 
@@ -418,6 +427,7 @@ def lint(
     video_seconds: float | None = None,
     audio_seconds: float | None = None,
     target_duration: float | None = None,
+    long_video: bool = False,
     allow_music: bool = False,
     anchor_mode: str = "semantic",
     allow_template_placeholders: bool = False,
@@ -426,7 +436,7 @@ def lint(
     issues: list[Issue] = []
     handles = referenced_handles(text)
     check_counts(issues, handles, images, videos, audio, video_seconds, audio_seconds)
-    check_target_duration(issues, target_duration)
+    check_target_duration(issues, target_duration, long_video=long_video)
     check_roles(issues, text, handles)
     check_timeline(issues, text)
     check_dialogue_density(issues, text)
@@ -507,6 +517,10 @@ The white lamp inherits every appearance timing, motion, and occlusion of the re
 
     _, issues = lint("A complete but segmented story prompt.", target_duration=31)
     assert {"TARGET_DURATION_LIMIT", "TARGET_DURATION_SEGMENTATION"}.issubset({i.code for i in issues}), issues
+    _, issues = lint("A complete Dreamina Long Video story prompt.", target_duration=120, long_video=True)
+    assert "TARGET_DURATION_LIMIT" not in {i.code for i in issues}, issues
+    _, issues = lint("An over-limit Long Video story prompt.", target_duration=181, long_video=True)
+    assert "TARGET_DURATION_LIMIT" in {i.code for i in issues}, issues
 
     shot_headers = "Shot 1 (0-3s): A walks in.\nShot 2 (4-6s): A sits down."
     _, issues = lint(shot_headers)
@@ -548,6 +562,11 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--video-seconds", type=float)
     parser.add_argument("--audio-seconds", type=float)
     parser.add_argument("--target-duration", type=float, help="Requested generated-video duration in seconds")
+    parser.add_argument(
+        "--long-video",
+        action="store_true",
+        help="Allow 30-180s target duration for Dreamina web Long Video mode (default cap Remains 30s)",
+    )
     parser.add_argument("--allow-music", action="store_true")
     parser.add_argument(
         "--anchor-mode",
@@ -580,6 +599,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         video_seconds=args.video_seconds,
         audio_seconds=args.audio_seconds,
         target_duration=args.target_duration,
+        long_video=args.long_video,
         allow_music=args.allow_music,
         anchor_mode=args.anchor_mode,
         allow_template_placeholders=args.allow_template_placeholders,

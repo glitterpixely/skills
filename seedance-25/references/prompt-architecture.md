@@ -218,7 +218,7 @@ For handoffs, state the object's ownership before and after. Once released, the 
 
 ## Programs longer than 30 seconds
 
-A single generated video is documented up to 30 seconds. Treat a longer requested finished program as a multi-call production plan:
+A single generated video is documented up to 30 seconds by default (Standard mode, 4–30 seconds). If the user explicitly targets Dreamina web's Long Video mode (30–180 seconds), write one continuous-prose story prompt or consecutive stages with one primary state change per stage, observable end states, and explicit consistency locks. Otherwise, treat a requested program longer than 30 seconds as a multi-call production plan:
 
 1. Build one global beat map and protect the causal order, dialogue, ownership changes, and final outcome.
 2. Group beats into clips no longer than 30 seconds. Each clip must form a coherent mini-scene with one observable opening state and one observable closing state; do not split in the middle of an uncompleted handoff or identity-critical reveal.

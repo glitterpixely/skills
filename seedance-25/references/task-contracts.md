@@ -28,7 +28,7 @@ The presence of a video reference does not automatically mean editing. A motion,
 
 If a request needs both edit and extension, use two prompts only when the operations are sequential. Step 2 must name the edited output of Step 1 as its new source master.
 
-For a finished program longer than one documented 30-second video, keep generation as the primary task but return multiple clip contracts using [the long-program segmentation workflow](prompt-architecture.md#programs-longer-than-30-seconds).
+For a finished program longer than one default 30-second video, keep generation as the primary task and return multiple clip contracts using [the long-program segmentation workflow](prompt-architecture.md#programs-longer-than-30-seconds), unless the user explicitly targets Dreamina web's Long Video mode (30–180 seconds) for a single long-mode prompt.
 
 ## Reference generation
 
