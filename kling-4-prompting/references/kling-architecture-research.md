@@ -1,27 +1,33 @@
 # Kling 4 & Kuaishou Video DiT Research Lineage
 
-Use this reference to ground multi-reference disentanglement, multi-concept identity locking, 6-DoF camera trajectory separation, and video editing prompts in published Kuaishou / Kling research mechanics. Model availability and hard surface caps remain governed by [`capabilities.md`](capabilities.md).
+Use this reference to ground reference ownership, multi-subject identity separation, camera/subject separation and physical-causality rules. Model availability and hard caps stay in [`capabilities.md`](capabilities.md).
 
-## 1. Foundational Research Papers (Kuaishou / Kling Lab)
+Citations were checked against the arXiv API on 2026-10-30. The four Kuaishou papers below list Kuaishou authors in their arXiv HTML. Kling 4.0's own architecture is not published; these papers show the lab's published methods, not Kling 4.0 internals. Each table separates what a paper reports from the prompt rule this skill derives from it.
 
-| Paper | arXiv ID | Core Architectural Mechanism | Deterministic Prompting Rule |
+## 1. Kuaishou / Kling research
+
+| Paper | arXiv ID | What the paper reports | Derived prompt rule (heuristic) |
 | --- | --- | --- | --- |
-| **Kling-Omni Technical Report** | [`2512.16776`](https://arxiv.org/abs/2512.16776) | Unified Multi-Modal Visual Language (MVL) framework interleaving text instructions, reference images, and reference videos in a single end-to-end transformer for generation, Omni Reference, and instruction-based editing. | Assign each reference asset exactly one semantic ownership dimension (`identity`, `action/choreography`, `camera path`, `environment/layout`, or `voice`) and explicitly exclude unrequested dimensions (`do not inherit the reference performer's identity or background`). |
-| **FullDiT** | [`2503.19907`](https://arxiv.org/abs/2503.19907) | Replaces separate adapter/ControlNet branches with unified 3D full self-attention across text, camera extrinsics, depth/white-model geometry, and identity conditions. | Order prompt clauses from coarse spatio-temporal structure to fine detail: `reference ownership -> spatial layout & camera trajectory -> primary physical action -> surface/lighting treatment -> audio -> terminal hold`. When using white-model/depth/wireframe videos, explicitly instruct the model to replace all gray/proxy shading with finished materials. |
-| **ConceptMaster** | [`2501.04698`](https://arxiv.org/abs/2501.04698) | Tuning-free multi-concept video customization on DiTs; resolves **identity attribute bleeding** (where multiple subjects swap faces, outfits, or props) by decoupling concept tokens and binding each to distinct entity anchors. | State the exact count of distinct entities (`two distinct characters, one of each`), clarify when multiple turnaround views depict a **single** character, and pair each character with a persistent visual attribute anchor plus screen-side coordinate (`on screen left` / `on screen right`). |
-| **ReCamMaster** & **SynCamMaster** | [`2503.11647`](https://arxiv.org/abs/2503.11647), [`2412.07760`](https://arxiv.org/abs/2412.07760) | 6-DoF camera-controlled generative rendering and multi-viewpoint dynamic synchronization over monocular/T2V diffusion backbones. | Decouple **camera extrinsics** (`start framing -> translation/rotation axis -> tracked target -> terminal framing`) from **subject kinematics**. Never combine mutually exclusive camera commands (e.g., `locked static camera` + `dolly in`) in the same continuous shot. |
+| **Kling-Omni Technical Report** | [`2512.16776`](https://arxiv.org/abs/2512.16776) | One end-to-end framework that takes text instructions, reference images and video contexts as a unified multimodal representation, for generation, editing and reasoning-based editing. | Inputs are read jointly, so an asset can leak traits you did not intend. Give each asset one job (`identity`, `action`, `camera path`, `environment`, `voice`) and say what it must not contribute. |
+| **FullDiT** | [`2503.19907`](https://arxiv.org/abs/2503.19907) | Fuses multiple conditions (e.g., camera, identity, depth) into one sequence with full self-attention instead of separate adapters, to avoid branch conflicts between conditions. | Conditions compete inside one attention space. Do not give two assets the same job. When you use a gray-box, depth or wireframe video, tell the model to replace all proxy shading with finished materials. |
+| **ConceptMaster** | [`2501.04698`](https://arxiv.org/abs/2501.04698) | Names the *identity decoupling* problem: multi-concept customization mixes identity attributes between subjects. Learns decoupled per-concept embeddings. | State the subject count (`two distinct characters, one of each`). Say when several turnaround views show **one** character. Give each subject 2–3 unique visual anchors and a screen side. |
+| **ReCamMaster** | [`2503.11647`](https://arxiv.org/abs/2503.11647) | Re-renders the dynamic scene of an input video along a new camera trajectory, conditioned on the source video. | Describe camera motion separately from subject motion: start framing → move axis → tracked target → end framing. |
+| **SynCamMaster** | [`2412.07760`](https://arxiv.org/abs/2412.07760) | Multi-camera generation from arbitrary 6-DoF viewpoints with a multi-view synchronization module for appearance and geometry consistency. | When a sequence cuts between angles of one moment, restate the subject's appearance and position for each angle. |
 
-## 2. Deterministic Mitigation Rules for Common Kling 4 Failure Modes
+## 2. General video-generation evidence
 
-1. **Multi-Concept Attribute Bleeding (`arXiv:2501.04698`)**:
-   - **Failure**: Two characters merge outfits, swap weapons, or duplicate into three figures.
-   - **Rule**: Declare total subject cardinality up front, bind each reference image to a named role with 2–3 distinctive visual anchors (`armored courier in silver bracer` vs. `masked pursuer with wooden staff`), and maintain explicit left/right screen-axis separation.
-2. **Cross-Modal Reference Contamination (`arXiv:2512.16776`, `arXiv:2503.19907`)**:
-   - **Failure**: Motion or camera reference video leaks its source actor's clothing, room background, or proxy gray-box shading into the render.
-   - **Rule**: Pair every structural/motion video binding with an explicit negative transfer clause: *"Use the performance video only for movement timing and gesture order; do not inherit the performer's appearance, costume, or background."*
-3. **6-DoF Camera vs. Subject Velocity Confusion (`arXiv:2503.11647`)**:
-   - **Failure**: Background slides unnaturally or camera crosses the 180° action line mid-impact.
-   - **Rule**: Specify camera motion relative to the scene geometry and subject trajectory (`lateral tracking shot parallel to the rooftop from the near side without crossing the action axis`).
-4. **Multi-Keyframe Teleportation (Up to 10 Keyframes)**:
-   - **Failure**: Ordered keyframe images render as disconnected jump-cuts or morphing dissolves instead of physical progression.
-   - **Rule**: Write an explicit causal transition bridge (`Entry Keyframe N -> physical locomotion/grip/contact -> Arrival Keyframe N+1`) and declare whether the bridge is `one continuous take` or an intentional editorial cut.
+| Paper | arXiv ID | What the paper reports | Derived prompt rule (heuristic) |
+| --- | --- | --- | --- |
+| **Physics-IQ** | [`2501.09038`](https://arxiv.org/abs/2501.09038) | Physical understanding in current video models is severely limited and unrelated to visual realism. | Write footing, approach, contact and result before spectacle. "Cinematic" or "realistic" does not add physics. |
+| **VideoPhy** | [`2406.03520`](https://arxiv.org/abs/2406.03520) | Text-to-video outputs often break physical commonsense in solid–solid, solid–fluid and fluid–fluid interactions. | Name both materials at a contact and the outcome (`boot sinks ankle-deep into wet sand`). |
+| **CameraCtrl** | [`2404.02101`](https://arxiv.org/abs/2404.02101) | Camera pose is a distinct control signal from content; camera-diverse training data improves camera controllability. | Treat the camera as its own clause. Never combine contradictory camera commands (`locked-off` + `dolly in`) in one continuous shot. |
+| **NegBench** | [`2501.09425`](https://arxiv.org/abs/2501.09425) | Modern vision-language models often handle negated captions at chance level. | Pair every exclusion with a positive ownership statement: `use the performance video only for timing and gesture order` before `do not inherit the performer's face, costume or room`. |
+| **VBench-2.0** | [`2503.21755`](https://arxiv.org/abs/2503.21755) | Scores intrinsic faithfulness on Human Fidelity, Controllability, Creativity, Physics and Commonsense. | Use these five headings when you review a render ([`review-and-repair.md`](review-and-repair.md)). |
+
+## 3. Failure modes and mitigations
+
+1. **Identity bleeding between subjects (ConceptMaster):** two characters swap outfits or props, or a third appears. Declare the subject count. Bind each reference to a named role with 2–3 unique anchors (`courier in silver bracer` / `pursuer with wooden staff`). Keep left/right screen sides fixed.
+2. **Reference contamination (Kling-Omni, FullDiT, NegBench):** a motion or camera video leaks its actor, room or gray-box shading. State the positive job of the asset first, then one short exclusion clause.
+3. **Camera vs. subject confusion (ReCamMaster, CameraCtrl):** the background slides or the camera crosses the action line during an impact. Describe camera motion relative to scene geometry and the subject's path (`lateral tracking shot parallel to the rooftop, near side, without crossing the action axis`).
+4. **Keyframe teleportation (up to 10 keyframes; craft rule, no paper):** ordered keyframes render as jump cuts or morphs. Write the bridge (`Keyframe N → locomotion/grip/contact → Keyframe N+1`) and say whether it is `one continuous take` or an intentional cut.
+5. **Physically wrong contact (Physics-IQ, VideoPhy):** objects pass through each other, liquids behave like solids, impacts have no reaction. Name materials, the contact point and the visible result.

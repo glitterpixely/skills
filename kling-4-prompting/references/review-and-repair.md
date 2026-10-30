@@ -17,6 +17,8 @@ Watch the full clip for motion continuity and narrative order. Inspect beginning
 
 If only stills were inspected, report visual-frame findings only. If audio was not heard, do not claim lip-sync or mix quality was verified. Separate prompt delivery, job submission, generated output, visual inspection, listening, and technical checks.
 
+Sort visual findings under the five VBench-2.0 faithfulness headings ([`arXiv:2503.21755`](https://arxiv.org/abs/2503.21755)) so the repair targets one layer: **Human Fidelity** (anatomy, faces, hands), **Controllability** (did the camera, count, and action follow the prompt), **Creativity** (composition beyond the default), **Physics** (contact, mass, fluids, collisions), and **Commonsense** (plausible cause and effect).
+
 ## Repair the smallest demonstrated failure
 
 | Observed mismatch | Focused revision |
