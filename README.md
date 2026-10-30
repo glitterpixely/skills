@@ -8,7 +8,7 @@ Video direction · Reference workflows · Songwriting · Prompt validation
 
 A personal collection by [glitterpixely](https://github.com/glitterpixely), built for working with creative AI tools through an assistant.
 
-[Explore the skills](#choose-a-skill) · [Seedance 2.5 guide](#seedance-25-summary) · [Install](#installation) · [Try a brief](#example-briefs) · [Contribute](CONTRIBUTING.md)
+[Explore the skills](#choose-a-skill) · [Seedance 2.5 guide](#seedance-25-summary) · [Install](#installation) · [Try a brief](#example-briefs) · [Contribute](CONTRIBUTING.md) · [License](LICENSE)
 
 </div>
 
@@ -83,7 +83,9 @@ In addition to material limits, reference role bindings, timeline gaps/overlaps,
 
 ## Installation
 
-### Use with Codex
+Every skill uses the portable `SKILL.md` + `references/` + `scripts/` layout and plain-text Markdown, so it works with **any AI coding agent, desktop assistant, IDE, or chat interface**.
+
+### 1. Any agent with a local `skills/` directory
 
 Clone this repository:
 
@@ -92,11 +94,21 @@ git clone https://github.com/glitterpixely/skills.git
 cd skills
 ```
 
-Copy the skill you want into your Codex skills directory. For example:
+Copy the skill folder you want (or symlink/clone the repository) into your agent's skills directory:
+
+| Agent / Environment | Typical skills path |
+| --- | --- |
+| **Antigravity** | `~/.gemini/config/skills/<skill>` |
+| **Claude Code** | `~/.claude/skills/<skill>` |
+| **Codex** | `${CODEX_HOME:-$HOME/.codex}/skills/<skill>` |
+| **Hermes** | `${HERMES_HOME:-$HOME/.hermes}/skills/<skill>` |
+| **OpenCode / Cursor / Other** | Your configured local `skills/` directory |
+
+Example copy command (set `skills_dir` to your agent's path):
 
 ```bash
 skill="seedance-25"
-skills_dir="${CODEX_HOME:-$HOME/.codex}/skills"
+skills_dir="$HOME/.gemini/config/skills"
 mkdir -p "$skills_dir"
 
 # Preserve an existing installation instead of overwriting it.
@@ -107,56 +119,41 @@ else
 fi
 ```
 
-Replace `seedance-25` with any skill folder listed above. Copy the **entire folder** so that references, templates, and scripts remain available. Start a new Codex chat after installation and invoke the skill by name, for example `$seedance-25`.
+Copy the **entire skill folder** so that `references/`, `templates/`, and `scripts/` remain available alongside `SKILL.md`. To update later, run `git pull --ff-only` in the cloned repository and refresh your installed copy.
 
-To update your downloaded copy, run `git pull --ff-only` in the cloned repository. Review the changes and back up any customized installed skill before copying the updated folder. Pulling this repository does not automatically update your installed skills.
+### 2. Any chat UI, Project, Gem, or Custom GPT
 
-### Use with Hermes (Git-backed)
+No CLI or agent runtime is required:
 
-For a single working copy that Hermes can load and Git can track, clone the complete repository inside the active profile's skills directory:
-
-```bash
-hermes_home="${HERMES_HOME:-$HOME/.hermes}"
-mkdir -p "$hermes_home/skills/creative"
-git clone https://github.com/glitterpixely/skills.git \
-  "$hermes_home/skills/creative/glitterpixely-skills"
-hermes skills list --source local --enabled-only
-```
-
-If any of these five skills are already installed elsewhere in that profile, compare and back up those folders **outside the skills directory** before retiring the duplicate installations. Preserve local customizations for review; do not overwrite them blindly. Start a fresh Hermes chat after installation.
-
-The checkout is the installed library: edits to its skill files are immediately local Git changes, and pulling reviewed upstream changes updates the installed files without another copy step. Use authenticated Git access to push owner-authorized updates. Review changes, run the relevant validators, commit only the intended files, push, and verify the remote commit. See [AGENTS.md](AGENTS.md) for the maintenance workflow. This does not create a background auto-push service or update separate Codex installations or other Hermes profiles.
-
-### Use as a reference library
-
-You can also read the Markdown files directly or provide a skill and its relevant reference files to another assistant. The workflows are written in plain text; assistant-specific discovery and tool integration may differ.
+1. Upload or attach the skill's `SKILL.md` file (and the relevant files from `references/`) to your **Claude Project**, **Gemini Gem**, **ChatGPT Custom GPT**, or directly into a chat thread.
+2. Give your brief in plain language—the assistant will follow the workflow and rules in `SKILL.md`.
 
 ## Example briefs
 
-These are requests to give your assistant after loading the appropriate skill. The assistant uses the skill to develop the final generation prompt.
+These prompts work in any assistant once the relevant skill is loaded or attached:
 
-**A small visual story**
+**A small visual story (`seedance-25`)**
 
 ```text
-Use $seedance-25 to write a 15-second video prompt.
+Using the seedance-25 skill, write a 15-second video prompt.
 A tiny witch tries to lift a fallen star into her wheelbarrow.
 One character, one garden setting, one clear visual payoff.
 Use a gentle camera move, preserve a storybook look, and include no music.
 ```
 
-**A reference-led character moment**
+**A reference-led character moment (`kling-4-prompting`)**
 
 ```text
-Use $kling-4-prompting to animate my attached character image.
+Using the kling-4-prompting skill, animate my attached character image.
 Preserve the face, outfit, and illustration style. The character notices
 a glowing moth, reaches toward it, and smiles as it lands on one finger.
 Keep the action readable and list any generation settings separately.
 ```
 
-**An original song direction**
+**An original song direction (`suno-song-builder`)**
 
 ```text
-Use $suno-song-builder to develop an original indie-pop song about
+Using the suno-song-builder skill, develop an original indie-pop song about
 finding your confidence again. Warm vocals, tactile percussion,
 and a chorus that feels hopeful without becoming grandiose.
 Give me a style prompt and complete lyrics in separate paste-ready blocks.
@@ -168,6 +165,8 @@ For MiniMax Music, the [genre guide](minimax-music-30/references/genre-router.md
 
 ```text
 skills/
+├── LICENSE
+├── README.md
 ├── seedance-25/
 ├── h3-prompt-writing/
 ├── kling-4-prompting/
@@ -179,15 +178,15 @@ Inside each skill:
 
 | Path | Purpose |
 | --- | --- |
-| `SKILL.md` | Main instructions and workflow |
+| `SKILL.md` | Main instructions and workflow (portable across all agents) |
 | `references/` | Supporting craft guidance, examples, and capability notes |
-| `agents/openai.yaml` | Codex display metadata and default prompt |
-| `scripts/` | Validation helpers, where included |
+| `scripts/` | Python 3 validation helpers (stdlib only, no third-party packages required) |
 | `templates/` | Music prompt templates, in the MiniMax Music skill |
+| `agents/openai.yaml` | Optional display metadata for runtimes that read it |
 
 ## Validation
 
-The Seedance, H3, and MiniMax Music skills include Python prompt validators. Run these commands from the repository root to see their options:
+The Seedance, H3, and MiniMax Music skills include standalone Python 3 validators (using only the Python standard library):
 
 ```bash
 python3 seedance-25/scripts/prompt_lint.py --help
@@ -202,3 +201,7 @@ Follow the chosen skill’s instructions for the correct mode, duration, input f
 These skills provide prompting guidance and local validation helpers. Generation runs in the relevant creative platform or runtime, using your own access. Capability notes record their sources and boundaries; check those references when a model version, interface, or feature changes.
 
 Found a broken reference, an outdated capability, or a useful improvement? [Open an issue](https://github.com/glitterpixely/skills/issues) or see the [contribution guide](CONTRIBUTING.md).
+
+## License
+
+Released under the [MIT License](LICENSE).

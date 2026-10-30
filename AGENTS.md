@@ -6,7 +6,7 @@ This repository owns these five skills: `h3-prompt-writing`, `kling-4-prompting`
 
 ## Local edits and GitHub updates
 
-The owner's requested workflow is to update this repository whenever we update these skills locally. A Git-backed Hermes installation uses this checkout directly, rather than a second copied installation.
+The owner's requested workflow is to update this repository whenever we update these skills locally. A Git-backed installation uses this checkout directly, while separate local skill directories should be kept in sync when updated.
 
 1. Confirm the checkout and origin are for `glitterpixely/skills`. Inspect the current branch, working-tree diff, and staged changes before editing. Read `CONTRIBUTING.md`.
 2. Fetch origin. If the working tree is clean and the checked-out branch tracks the intended remote branch, use `git pull --ff-only`. Preserve existing work; never reset, overwrite, auto-stash, or force-push to resolve divergence. If concurrent edits or conflicts make intent unclear, ask the owner.

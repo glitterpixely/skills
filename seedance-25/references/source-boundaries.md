@@ -41,7 +41,7 @@ npx --yes skills@latest add \
   --yes
 ```
 
-Its documented invocation is `/sd25-pe + the user's prompt`. This local skill preserves its behavior while using Codex-compatible frontmatter and progressive disclosure.
+Its documented invocation is `/sd25-pe + the user's prompt`. This local skill preserves its behavior while using agent-agnostic frontmatter and progressive disclosure.
 
 ## Surface boundary
 
