@@ -20,7 +20,7 @@ Identify the primary deliverable and load only the required references:
 | **5. Render Diagnosis & Natural-Language Repair** | Single-variable A/B repair plan, v6 natural-language edit prompt, or Song Editor section replacement | Read [`references/songcraft.md`](references/songcraft.md), [`references/suno-controls.md`](references/suno-controls.md), and [`references/controllable-song-research.md`](references/controllable-song-research.md). |
 | **6. Authorized Live Suno UI Operation** | Direct browser creation (1 batch default, private/link-only, zero purchases) | Read [`references/suno-controls.md`](references/suno-controls.md) and the active browser-control skill. |
 
-Infer harmless defaults (`2:40–3:20` full song; `2:30–3:15` film cue with a `40–60s` hero passage; continuous v6 generation supports up to `8:00`) and ask at most one concise question only when a missing choice materially alters the work (e.g., vocal vs. instrumental when unresolved).
+Infer harmless defaults (`2:40–3:20` full song; `2:30–3:15` film cue with a `40–60s` hero passage; check the live Duration slider for the current maximum) and ask at most one concise question only when a missing choice materially alters the work (e.g., vocal vs. instrumental when unresolved).
 
 ## 2. Deterministic Song Engineering Protocol
 
@@ -34,16 +34,17 @@ Infer harmless defaults (`2:40–3:20` full song; `2:30–3:15` film cue with a 
    - For multi-song batches, vary **all 6 anchors** (Premise, Hook shape, Groove, Harmony, Lead identity, Form) across every option.
 
 ### Step 2: Engineer the `Style` Field (`Mustango` `arXiv:2311.08355` & `MusicRL` `arXiv:2402.04229`)
-Construct `Style` as a positive-only, music-theory-grounded studio brief ($\le$**1,000 characters** in Suno v6; obey any tighter user-supplied cap) following this exact 8-part sequence:
+Captions are ambiguous by default: MusicRL reports that one caption maps to very different music for different users. Name the lane, groove, and lead so your intent is the only reading.
+Construct `Style` as a positive-only, music-theory-grounded studio brief (stay within the live `Style` character counter — third-party sources report 1,000 characters, unconfirmed by Suno; obey any tighter user cap) following this exact 8-part sequence:
 `[1. Function & target duration] -> [2. Primary genre lane + 1 contrast] -> [3. BPM/tempo feel, meter, & pocket] -> [4. Harmonic engine/mode] -> [5. Focal ensemble roles (2–3 core instruments + counter-voice)] -> [6. Vocal register, distance, & delivery (or instrumental lead)] -> [7. Section energy arc across >=3 states including subtraction] -> [8. Recording space, mix finish, & 1 signature rule]`
 
-- **Focal Ensemble Rule (`arXiv:2402.04229`)**: Anchor around 2–3 primary instruments with relational verbs (`muted telecaster answers the vocal cadence; upright bass holds a pedal drone`) rather than a 10-instrument noun list that averages into mud.
+- **Focal Ensemble Rule (craft heuristic)**: Anchor around 2–3 primary instruments with relational verbs (`muted telecaster answers the vocal cadence; upright bass holds a pedal drone`) rather than a 10-instrument noun list, which tends to blur. Describe how voice and accompaniment relate (`LeVo` `arXiv:2506.07520`).
 - **Zero Inline Negations**: Keep `Style` 100% positive; move all unwanted sounds into `Exclude`.
 
-### Step 3: Engineer `Lyrics` or `Instrumental Structure` (`SongComposer` `arXiv:2402.17645` & `LeVo` `arXiv:2506.07520`)
-- **Prosodic Stress & Vowel Placement (`arXiv:2402.17645`)**: Keep `Lyrics` within the **5,000-character** v6 cap. Match stressed-beat counts across parallel verse lines, place open sustainable vowels (`ah`, `oh`, `ay`) on long hook notes, and cut syllable-crowded lines so vocals never rush.
+### Step 3: Engineer `Lyrics` or `Instrumental Structure` (`SongComposer` `arXiv:2402.17645` & `YuE` `arXiv:2503.08638`)
+- **Prosodic Stress & Vowel Placement (craft rules; lyric–note alignment per `arXiv:2402.17645`)**: Keep `Lyrics` within the live character counter (third-party sources report 5,000 characters). Match stressed-beat counts across parallel verse lines, place open sustainable vowels (`ah`, `oh`, `ay`) on long hook notes, and cut syllable-crowded lines so vocals never rush.
 - **Concrete Evidence Over AI Clichés**: Use tangible objects, places, actions, and interpersonal stakes; ban default AI filler (`neon shadows`, `echoes in the dark`, `ashes rising`, `scars`, `chains`, `destiny`) unless literally required by the brief.
-- **Clean Section Tags (`arXiv:2506.07520`)**: Place concise structural tags (`[Cold Open | dry single voice]`, `[Verse 1]`, `[Pre-Chorus]`, `[Chorus | drums drop out]`, `[Bridge]`, `[Outro]`) on their own lines with blank lines between sections. Keep production essays out of sung text.
+- **Clean Section Tags (`YuE` `arXiv:2503.08638`)**: Place concise structural tags (`[Cold Open | dry single voice]`, `[Verse 1]`, `[Pre-Chorus]`, `[Chorus | drums drop out]`, `[Bridge]`, `[Outro]`) on their own lines with blank lines between sections. Keep production essays out of sung text.
 - **Instrumental Cues**: Enable `Instrumental` and structure by dramatic state (`Establish Motif` $\rightarrow$ `Build Motion` $\rightarrow$ `Subtraction/Drop` $\rightarrow$ `Hero Passage` $\rightarrow$ `Edit Tail/Resolve`).
 
 ### Step 4: Populate `Exclude` & Calibrate Suno v6 Controls (`JASCO` `arXiv:2406.10970`)
@@ -52,8 +53,8 @@ Construct `Style` as a positive-only, music-theory-grounded studio brief ($\le$*
   - **`v6` (Flagship — Pro/Premier)**: Default for polished, reliable, genre-accurate production.
   - **`v6-wild` (Experimental — Pro/Premier)**: Recommend when the user wants bold, unpredictable textures or avant-garde motif discovery before converging in core `v6`.
   - **`v6-mini` (Fast/All Tiers)**: Recommend for free-tier users or rapid lyric/meter sketching.
-  - **`Variety` (`Off / 0` vs. `On`)**: Set `Variety: Off (0)` in More Options when locking literal `Style` wording across controlled A/B takes; leave `On` for wider take-to-take variation.
-  - **`Max Mode` (`2x` credits)**: Recommend enabling for arrangements longer than 2 minutes (up to 8 minutes), faithful covers, or strict style transfers requiring high vocal/structural continuity.
+  - **`Variety` slider (`0` vs. above `0`)**: Suno: Variety adjusts and updates your style prompts; set it to `0` to keep full control of your style tags. Use `0` for controlled A/B takes; raise it for wider variation.
+  - **`Max Mode` (extra credits; Suno gives no multiplier)**: Suno recommends it for songs longer than 2 minutes, covers that stay close to the original, style transfer, and consistent vocals and style through the track.
 - **Slider Heuristics (`references/controllable-song-research.md`)**: Clearly label numeric slider suggestions as practical heuristics (e.g., Exploration: `Weirdness 45–65% / Style Influence 50–70%`; Convergence: `Weirdness 20–40% / Style Influence 75–90%`; Owned Audio Seed / Mashup: `Audio Influence 75–90%`, avoiding hard `100%` artifact transfer).
 
 ## 3. Mandatory 7-Block Delivery Schema
@@ -67,37 +68,37 @@ Deliver every complete package in this order, putting each paste-ready field in 
    ```
 3. **Style**:
    ```text
-   [Positive-only 8-part production brief; <=1,000 characters in v6 and obeying any stricter user cap]
+   [Positive-only 8-part production brief; within the live Style counter and any stricter user cap]
    ```
 4. **Lyrics** (or **Instrumental structure**):
    ```text
-   [Section-tagged lyrics (<=5,000 characters) or dramatic instrumental cue map]
+   [Section-tagged lyrics within the live Lyrics counter, or dramatic instrumental cue map]
    ```
 5. **Exclude**:
    ```text
    [Comma-separated unwanted instruments, styles, vocal traits, and mix habits]
    ```
-6. **Settings**: Model (`v6`, `v6-wild`, or `v6-mini`), Mode (`Custom`), `Instrumental` toggle state, `Duration` slider target (up to `8:00`), `Max Mode` recommendation (`On [2x credits]` vs. `Off`), `Variety` setting (`Off / 0` for literal style lock vs. `On`), and clearly labeled heuristic starting ranges for `Weirdness`, `Style Influence`, and (when using an owned audio/multimodal seed) `Audio Influence`.
-7. **Iteration**: Controlled single-variable A/B loop, **v6 natural-language edit command** (for targeted lyric, vocal, or section swaps) + **Song Editor** section-replacement step, **Suno Studio** / 12-stem WAV export (with Auto-Stretch and semitone+cent fine pitch where useful), and post-lock **Remaster** guidance.
+6. **Settings**: Model (`v6`, `v6-wild`, or `v6-mini`), Mode (`Custom`), `Instrumental` toggle state, `Duration` slider target, `Max Mode` recommendation (`On [extra credits]` vs. `Off`), `Variety` setting (`0` for literal style lock vs. above `0`), and clearly labeled heuristic starting ranges for `Weirdness`, `Style Influence`, and (when using an owned audio/multimodal seed) `Audio Influence`.
+7. **Iteration**: Controlled single-variable A/B loop scored on the five SongEval dimensions (`arXiv:2505.10793`: coherence, memorability, vocal breathing/phrasing, structure clarity, musicality), **v6 natural-language edit command** (for targeted lyric, vocal, or section swaps) + **Song Editor** section-replacement step, **Suno Studio** / 12-stem WAV export (with Auto-Stretch and semitone+cent fine pitch where useful), and post-lock **Remaster** guidance.
 
 ## 4. Verification Gate & Diagnostic Repair
 
 Before delivery, verify:
 - [ ] **Zero Artist/Title Leakage**: No living artist names, reference titles, or copied hooks appear in `Title`, `Style`, `Lyrics`, or `Exclude`.
-- [ ] **v6 Cap & Dynamic Subtraction**: `Style` is $\le$1,000 chars, `Lyrics` is $\le$5,000 chars, and at least 3 distinct energy states are planned (including at least one moment of subtraction/dropout).
+- [ ] **Length & Dynamic Subtraction**: `Style` and `Lyrics` fit the live counters (third-party-reported 1,000 / 5,000 characters when the UI is not visible), and at least 3 distinct energy states are planned (including at least one moment of subtraction/dropout).
 - [ ] **Prosody & Tag Hygiene**: Section tags sit on their own lines; verses use concrete physical imagery and natural spoken stress.
 - [ ] **Evidence Honesty**: Settings distinguish official Suno v6 controls (`v6`/`v6-wild`/`v6-mini`, `Max Mode`, `Variety`, sliders) from practical numeric heuristics; un-auditioned audio is never described as heard or verified.
 
-When repairing an existing Suno v6 render (`references/songcraft.md`), isolate the failure layer (`composition`, `arrangement`, `prosody`, `timbre`, `mix`, or `local section glitch`), preserve the winning seed/section, change **one variable per A/B batch** (with `Variety: Off`), and use **v6 natural-language editing** (e.g., *"Change the chorus arrangement to stripped upright bass and dry close harmony"* or *"Change the lyric in Verse 2 from X to Y"*) or **Song Editor** section replacement before regenerating the entire track.
+When repairing an existing Suno v6 render (`references/songcraft.md`), isolate the failure layer (`composition`, `arrangement`, `prosody`, `timbre`, `mix`, or `local section glitch`), preserve the winning seed/section, change **one variable per A/B batch** (with `Variety: 0`), and use **v6 natural-language editing** (e.g., *"Change the chorus arrangement to stripped upright bass and dry close harmony"* or *"Change the lyric in Verse 2 from X to Y"*) or **Song Editor** section replacement before regenerating the entire track.
 
 ### Do Not
 - Do not upload or sample third-party music, film audio, or another person's voice in Suno (including in v6 mashups or multimodal prompts), or promise copyrightability, uniqueness, or detector evasion.
 - Do not bury negative exclusions inside `Style` or `Lyrics` instead of using `Exclude`.
 - Do not reskin the same chord loop and form across a multi-song batch.
-- Do not purchase credits, change plans, enable `Max Mode` (`2x` credits) without user consent, or publish songs publicly when operating the live Suno UI.
+- Do not purchase credits, change plans, enable `Max Mode` (extra credits) without user consent, or publish songs publicly when operating the live Suno UI.
 
 ## 5. Resource Index
 
 - [`references/songcraft.md`](references/songcraft.md): Intake defaults, 9-dimension reference appeal map, 10-point originality delta, thesis & musical engine design, prosody checks, 6-anchor batch diversity, and diagnostic repair table.
 - [`references/suno-controls.md`](references/suno-controls.md): Audited Suno v6 controls snapshot (2026-10-30), `v6` / `v6-wild` / `v6-mini` model selection, `Max Mode`, `Variety`, Duration/Weirdness/Style/Audio sliders, natural-language editing, multimodal & mashup rules, Custom Models, Voices, Suno Studio (Clip Settings, cent-level pitch, Auto-Stretch), 12-stem separation, live UI rules, and official links.
-- [`references/controllable-song-research.md`](references/controllable-song-research.md): Controllable music generation research (`Mustango` `arXiv:2311.08355`, `JASCO` `arXiv:2406.10970`, `SongComposer` `arXiv:2402.17645`, `MusicRL` `arXiv:2402.04229`, `YuE` `arXiv:2503.08638`, `LeVo` `arXiv:2506.07520`) and CFG/v6 mode/slider mechanics.
+- [`references/controllable-song-research.md`](references/controllable-song-research.md): Controllable music generation research (`Mustango` `arXiv:2311.08355`, `JASCO` `arXiv:2406.10970`, `SongComposer` `arXiv:2402.17645`, `MusicRL` `arXiv:2402.04229`, `YuE` `arXiv:2503.08638`, `LeVo` `arXiv:2506.07520`, `SongEval` `arXiv:2505.10793`, `NegBench` `arXiv:2501.09425`) with paper findings separated from craft heuristics, plus v6 mode/slider starting ranges.
