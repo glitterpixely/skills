@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 44" width="260" height="44">
+  <rect x="2" y="4" width="256" height="36" rx="18" fill="#FFFDF9" stroke="#DECBD4" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <circle cx="26" cy="22" r="7" fill="#FADCE4" stroke="#68535B" stroke-width="1.2"/>
+  <circle cx="24" cy="21" r="1" fill="#68535B"/>
+  <circle cx="28" cy="21" r="1" fill="#68535B"/>
+  <text x="134" y="26" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif" font-size="11.5" font-weight="600" fill="#68535B" letter-spacing="0.4">crafted with care · glitterpixely studio</text>
+  <path d="M234 15 C235 19 236 20 240 21 C236 22 235 23 234 27 C233 23 232 22 228 21 C232 20 233 19 234 15 Z" fill="#FDF0C4" stroke="#68535B" stroke-width="1" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="178" height="28" viewBox="0 0 178 28">
+  <rect x="1" y="1" width="176" height="26" rx="13" fill="#E3F3EA" stroke="#B8DEC8" stroke-width="1.2"/>
+  <circle cx="16" cy="14" r="5" fill="#9FD4B6"/>
+  <text x="28" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif" font-size="11.5" font-weight="600" fill="#425B4E" letter-spacing="0.2">Python 3 Validators</text>
+</svg>

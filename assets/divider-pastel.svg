@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 32" width="100%" height="32">
+  <defs>
+    <linearGradient id="lineLeft" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F6D5DC" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#E5CEDC" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#D4C5E8" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="lineRight" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#D4C5E8" stop-opacity="1"/>
+      <stop offset="50%" stop-color="#D5EAE0" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#F6D5DC" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- Delicate hairlines -->
+  <line x1="60" y1="16" x2="340" y2="16" stroke="url(#lineLeft)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="460" y1="16" x2="740" y2="16" stroke="url(#lineRight)" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Pastel dots & sparkles -->
+  <circle cx="362" cy="16" r="3.5" fill="#F9D5E0" stroke="#6E5A63" stroke-width="1"/>
+  <path d="M400 6 C401.8 12.2 403.8 14.2 410 16 C403.8 17.8 401.8 19.8 400 26 C398.2 19.8 396.2 17.8 390 16 C396.2 14.2 398.2 12.2 400 6 Z" fill="#FDF0C4" stroke="#6E5A63" stroke-width="1.1" stroke-linejoin="round"/>
+  <circle cx="438" cy="16" r="3.5" fill="#D6EDE2" stroke="#6E5A63" stroke-width="1"/>
+</svg>
