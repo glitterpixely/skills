@@ -1,101 +1,104 @@
 ---
 name: kling-4-prompting
-description: Write, optimize, and repair Kling 4.0 and Kling 4.0 Flash video prompts using model-specific limits and explicit reference roles. Use for text-to-video, image animation, first/last frames, multi-keyframes, Omni references, creative recreation, dialogue, visible text, and targeted video edits. Also use to plan extensions while checking feature availability. Applies to Kling 4 requests, not other video models or Kling 3 by default.
+description: Write, optimize, audit, and repair Kling 4.0 and Kling 4.0 Flash video prompts using model-specific limits, explicit reference ownership, and Kuaishou DiT/Omni conditioning rules. Invoke whenever the user requests a Kling 4 or Kling 4.0 Flash prompt for text-to-video, image animation, First & Last Frames, multi-keyframes (up to 10), Omni Reference (up to 15 combined assets), white-model/depth/camera transfer, creative ad recreation, synchronized stereo dialogue, visible scene lettering/UI, targeted video editing, or multi-clip continuation plans.
 ---
 
 # Kling 4 Prompting
 
-Turn the brief and supplied materials into a concise, ready-to-paste video prompt with separately stated generation settings. Optimize for observable action, reference ownership, coherent timing, and a deliberate final state.
+Turn a user brief and supplied reference assets into a concise, paste-ready Kling 4.0 or Kling 4.0 Flash prompt with separately stated generation settings. Enforce single-owner reference binding, physical causality, 6-DoF camera separation, and hard model budget checks before delivery.
 
-This skill derives capabilities from Kling's **Meet All-New Kling 4.0!** release notes, read on **2026-09-28**. Prompt construction and examples are authored craft guidance, not official syntax or benchmark-proven recipes. Read [capabilities.md](references/capabilities.md) for the source, exact limits, conflicting statements, and availability boundaries.
+Read [`references/capabilities.md`](references/capabilities.md) for audited Kling 4.0 vs. Flash specifications (snapshot: `Meet All-New Kling 4.0!`, 2026-09-28) and [`references/kling-architecture-research.md`](references/kling-architecture-research.md) for Kuaishou DiT / Kling-Omni (`arXiv:2512.16776`, `arXiv:2503.19907`, `arXiv:2501.04698`, `arXiv:2503.11647`) failure mitigations.
 
-## Choose the model and operation
+## 1. Model & Operation Decision Tree
 
-- **Full Kling 4.0:** announced for October 2026; documented generation range 3–30 seconds. Do not treat the announcement as proof of account access.
-- **Kling 4.0 Flash:** limited early access began September 28; documented generation range 3–20 seconds, 720p, 8-bit SDR. Do not silently transfer full-model controls or specifications to Flash.
-- **HDR and repeated extension:** marked coming soon. Confirm current availability before giving executable instructions that depend on either.
+### Step 1A: Verify Model Tier & Hard Budgets (`references/capabilities.md`)
 
-For prompt-only work, proceed with the user's named model and label an unavailable feature as a future-use draft. Do not interrupt ordinary creative drafting to ask about account access. For live execution, verify the actual model, mode, settings, and upload controls. Read the capability reference when limits or model choice affect the task; refresh official evidence for current availability questions or requests outside this dated snapshot.
-
-Choose the operation from the requested outcome:
-
-| Need | Operation and controlling input |
-| --- | --- |
-| Invent a scene | Text-to-video |
-| Animate an existing composition | Image-to-video; source image anchors the initial visual state |
-| Arrive at a specific final composition | First & Last Frames; specify the causal bridge |
-| Hit several visual story states in order | Multi-keyframes; ordered inputs, up to 10 on full 4.0 |
-| Combine identity, performance, style, camera, voice | Omni Reference; bind each input to its role |
-| Reuse an ad's pacing or camera with new content | Creative recreation; identify what is inherited and replaced |
-| Change a region, subject, behavior, or style in existing footage | Video editing; identify exactly one primary video |
-| Add new footage after an existing ending | Extension only if available; otherwise plan separately generated adjacent clips |
-
-Do not equate an ordered keyframe sequence with an unordered identity reference set. Do not rewrite a supplied video when the user only wants a continuation. Backward extension and exact extension increments are not established by these notes.
-
-## Build the prompt
-
-### 1. Preserve the brief
-
-Extract identities, subject count, action direction, environment, style, duration, framing, camera behavior, dialogue, audio intent, and final outcome. Preserve the newest literal corrections and previously accepted parts. Translate abstract emotion into visible performance without inventing a new plot.
-
-If a detail is optional, make a reasonable creative choice. Ask a focused question only when ambiguity changes a core identity, reference assignment, edit target, or narrative endpoint. Do not require a form before writing a simple prompt.
-
-### 2. Bind the materials
-
-Inspect accessible assets; distinguish what was actually seen or heard from the user's descriptions. Do not diagnose an unseen result or infer video motion from one still frame.
-
-For multiple references, make a compact working ledger:
-
-| Input as labeled in the user's surface | Role | Inherit | Exclude when relevant |
+| Dimension | Full Kling 4.0 (Documented) | Kling 4.0 Flash (Documented) | Enforcement Rule |
 | --- | --- | --- | --- |
-| Character image | Identity | Face, costume, proportions | Reference background |
-| Performance video | Action | Gesture order and timing | Performer identity and costume |
-| Camera reference | Camera | Travel path and framing | Scene objects |
-| Voice reference | Voice | Named speaker's vocal identity | Unrequested words or music |
+| **Modes** | T2V, I2V, First & Last Frames, Multi-keyframes, Omni Reference, Video Editing | T2V, I2V, Omni Reference | Do not silently transfer Full 4.0 modes (e.g., 10 keyframes, editing) to Flash without flagging unconfirmed parity. |
+| **Duration** | **3–30 seconds** per generation | **3–20 seconds** per generation | Fit all beats and speech inside the single-call cap; plan multi-clip sequences beyond 30s (or 20s on Flash). |
+| **Resolution & Range** | 720p, 1080p, 4K (10-bit HDR marked *coming soon*) | 720p, 8-bit SDR | State resolution/HDR in external `Settings`, not as proof inside prompt prose. |
+| **Aspect Ratio** | `21:9`, `16:9`, `1:1`, `9:16`, `Auto` | Surface-dependent | Compose for the target frame; keep ratio in `Settings`. |
+| **Prompt Cap** | Up to **8,000 tokens** | Unspecified in Flash table | Treat 8,000 tokens as ceiling capacity, not a verbosity target. |
+| **Reference Caps (Full 4.0)** | $\le$**15 combined** ($\le$10 images, $\le$5 videos totaling $\le$30s, voice audio, $\le$7 elements including $\le$3 video elements) | Check live Flash surface | Enforce **both** per-type caps and the 15-item / 30s combined ceiling. Never silently drop required user assets. |
+| **Video Editing** | $\le$**5 input clips** (1 primary + up to 4 supporting), each 3–30s, **combined $\le$30s total** | Not in Flash table | Include the primary video's duration inside the 30-second total editing budget. |
 
-Use actual attachment handles if supplied by the UI or user. Otherwise use plain prose such as “the character reference image” and “the camera reference video,” with an external mapping note when needed. Do not invent Kling token grammar or copy Seedance `@Image 1`, H3 subject tokens, or Midjourney flags as required Kling syntax.
+### Step 1B: Route to Exactly One Operation
 
-Several views of one character define **one character**, not several cast members. Bind voice to a named speaker. Where references disagree, assign ownership by dimension: identity from the portrait, action from the motion video, camera from the camera video, words from the user's script. Exclude irrelevant references instead of giving them competing authority.
+| User Goal | Selected Operation | Controlling Input & Structural Rule |
+| --- | --- | --- |
+| Invent a scene from scratch | **Text-to-Video** | One causal action chain with opening state, physical change, and terminal hold. |
+| Animate an existing still | **Image-to-Video** | Source image locks initial appearance/layout; spend prompt words on **what moves** vs. what stays fixed. |
+| Bridge two exact compositions | **First & Last Frames** | Inspect both frames; write the physical locomotion, grip, lighting, and camera bridge connecting them. |
+| Hit 3–10 ordered story states | **Multi-Keyframes** (up to 10 on Full 4.0) | Order keyframes chronologically; specify the physical transition or explicit cut between each node (`arXiv:2512.16776`). |
+| Combine identity, motion, camera, layout, or voice | **Omni Reference** | Assign one non-overlapping role per asset; add negative transfer exclusions (`arXiv:2503.19907`, `arXiv:2501.04698`). |
+| Reuse an ad/clip's pacing & camera with new product/cast | **Creative Recreation** | Separate inherited shot timing/camera from replacement identity/product geometry and hand grip. |
+| Modify a region, expression, style, or background in footage | **Video Editing** | Designate **one primary video**; state edited interval/target and explicitly preserve all untargeted content. |
+| Add footage after an existing clip's ending | **Continuation / Adjacent Clip Plan** | Native repeated extension (up to 2 min) is marked *coming soon*; unless verified live, write a standalone adjacent clip carrying forward the source's terminal pose, velocity, camera vector, and audio. |
 
-Check combined and per-type input budgets in the capability reference before recommending a large reference stack. Do not solve an over-limit request by silently dropping critical material.
+## 2. Reference Ownership & Anti-Bleeding Protocol
 
-### 3. Describe a filmable event
+1. **Inspect Accessible Media First**: Never diagnose an unseen render or infer motion from a single still.
+2. **Build an Ownership Ledger (`Kling-Omni` `arXiv:2512.16776` & `FullDiT` `arXiv:2503.19907`)**:
+   Give each uploaded asset one authoritative dimension and explicitly block cross-modal contamination:
+   - **Identity / Multi-view sheet** $\rightarrow$ Inherits face, body proportions, outfit; excludes reference background and static pose. State clearly when multiple views depict **one single character** (`ConceptMaster`, `arXiv:2501.04698`).
+   - **Performance / Action video** $\rightarrow$ Inherits gesture sequence and rhythm; excludes reference performer's face, body, costume, and room.
+   - **White-model / Depth / Wireframe / Camera video** $\rightarrow$ Inherits 6-DoF camera trajectory, obstacle spacing, and timing (`ReCamMaster`, `arXiv:2503.11647`); explicitly replace all gray proxy/wireframe surfaces with finished scene materials.
+   - **Voice reference audio** $\rightarrow$ Documented for **voice identity only**; bind to a named speaker and never promise music, SFX, or full-mix transfer from an audio upload.
+3. **Use Real Surface Handles or Plain Prose**: Use actual attachment names when supplied; otherwise write clear prose (`the character reference image`, `the performance reference video`) plus an external upload map. Never invent fake Kling token syntax or import Seedance `@Image 1`, H3 `<Subject N>`, or Midjourney `--` flags into Kling prompt prose.
 
-Use the shortest structure that expresses the job:
+## 3. Prompt Compilation Formula
 
-**Reference roles if needed → opening state → action and change → camera → visual treatment → audio → ending and essential constraints.**
+Compile prompts in this deterministic 7-part sequence (`references/prompt-patterns.md`):
 
-For a simple shot, write one connected paragraph. For a complex narrative, use a few ordered beats or explicitly separated shots. An 8,000-token allowance is capacity, not a target.
+`[1. Reference Role & Exclusion Header] -> [2. Opening Spatial State & Subject Cardinality] -> [3. Causal Action & Contact Chain] -> [4. 6-DoF Camera Trajectory] -> [5. Medium & Visual Treatment] -> [6. Stereo Audio, Dialogue & Lettering] -> [7. Terminal State & Hard Constraints]`
 
-- Write concrete verbs, trajectories, contact, reactions, and consequences. For physical action, establish footing and distance; show impact before debris or magical effects.
-- Distinguish subject motion from camera motion. State the starting framing, movement direction, tracked target, and ending framing. Avoid simultaneous incompatible camera instructions.
-- For a continuous take, explain transitions through camera travel or occlusion. For an edited sequence, name the cut and new viewpoint. Do not call hard cuts a continuous take.
-- Use time ranges only when they clarify pacing. They are creative timing requests, not frame-exact control. Fit action and speech into the configured duration; reserve space for the requested ending.
-- For image animation, spend words on what changes. Preserve source identity/composition/style as appropriate; do not re-describe the entire image or lock every moving component.
-- For stylized work, retain the specified medium. Realism improvements do not require replacing anime, felt, clay, or illustration with photorealism.
-- Specify a perceptible main movement, with secondary reactions at lower intensity. “Subtle” everywhere often weakens the intended animation; use visible amplitudes and clear paths.
-- Keep failure constraints few and specific to the job, such as fixed subject count, stable product label, or no unrequested cut. The notes do not establish a separate negative-prompt field.
+### Imperative Drafting Rules
+- **Physical Causality Before Spectacle**: Establish footing, approach vector, and contact point before debris, sparks, or reaction recovery. Replace vague "subtle movement" fillers with concrete amplitudes and trajectories.
+- **Decouple Camera from Subject Motion (`arXiv:2503.11647`)**: State starting framing, camera travel direction, tracked target, and ending framing without crossing the 180° action axis or combining contradictory moves (`fixed camera` + `orbit`).
+- **Topology Honesty**: Explain continuous-take transitions via camera travel or foreground pass; if shots cut, name the cut and new angle explicitly.
+- **Preserve Stylized Media**: Do not overwrite requested anime, clay, felt, 2D illustration, or 3D cyber styles with generic photorealistic lens buzzwords.
+- **Dialogue & Two-Channel Stereo Audio**:
+  - Name the speaker, language/accent, exact quoted words, and turn order ($\approx$2–3 words/s conversational pacing). Keep non-speaking listeners' mouths closed.
+  - Place sound sources in screen-relative stereo space (`rolls from screen right to screen left`). Do not invent numerical pan values or stem exports.
+  - Default to scene-appropriate ambience and foley with `No music` unless score is requested.
+- **Visible Text & UI**: Quote exact strings, script/language, surface placement, causal trigger (e.g., button press $\rightarrow$ state change), and readable hold duration.
 
-Read [prompt-patterns.md](references/prompt-patterns.md) for the relevant mode, including keyframe bridges, blockouts, stereo sound, dialogue, lettering, and edits. Examples are adaptable, not a mandatory output template.
+## 4. Verification & Repair Gate
 
-### 4. Direct the audio and text deliberately
+Before outputting, verify every item in this checklist (and consult [`references/review-and-repair.md`](references/review-and-repair.md) when diagnosing a user's rendered clip):
+- [ ] **Model & Budget Compliance**: Duration (3–30s Full / 3–20s Flash), reference counts ($\le$15 total, $\le$10 images, $\le$5 videos $\le$30s), and editing duration ($\le$30s including primary clip) are within documented bounds.
+- [ ] **Single-Owner Dimensions**: No two references compete for identity, motion, or camera; proxy/performer exclusions and exact subject counts (`one of each`) are explicit.
+- [ ] **Keyframe / Continuation Continuity**: Every keyframe pair has a physical or editorial bridge; continuations start from the source's exact terminal pose and velocity rather than restarting the action.
+- [ ] **Clean Prompt Boundary**: Settings (model, mode, duration, aspect ratio, resolution, HDR) and upload mappings sit outside the fenced prompt block.
 
-For speech, name the speaker, language/accent when needed, exact quoted words, performance, and speaking order. Distinguish vocal identity from dialogue content. Give visible facial performance time to match the line. Keep subtitles separate from spoken words.
+## 5. Delivery Format & Hard Prohibitions
 
-Separate dialogue, environmental sound, synchronized effects, and music. Preserve the user's audio choices. When unspecified, use scene-appropriate ambience/effects without adding an unsolicited score; this is a skill default, not a Kling requirement. Ask for “No music” explicitly when appropriate. Reference audio is documented for **voice only**: do not promise music, sound-effect, or full-mix transfer from audio uploads.
+Lead directly with the copy-ready prompt block, followed by compact settings and reference bindings (omit wrapper text if the user asked for prompt-only output):
 
-For lettering, provide exact text, language, surface, position, and when it is visible. Short, readable copy and a deliberate hold are useful craft choices. Legibility claims still require inspecting the rendered spelling and stability.
+````text
+Prompt:
+```text
+[paste-ready Kling 4 prompt only]
+```
 
-### 5. Keep settings outside the prompt
+Settings & Reference Map:
+- Model & Operation: [Full Kling 4.0 | Kling 4.0 Flash] — [Operation]
+- Duration / Aspect Ratio / Resolution: ...
+- Reference Bindings: [asset -> role, inherited traits, exclusions]
+- Availability / Limit Note: [only if HDR, native extension, or Flash parity applies]
+````
 
-State model, operation, duration, aspect ratio, resolution, and available audio/HDR controls separately when relevant. Text requesting “4K,” “30 seconds,” or “HDR” is not proof those output settings were selected. Keep requested settings distinct from confirmed current controls.
+### Do Not
+- Do not equate an ordered multi-keyframe sequence with an unordered identity reference set.
+- Do not promise music, SFX, or full-mix audio transfer from voice-only reference audio uploads.
+- Do not invent Kling API endpoints, JSON payloads, model IDs, seeds, CFG scales, or negative-prompt fields not established in official docs.
+- Do not present the forthcoming 2-minute repeated extension ceiling as a single 120-second generation call.
+- Do not conflate prompt drafting, queue submission, rendering, frame inspection, and audio listening into a single "verified" state.
 
-Do not invent model IDs, endpoints, JSON fields, seeds, guidance scales, frame rates, prices, or Flash feature parity. For API work, obtain the current official API contract first; the release notes are not an API specification.
+## 6. Resource Index
 
-## Deliver and refine
-
-Lead with the complete copy-ready prompt. Add only necessary settings, reference assignments, or one concise availability/limit note. If the user asks for prompt only, omit explanatory material unless an essential feasibility issue must be disclosed. Do not include internal ledgers, source commentary, or alternative drafts inside the paste block.
-
-For a requested video longer than one supported generation, write a sequence of valid clips with local timing and carry forward each boundary state. Label manual stitching as a production plan, not native extension. Never turn the forthcoming two-minute extension total into a single 120-second generation claim.
-
-Before delivery, check model limits, reference roles, chronological beats, camera compatibility, speech budget, style, exact text, and the final state. For supplied results, read [review-and-repair.md](references/review-and-repair.md), preserve successful parts, and repair the observed mismatch. Prompt review, submission, rendering, frame inspection, playback, listening, and metadata verification are separate evidence states.
+- [`references/capabilities.md`](references/capabilities.md): Audited Kling 4.0 vs. Flash specifications, reference accounting rules, language coverage, and availability boundaries.
+- [`references/kling-architecture-research.md`](references/kling-architecture-research.md): Kuaishou DiT / Kling-Omni (`arXiv:2512.16776`), FullDiT (`arXiv:2503.19907`), ConceptMaster (`arXiv:2501.04698`), and ReCamMaster/SynCamMaster (`arXiv:2503.11647`, `arXiv:2412.07760`) prompting mechanics and failure mitigations.
+- [`references/prompt-patterns.md`](references/prompt-patterns.md): Production-ready prompt patterns across T2V, I2V, First & Last Frames, Multi-keyframes, Omni Reference, white-model/depth transfer, creative recreation, stereo dialogue, UI, editing, and continuation.
+- [`references/review-and-repair.md`](references/review-and-repair.md): Pre-generation checklist, render inspection protocol, and failure-to-repair diagnostic table.
