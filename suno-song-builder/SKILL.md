@@ -1,90 +1,97 @@
 ---
 name: suno-song-builder
-description: Create original song concepts, lyrics, instrumental scores, paste-ready Suno prompt packages, settings, and iteration plans from a user's brief or reference audio/video. Use when the user asks to make or generate a song, write or improve a Suno prompt, develop lyrics or hooks, score a film or short video, translate a reference track's appeal without copying it, diagnose generic or artificial-sounding Suno output, or produce multiple genuinely distinct song directions.
+description: Create original song concepts, prosody-checked lyrics, instrumental film/game scores, paste-ready Suno v5.5 prompt packages (Title, Style, Lyrics, Exclude, Settings), and A/B iteration plans from a user brief or reference audio/video. Invoke whenever the user asks to make a song, write or improve a Suno prompt, develop lyrics or hooks, score a film or short video, translate a reference track's appeal into an original song without copying it, diagnose generic or synthetic-sounding Suno output, produce multiple distinct song directions, or operate Suno directly when authorized.
 ---
 
 # Suno Song Builder
 
-Turn a request into an original, production-aware song package. Treat Suno as a composition and production tool, not a uniqueness guarantee.
+Turn a user brief or reference into an original, production-aware Suno song package. Treat Suno as a probabilistic composition and production engine—never as a uniqueness, copyright, or symbolic-MIDI guarantee.
 
-## Route the request
+## 1. Request Routing Decision Tree
 
-1. Identify the deliverable:
-   - complete Suno prompt package;
-   - song concept, lyrics, or hook development;
-   - instrumental or picture-scoring cue;
-   - reference-inspired originality translation;
-   - diagnosis and revision of an existing result;
-   - direct creation in the Suno UI when explicitly requested and browser control is available.
-2. Extract supplied constraints: use case, duration, language, vocal configuration, genre lane, emotional arc, reference material, explicit exclusions, and output format.
-3. Infer harmless defaults and proceed. Ask one concise question only when a missing choice would materially change the song, such as instrumental versus vocal when neither the brief nor reference resolves it.
-4. Read [references/songcraft.md](references/songcraft.md) for reference mapping, lyrics, scoring, prompt construction, variation, and diagnosis.
-5. Read [references/suno-controls.md](references/suno-controls.md) when specifying Suno fields or settings, discussing current features, diagnosing a Suno render, or operating the live product.
+Identify the primary deliverable and load only the required references:
 
-## Applicability Gate
+| Deliverable Route | Scope & Output | Required Reference Loading |
+| --- | --- | --- |
+| **1. Complete Suno Package** | Creative direction + paste-ready `Title`, `Style`, `Lyrics`/`Instrumental structure`, `Exclude`, `Settings`, and `Iteration` plan | Read [`references/songcraft.md`](references/songcraft.md), [`references/suno-controls.md`](references/suno-controls.md), and [`references/controllable-song-research.md`](references/controllable-song-research.md). |
+| **2. Concept, Lyrics, or Hook Only** | Premise, stressed-meter lyrics, open-vowel hook, and section tags | Read [`references/songcraft.md`](references/songcraft.md) and [`references/controllable-song-research.md`](references/controllable-song-research.md). |
+| **3. Instrumental / Picture Score** | Through-composed or episodic dramatic cue with edit points, dropouts, and hero passage | Read [`references/songcraft.md`](references/songcraft.md) and [`references/suno-controls.md`](references/suno-controls.md). |
+| **4. Reference Originality Translation** | Appeal map + $\ge$5-dimension ($\ge$7 for famous sources) originality delta + fresh Suno package | Read [`references/songcraft.md`](references/songcraft.md). |
+| **5. Render Diagnosis & Repair** | Single-variable A/B repair plan or section replacement strategy | Read [`references/songcraft.md`](references/songcraft.md) and [`references/controllable-song-research.md`](references/controllable-song-research.md). |
+| **6. Authorized Live Suno UI Operation** | Direct browser creation (1 batch default, private/link-only, zero purchases) | Read [`references/suno-controls.md`](references/suno-controls.md) and the active browser-control skill. |
 
-Before building, record the active surface, deliverable, vocal/instrumental state, hard constraints, supplied references, and the listening or field-level check that defines success. Keep a confirmed arrangement tied to the tested Suno mode and context; do not generalize one render into a provider guarantee.
+Infer harmless defaults (`2:40–3:20` full song; `2:30–3:15` film cue with a `40–60s` hero passage) and ask at most one concise question only when a missing choice materially alters the work (e.g., vocal vs. instrumental when unresolved).
 
-When repairing a result, classify the failure before rewriting: composition/representation, field routing, lyrics or prosody, guidance misapplied, performance/mix, runtime/material failure, or missing audition evidence. Change one causal layer at a time and preserve the strongest confirmed element. A prompt that was selected or followed but produced a weak song is not automatically a retrieval failure.
+## 2. Deterministic Song Engineering Protocol
 
-## Build the song
+### Step 1: Write the Creative Thesis & Originality Delta
+1. **One-Sentence Thesis**:
+   `A [function] about [concrete physical situation/decision], moving from [emotional state A] to [state B], identified by [one audible relational signature rule].`
+2. **Originality Enforcement (`references/songcraft.md`)**:
+   - When working from a reference track, extract only abstract functional appeal (energy curve, pocket, ensemble relationship, mix space).
+   - **Never** include an artist name, song title, copied lyric, or recognizable progression in any field.
+   - Change **at least 5** identity-bearing dimensions (**at least 7** for famous/iconic sources): premise/title, hook phonetic shape, melodic contour, harmonic engine, groove/meter, section order, lead/counter-voice roles, signature sound event, recording space, and emotional resolution.
+   - For multi-song batches, vary **all 6 anchors** (Premise, Hook shape, Groove, Harmony, Lead identity, Form) across every option.
 
-1. Write a one-sentence creative thesis containing:
-   - the song's function;
-   - a fresh central premise or dramatic situation;
-   - the emotional turn;
-   - one audible signature rule.
-2. Define the musical engine:
-   - duration and edit target;
-   - BPM or tempo behavior and meter feel;
-   - harmonic color or tonal center;
-   - groove and microtiming;
-   - instrument roles and performance behavior;
-   - section-by-section energy movement;
-   - recording space and mix character.
-3. For vocal songs, develop the title, hook, point of view, section map, and singable lyrics before polishing production language.
-4. For instrumentals, replace verse/chorus assumptions with a clear dramatic form and intentional edit points.
-5. Translate the design into the provider fields described in `references/suno-controls.md`.
+### Step 2: Engineer the `Style` Field (`Mustango` `arXiv:2311.08355` & `MusicRL` `arXiv:2402.04229`)
+Construct `Style` as a positive-only, music-theory-grounded paragraph following this exact 8-part sequence:
+`[1. Function & target duration] -> [2. Primary genre lane + 1 contrast] -> [3. BPM/tempo feel, meter, & pocket] -> [4. Harmonic engine/mode] -> [5. Focal ensemble roles (2–3 core instruments + counter-voice)] -> [6. Vocal register, distance, & delivery (or instrumental lead)] -> [7. Section energy arc across >=3 states including subtraction] -> [8. Recording space, mix finish, & 1 signature rule]`
 
-## Enforce originality
+- **Focal Ensemble Rule (`arXiv:2402.04229`)**: Anchor around 2–3 primary instruments with relational verbs (`muted telecaster answers the vocal cadence; upright bass holds a pedal drone`) rather than a 10-instrument noun list that averages into mud.
+- **Zero Inline Negations**: Keep `Style` 100% positive; move all unwanted sounds into `Exclude`.
 
-- Abstract a reference into high-level appeal such as energy curve, groove, ensemble relationship, vocal mechanics, or mix space.
-- Replace the reference's central concept, title, lyrical hook, melodic contour, signature rhythm, harmonic path, section order, and defining sound event.
-- Change at least five identity-bearing dimensions listed in `references/songcraft.md`; change more when the source is highly recognizable.
-- Never put an artist name, source title, copied lyric, transcribed melody, or request for close imitation in a paste-ready prompt.
-- Do not upload third-party music, film audio, or another person's voice to Suno unless the user establishes the necessary rights. Prefer a newly hummed motif, played chord loop, tapped rhythm, scratch vocal, or owned demo.
-- Do not promise that output is unique or “undetectable.” Describe the workflow as originality-oriented and verify similarity by listening and revision.
-- Make every song in a batch differ in premise, hook shape, groove, harmonic engine, lead timbre, and form. Do not reskin one template with new nouns.
+### Step 3: Engineer `Lyrics` or `Instrumental Structure` (`SongComposer` `arXiv:2402.17645` & `LeVo` `arXiv:2506.07520`)
+- **Prosodic Stress & Vowel Placement (`arXiv:2402.17645`)**: Match stressed-beat counts across parallel verse lines, place open sustainable vowels (`ah`, `oh`, `ay`) on long hook notes, and cut syllable-crowded lines so vocals never rush.
+- **Concrete Evidence Over AI Clichés**: Use tangible objects, places, actions, and interpersonal stakes; ban default AI filler (`neon shadows`, `echoes in the dark`, `ashes rising`, `scars`, `chains`, `destiny`) unless literally required by the brief.
+- **Clean Section Tags (`arXiv:2506.07520`)**: Place concise structural tags (`[Cold Open | dry single voice]`, `[Verse 1]`, `[Pre-Chorus]`, `[Chorus | drums drop out]`, `[Bridge]`, `[Outro]`) on their own lines with blank lines between sections. Keep production essays out of sung text.
+- **Instrumental Cues**: Enable `Instrumental` and structure by dramatic state (`Establish Motif` $\rightarrow$ `Build Motion` $\rightarrow$ `Subtraction/Drop` $\rightarrow$ `Hero Passage` $\rightarrow$ `Edit Tail/Resolve`).
 
-## Deliver paste-ready fields
+### Step 4: Populate `Exclude` & Calibrate Slider Heuristics (`JASCO` `arXiv:2406.10970`)
+- **`Exclude` Field**: Comma-separated list of unwanted audible traits only (e.g., `stock risers, trap hi-hat rolls, supersaws, four-chord pop loop, heavy autotune, stadium reverb, over-compressed master`).
+- **Slider Heuristics (`references/controllable-song-research.md`)**: Clearly label numeric slider suggestions as practical heuristics (e.g., Exploration: `Weirdness 40–65% / Style Influence 50–70%`; Convergence: `Weirdness 20–40% / Style Influence 75–90%`; Owned Audio Seed: `Audio Influence 75–90%`, avoiding hard `100%` artifact transfer).
 
-Use this default order:
+## 3. Mandatory 7-Block Delivery Schema
 
-1. `Creative direction` — one short paragraph explaining the governing idea and what makes it distinct.
-2. `Title` — one standalone fenced block.
-3. `Style` — one standalone fenced block containing audible production decisions.
-4. `Lyrics` or `Instrumental structure` — one standalone fenced block.
-5. `Exclude` — one standalone fenced block containing only unwanted sounds, styles, or production traits.
-6. `Settings` — model, mode, instrumental state, duration, and clearly labeled slider heuristics.
-7. `Iteration` — the smallest useful generate, select, edit, and finish loop.
+Deliver every complete package in this order, putting each paste-ready field in its own standalone fenced block (when the user requests easy copy/paste or one-at-a-time prompts, keep wrapper prose minimal):
 
-When the user requests easy copying, individual formatting, or one-at-a-time prompts, keep every field or song in its own fenced block with minimal wrapper text. Count the complete paste-ready field when the user supplies a character cap.
+1. **Creative direction**: 1 concise paragraph stating the thesis, signature rule, and originality delta.
+2. **Title**:
+   ```text
+   [Original title]
+   ```
+3. **Style**:
+   ```text
+   [Positive-only 8-part production brief; obey any user-supplied character cap]
+   ```
+4. **Lyrics** (or **Instrumental structure**):
+   ```text
+   [Section-tagged lyrics or dramatic instrumental cue map]
+   ```
+5. **Exclude**:
+   ```text
+   [Comma-separated unwanted instruments, styles, vocal traits, and mix habits]
+   ```
+6. **Settings**: Model (e.g., `v5.5`), Mode (`Custom`), `Instrumental` toggle state, `Duration` slider target, and clearly labeled heuristic starting ranges for `Weirdness`, `Style Influence`, and (when using an owned seed) `Audio Influence`.
+7. **Iteration**: Controlled single-variable A/B loop, Song Editor section-replacement step, stem/WAV export, and post-lock remaster guidance.
 
-Keep production directions out of sung lines. Use familiar section labels such as `[Intro]`, `[Verse]`, `[Chorus]`, `[Bridge]`, and `[Outro]`; treat more elaborate tags and exact musical values as probabilistic guidance rather than code.
+## 4. Verification Gate & Diagnostic Repair
 
-## Diagnose an existing result
+Before delivery, verify:
+- [ ] **Zero Artist/Title Leakage**: No living artist names, reference titles, or copied hooks appear in `Title`, `Style`, `Lyrics`, or `Exclude`.
+- [ ] **Dynamic Subtraction**: At least 3 distinct energy states are planned, including at least one moment of subtraction/dropout so the track is not loud wall-to-wall.
+- [ ] **Prosody & Tag Hygiene**: Section tags sit on their own lines; verses use concrete physical imagery and natural spoken stress.
+- [ ] **Evidence Honesty**: Settings distinguish official Suno controls from practical slider heuristics; un-auditioned audio is never described as heard or verified.
 
-1. Separate the failure into composition, arrangement, lyrics/prosody, performance, timbre, mix, or generation artifacts.
-2. Preserve the strongest identity-bearing element.
-3. Change one controlled variable per A/B batch.
-4. Replace a weak section instead of regenerating a good song wholesale.
-5. Rebuild or overdub at least one defining stem when the user wants release-ready individuality.
-6. Remaster only after structure, lyrics, and performances are settled.
+When repairing an existing Suno render (`references/songcraft.md`), isolate the failure layer (`composition`, `arrangement`, `prosody`, `timbre`, `mix`, or `local section glitch`), preserve the winning seed/section, change **one variable per A/B batch**, and use **Song Editor** to replace a weak section before regenerating the whole track.
 
-## Operate Suno only on explicit request
+### Do Not
+- Do not upload third-party music, film audio, or another person's voice to Suno, or promise copyrightability, uniqueness, or detector evasion.
+- Do not bury negative exclusions inside `Style` or `Lyrics` instead of using `Exclude`.
+- Do not reskin the same chord loop and form across a multi-song batch.
+- Do not purchase credits, change plans, or publish songs publicly when operating the live Suno UI.
 
-- Verify the live interface and current official guidance before relying on version-specific controls.
-- Read and follow the available browser-control skill before operating a signed-in Suno session.
-- Treat an explicit request to generate as authorization for one initial batch unless the user specifies a different amount. Do not buy credits, change subscriptions, publish publicly, or alter account settings.
-- Use only inputs the user owns or has permission to use.
-- Return the created song links and visible settings. Never claim to have judged audio that was not actually available for listening; ask the user to audition numbered candidates and report what they hear.
+## 5. Resource Index
+
+- [`references/songcraft.md`](references/songcraft.md): Intake defaults, 9-dimension reference appeal map, 10-point originality delta, thesis & musical engine design, prosody checks, 6-anchor batch diversity, and diagnostic repair table.
+- [`references/suno-controls.md`](references/suno-controls.md): Audited Suno v5.5 controls snapshot (2026-08-08), Custom Mode fields, Duration/Weirdness/Style/Audio sliders, Custom Models, Voices, Song Editor, 12-stem separation, live UI rules, and official help links.
+- [`references/controllable-song-research.md`](references/controllable-song-research.md): Controllable music generation research (`Mustango` `arXiv:2311.08355`, `JASCO` `arXiv:2406.10970`, `SongComposer` `arXiv:2402.17645`, `MusicRL` `arXiv:2402.04229`, `YuE` `arXiv:2503.08638`, `LeVo` `arXiv:2506.07520`) and CFG/slider mechanics.
