@@ -9,8 +9,8 @@ Build complete, production-ready MiniMax Music 3.0 packages that strictly preser
 
 ## 1. Non-Negotiable Invariants
 
-1. **Strict Dual-Input Separation (`arXiv:2502.13128`)**: Treat `Caption` and `Lyrics` as separate inputs. Never bury lyrics inside the caption or place production essays inside the lyrics field.
-2. **Newline-Isolated Section Tags (`arXiv:2506.07520`)**: Place every lyric section tag (`[Intro]`, `[Verse]`, `[Pre-Chorus]`, `[Chorus]`, `[Bridge]`, `[Solo]`, `[Instrumental]`, `[Outro]`) strictly alone on its own line, with blank lines between sections. Never place sung text on the same line after a leading tag.
+1. **Strict Dual-Input Separation (`SongGen` `arXiv:2502.13128`)**: Treat `Caption` and `Lyrics` as separate inputs. Never bury lyrics inside the caption or place production essays inside the lyrics field.
+2. **Newline-Isolated Section Tags (SGLang/Diffusers normalization, [prompt-architecture.md](references/prompt-architecture.md))**: Place every lyric section tag (`[Intro]`, `[Verse]`, `[Pre-Chorus]`, `[Chorus]`, `[Bridge]`, `[Solo]`, `[Instrumental]`, `[Outro]`) strictly alone on its own line, with blank lines between sections. Local runtimes silently drop sung text placed on the tag line.
 3. **Surface Isolation**: Keep hosted API, SGLang-Omni, Diffusers, and ComfyUI controls separate. Do not import Suno controls, Music 2.6 assumptions, TTS voice fields, or generic diffusion parameters.
 4. **Generative Honesty & Rights**: Treat BPM, key, instrumentation, and structure as generative conditioning rather than symbolic MIDI guarantees. Describe abstract musical traits rather than cloning living artists.
 5. **Licensing Boundary**: Never claim the open weights are Apache or MIT licensed; they use the MiniMax-Music3 Community License. Read [model-contract.md](references/model-contract.md) before giving licensing or deployment guidance.
@@ -37,10 +37,10 @@ Read [source-coverage.md](references/source-coverage.md) before asserting curren
 
 ### Step 1: Establish the Contract & Song Architecture
 1. Extract target surface, vocal vs. instrumental mode, target duration (advertised complete-song target is **up to 5 minutes**; local 9,000-frame / 6-minute cap is an implementation ceiling, not a coherence promise), language, genre/groove, emotional arc, vocal timbre, instrumentation, and exclusions.
-2. **Align Caption & Lyric Chronology (`Qwen3-8B` 25 fps Global LLM, `references/music-generation-research.md`)**:
+2. **Align Caption & Lyric Chronology (8B Global LLM carries song structure, `references/music-generation-research.md`)**:
    - Design the section order (`[Intro]` $\rightarrow$ `[Verse]` $\rightarrow$ `[Pre-Chorus]` $\rightarrow$ `[Chorus]` $\rightarrow$ `[Bridge]` $\rightarrow$ `[Outro]`) before drafting prose.
    - Give every section a distinct dynamic and instrumental delta (`YuE`, `arXiv:2503.08638`) so the model does not loop a static backing loop.
-   - Budget lyric length to duration ($\text{frames} = \text{seconds} \times 25$; `DiffRhythm`, `arXiv:2503.01183`). Keep hooks shorter and more open-voweled than verses.
+   - Budget lyric length to duration ($\text{frames} = \text{seconds} \times 25$ on local runtimes). Keep hooks shorter and more open-voweled than verses (craft heuristic).
 
 ### Step 2: Author or Preserve Section-Tagged Lyrics
 - Preserve user-supplied lyrics verbatim unless revision is requested.
@@ -56,7 +56,7 @@ Use progressive disclosure across the 1,000-template library without scanning al
 Output these exact three headings in order:
 - `### Global Metadata`: Genre/subgenres, tempo feel (include exact BPM/key only when requested or musically load-bearing), emotional progression, use-case scenario, and overall mix aesthetic.
 - `### Vocal Details`: Lead configuration, timbre, register, articulation, harmonies/backing layers, and restrained vocal processing. For instrumentals, state explicitly that the track is instrumental and name the lead melodic instrument.
-- `### Arrangement`: Chronological section-by-section timeline matching the lyric tags, tracking instrument entrances/exits, bass/percussion groove shifts, vocal-accompaniment frequency clearance (`arXiv:2503.08638`), transitions, and spatial dynamics.
+- `### Arrangement`: Chronological section-by-section timeline matching the lyric tags, tracking instrument entrances/exits, bass/percussion groove shifts, how the accompaniment leaves room for the vocal (`YuE` `arXiv:2503.08638`, `LeVo` `arXiv:2506.07520`), transitions, and spatial dynamics.
 
 ### Step 4: Serialize for the Target Surface
 Follow [runtime-surfaces.md](references/runtime-surfaces.md) to Serialize fields without cross-surface leakage:
@@ -67,15 +67,15 @@ Follow [runtime-surfaces.md](references/runtime-surfaces.md) to Serialize fields
 
 ## 4. Diagnostic Repair Matrix
 
-When repairing a prior render, keep the seed fixed (where supported) and modify only the single causal layer responsible:
+When repairing a prior render, keep the seed fixed (where supported) and modify only the single causal layer responsible. When comparing takes by ear, score the five SongEval dimensions (`arXiv:2505.10793`: coherence, memorability, vocal breathing/phrasing, structure clarity, musicality) and repair the weakest first. Root causes below are likely diagnoses, not confirmed mechanisms:
 
-| Observed Defect | Root Cause (`references/music-generation-research.md`) | Deterministic Repair Action |
+| Observed Defect | Likely Cause (`references/music-generation-research.md`) | Deterministic Repair Action |
 | --- | --- | --- |
-| **Skipped lyric line or mangled hook** | Section tag shared a line with sung text or line exceeded syllable budget. | Isolate `[Tag]` on its own line; trim overcrowded line syllables. |
-| **Track ends early below duration cap** | Global LLM exhausted lyric tokens and emitted `<EOS>` early. | Add structural sections (`[Instrumental]`, `[Bridge]`, repeat `[Chorus]`) or expand lyric bars. |
+| **Skipped, repeated, or mangled lyric line** | Section tag shared a line with sung text, line exceeded the syllable budget, or generator lyric omission/repetition (`DiffRhythm+` `arXiv:2507.12890`). | Isolate `[Tag]` on its own line; trim overcrowded lines; then reroll. |
+| **Track ends early below duration cap** | The model likely finished the lyric sheet before the cap. | Add structural sections (`[Instrumental]`, `[Bridge]`, repeat `[Chorus]`) or expand lyric bars. |
 | **Track cuts off abruptly mid-phrase** | Hit `max_new_tokens` (25 fps) or `audio_duration` ceiling. | Increase frame/duration cap or condense lyric section count before touching the seed. |
 | **Opening works, middle/end drifts or flattens** | `Arrangement` lacks section-specific instrument lifecycles. | Specify explicit entrances, dropouts, register shifts, and final-chorus lift per section. |
-| **Muddy mix or buried vocals** | Polyphonic masking across overlapping midrange instruments (`arXiv:2503.08638`). | Reduce simultaneous competing instruments; specify midrange clearance in `Arrangement` and projection in `Vocal Details`. |
+| **Muddy mix or buried vocals** | Too many simultaneous midrange parts competing with the lead. | Reduce simultaneous competing instruments; specify where the accompaniment leaves room in `Arrangement` and projection in `Vocal Details`. |
 | **Vocal appears on an instrumental request** | Missing `is_instrumental: true` (Hosted) or stray sung words in `input` (Local). | Set `is_instrumental: true` and omit `lyrics` (Hosted), or use only `[Intro]\n(instrumental)` tags (Local) and declare instrumental lead in `Vocal Details`. |
 
 ## 5. Verification Gate (Black-Box Linter Execution)
@@ -93,7 +93,7 @@ When modifying skill files, also run `python3 scripts/validate_coverage.py`. Ver
 ## 6. Resource Index
 
 - [`references/model-contract.md`](references/model-contract.md): Audited architecture, 32 kHz vs. 44.1 kHz and Qwen3-8B vs. Qwen3.5-8B source discrepancies, and MiniMax-Music3 Community License terms.
-- [`references/music-generation-research.md`](references/music-generation-research.md): Hybrid-LM + 8-layer RVQ + Flow-Matching mechanics and full-song alignment research (`YuE` `arXiv:2503.08638`, `DiffRhythm` `arXiv:2503.01183` / `2507.12890`, `SongGen` `arXiv:2502.13128`, `LeVo` `arXiv:2506.07520`).
+- [`references/music-generation-research.md`](references/music-generation-research.md): Architecture facts used for frame budgeting and full-song research with findings separated from derived rules (`YuE` `arXiv:2503.08638`, `DiffRhythm` `arXiv:2503.01183`, `DiffRhythm+` `arXiv:2507.12890`, `SongGen` `arXiv:2502.13128`, `LeVo` `arXiv:2506.07520`, `SongEval` `arXiv:2505.10793`).
 - [`references/runtime-surfaces.md`](references/runtime-surfaces.md): Exact field schemas, limits, and serialization for Hosted API, SGLang-Omni, Diffusers, ComfyUI, and `music-cover`.
 - [`references/prompt-architecture.md`](references/prompt-architecture.md): Dual-input contract, three-part Structured Caption grammar, and section-tag discipline.
 - [`references/songcraft-and-originality.md`](references/songcraft-and-originality.md): Prosody, hook construction, reference translation, and picture scoring.

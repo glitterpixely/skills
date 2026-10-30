@@ -1,28 +1,33 @@
-# MiniMax Music 3.0 Architecture & Full-Song Generation Research
+# MiniMax Music 3.0 & Full-Song Generation Research
 
-Use this reference to ground section-tag formatting, syllable-to-frame budgeting, vocal-accompaniment separation, and long-form arrangement progression in MiniMax Music 3.0's Hybrid-LM + Flow-Matching stack and peer-reviewed full-song generation literature.
+Use this reference to ground section structure, lyric-length budgeting, vocal/accompaniment clarity and listening review. Provider facts stay in [`model-contract.md`](model-contract.md) and [`runtime-surfaces.md`](runtime-surfaces.md).
 
-## 1. MiniMax Music 3.0 Hybrid-LM + Flow-Matching Stack
+Citations were checked against the arXiv API on 2026-10-30. Each table separates what a paper reports from the prompt rule this skill derives from it. A derived rule is a heuristic, not a result the paper measured on MiniMax Music 3.0.
 
-| Architectural Stage | Mechanism | Deterministic Prompting Consequence |
-| --- | --- | --- |
-| **Global Autoregressive LLM (`Qwen3-8B` / `Qwen3.5-8B`)** | Models macro musical form, phrase boundaries, harmonic progression, and vocal phrasing at **25 frames per second (fps)** (`max_new_tokens` $\le$ 9,000 frames = 6 min implementation ceiling; 5 min creative target) by predicting Layer-1 semantic RVQ tokens from `Caption` + `Lyrics`. | The `Arrangement` section of the Caption must follow the exact chronological section order used in `Lyrics` (`[Intro]` $\rightarrow$ `[Verse]` $\rightarrow$ `[Chorus]`, etc.) so global attention aligns text instructions with lyric section delimiters. |
-| **Local Depth LLM (0.6B) + 8-Layer RVQ** | Refines Layers 2–8 residual acoustic tokens along the depth axis at each 25 fps timestep to capture vocal timbre, articulation transients, and instrument micro-dynamics. | Specific, non-contradictory timbre and articulation descriptors in `Vocal Details` (register, breathiness, vibrato restraint) directly condition the depth transformer without needing inline stage essays inside the lyrics. |
-| **Flow-Matching DiT + Flow-VAE Decoder** | Maps discrete/hidden token states into continuous audio latents via Flow Matching before waveform reconstruction (32 kHz stereo in SGLang-Omni; 44.1 kHz stereo in Diffusers). | Continuous flow-matching preserves stereo width and timbral sheen across 5-minute spans only when simultaneous instrument density is managed; overcrowded captions produce midrange masking. |
+## 1. Architecture facts used here
 
-## 2. Full-Song Generation Literature & Failure Mitigations
+From [`model-contract.md`](model-contract.md): an 8-layer RVQ representation (one 16,384-entry semantic codebook, seven 1,024-entry acoustic codebooks); an 8B Global LLM that predicts the semantic layer frame by frame and carries full-song structure; a 0.6B Local LLM for within-frame acoustic layers; a 2.4B flow-matching module conditioned on both LLMs' hidden states; a 123M audio decoder. SGLang caps generation at 9,000 frames at 25 frames per second (6 minutes). The advertised creative target is up to 5 minutes. The backbone is named Qwen3.5-8B in the launch blog and Qwen3-8B in the license; see the contract for the discrepancy.
 
-| Paper | arXiv ID | Core Finding | Deterministic Rule for Music 3.0 |
+`model-contract.md` warns: *do not use the architecture description as a prompt recipe.* Users control the caption, lyrics, length and seed, not tokens. The architecture explains two things only:
+
+- **Frame budget.** Length is counted in 25 fps frames on local runtimes: `frames = seconds × 25` (180 s = 4,500 frames).
+- **Structure is carried by the Global LLM.** Section order in `Arrangement` should match the section tags in `Lyrics`, so text and lyrics describe the same timeline.
+
+## 2. Full-song generation literature
+
+| Paper | arXiv ID | What the paper reports | Derived rule for Music 3.0 (heuristic) |
 | --- | --- | --- | --- |
-| **YuE** (*Scaling Open Foundation Models for Long-Form Music Generation*) | [`2503.08638`](https://arxiv.org/abs/2503.08638) | Long-form (up to 5 min) lyrics-to-song generation requires **Structural Progressive Conditioning** and **Track-Decoupled Prediction** to prevent vocal-accompaniment masking in dense genres (metal, heavy rock, EDM) and section drift over multi-minute spans. | 1. Give every section in `Arrangement` a distinct instrumental delta (what enters, drops out, or shifts octave).<br>2. In dense genres, explicitly carve midrange space for the lead vocal in `Arrangement` and specify clear chest/belting projection in `Vocal Details`. |
-| **DiffRhythm** & **DiffRhythm 2** | [`2503.01183`](https://arxiv.org/abs/2503.01183), [`2507.12890`](https://arxiv.org/abs/2507.12890) | Full-length song alignment between sparse/dense lyrics and acoustic frames breaks when syllable density mismatches tempo or when instrumental spans lack explicit structural anchors. | Budget lyric syllable count to tempo and frame cap ($\text{frames} = \text{seconds} \times 25$): keep verses around 6–11 stressed syllables per line and hooks shorter/more open-voweled so the 25 fps token stream neither rushes phrases nor emits `<EOS>` prematurely. |
-| **SongGen** | [`2502.13128`](https://arxiv.org/abs/2502.13128) | Single-stage autoregressive text-to-song transformers require strict separation between global style/timbre descriptors and phonetic lyric tokens to prevent prompt words from being sung. | Never place production notes, instrument instructions, or long parenthetical descriptions inside the `Lyrics` input; keep all sonic direction in the three-part `Caption`. |
-| **LeVo** (*High-Quality Song Generation with Multi-Preference Alignment*) | [`2506.07520`](https://arxiv.org/abs/2506.07520) | Explicit newline-isolated structural tags (`[Verse]`, `[Chorus]`, `[Bridge]`) act as hard attention reset anchors between mixed global structure tokens and fine vocal fidelity tokens. | Place every `[Section]` tag strictly alone on its own line with blank lines between sections; sharing a line between `[Chorus]` and sung words corrupts section-boundary detection. |
+| **YuE** | [`2503.08638`](https://arxiv.org/abs/2503.08638) | Lyrics-to-song up to 5 minutes using (1) track-decoupled next-token prediction to handle dense vocal+accompaniment mixtures and (2) structural progressive conditioning for long-context lyric alignment. | Give each section its own instrumental change (what enters, drops out, shifts register). In dense arrangements, leave room for the lead vocal in `Arrangement` and state its projection in `Vocal Details`. |
+| **DiffRhythm** | [`2503.01183`](https://arxiv.org/abs/2503.01183) | Latent-diffusion full-song model (vocals + accompaniment, up to 4m45s) that needs only lyrics and a style prompt at inference. | Lyrics and style are separate inputs in this model family too. Size the lyric sheet to the target length before changing other variables. |
+| **DiffRhythm+** | [`2507.12890`](https://arxiv.org/abs/2507.12890) | A larger, balanced training set reduces **repetition and omission of lyrics**; adds text + reference-audio style conditioning and preference optimization. | Lyric omission and repetition are known failure modes of full-song generators. When a line is skipped or doubled, first check the line length and the tag line, then reroll with the same seed policy. |
+| **SongGen** | [`2502.13128`](https://arxiv.org/abs/2502.13128) | Single-stage autoregressive text-to-song model taking lyrics and a text description (instrumentation, genre, mood, timbre) as separate controls; mixed and dual-track output modes. | Keep sonic direction in the `Caption` and sung words in `Lyrics`. |
+| **LeVo** | [`2506.07520`](https://arxiv.org/abs/2506.07520) | Models mixed tokens (vocal-instrument harmony) and dual-track tokens (separate vocal and accompaniment quality) in parallel; DPO-based multi-preference alignment improves musicality and instruction following. | Describe how voice and accompaniment relate (`piano leaves space under the verse vocal; strings answer the chorus line`), not only lists of instruments. |
+| **SongEval** | [`2505.10793`](https://arxiv.org/abs/2505.10793) | 2,399 full songs rated by 16 professional annotators on five dimensions: overall coherence, memorability, naturalness of vocal breathing and phrasing, clarity of song structure, overall musicality. | Use these five dimensions as the listening checklist when comparing takes. Fix the weakest dimension first. |
 
-## 3. Quantitative Duration & Prosody Heuristics
+**Tag-line rule source:** the rule "put each section tag alone on its own line" comes from SGLang/Diffusers lyric normalization, which drops text on the tag line without warning ([`prompt-architecture.md`](prompt-architecture.md)). It is a provider runtime fact, not a research finding.
 
-- **25 FPS Frame Budget (Local Runtimes)**:
-  $$\text{Target Frames} = \text{Target Seconds} \times 25 \quad (\text{e.g., } 180\text{s} = 4,500\text{ frames}; \text{hard cap } 9,000\text{ frames} = 360\text{s})$$
-- **Early `<EOS>` vs. Frame-Cap Truncation Diagnostic**:
-  - If a generated track ends cleanly *before* `audio_duration` / `max_new_tokens`, the Global LLM exhausted the lyric tokens and emitted `<EOS>`: add an `[Instrumental]`, `[Bridge]`, or additional `[Chorus]`/`[Outro]` section.
-  - If a track cuts off mid-phrase *at* the exact time cap, raise `max_new_tokens` / `audio_duration` or trim lyric line count before changing the seed.
+## 3. Duration diagnostics (inferred from the frame cap)
+
+- **Track ends cleanly before `audio_duration` / `max_new_tokens`:** the model likely finished the lyric sheet. Add an `[Instrumental]`, `[Bridge]`, repeated `[Chorus]` or `[Outro]` section.
+- **Track cuts off mid-phrase exactly at the cap:** the cap was reached. Raise `max_new_tokens` / `audio_duration` or remove lyric lines before you change the seed.
+- **Lyric density:** about 6–11 syllables per verse line, with shorter, open-vowel hook lines, is a songwriting heuristic for singable phrasing. No paper in this table measured it.
