@@ -274,6 +274,76 @@ def check_negation_conflicts(issues: list[Issue], text: str) -> None:
             )
 
 
+NEGATED_MORPH_RE = re.compile(
+    r"(?:\bno\b|\bnot\b|\bwithout\b|\bavoid\b|\bnever\b|不要|没有|不是|非|无|禁止|避免)"
+    r"[^\n.。;；]{0,30}?(?:变形|\bmorph(?:s|ed|ing)?\b|\bshape[- ]?shift(?:s|ed|ing)?\b)",
+    re.IGNORECASE,
+)
+POSITIVE_MORPH_RE = re.compile(
+    r"变形|\bmorph(?:s|ed|ing)?\s+into\b|\bshape[- ]?shift(?:s|ed|ing)?\s+into\b",
+    re.IGNORECASE,
+)
+STYLE_2D_RE = re.compile(
+    r"\b2D\s+(?:cel|anime|animation|hand[- ]drawn)\b|\bcel[- ]shaded\b|\bgouache\b"
+    r"|\bhand[- ]drawn\s+2D\b|赛璐璐|手绘2D|二维动画",
+    re.IGNORECASE,
+)
+NEGATED_LENS_RE = re.compile(
+    r"(?:\bno\b|\bnot\b|\bwithout\b|\bavoid\b|\bnever\b|不要|没有|不是|非|无|禁止|避免)"
+    r"[^\n.。;；]{0,30}?(?:\bbokeh\b|\bshallow\s+depth\s+of\s+field\b|\banamorphic\s+lens\b|\bf/\d(?:\.\d)?\b|景深虚化|大光圈虚化|背景虚化)",
+    re.IGNORECASE,
+)
+LIVE_ACTION_LENS_RE = re.compile(
+    r"\bbokeh\b|\bshallow\s+depth\s+of\s+field\b|\banamorphic\s+lens\b|\bf/\d(?:\.\d)?\b|景深虚化|大光圈虚化|背景虚化",
+    re.IGNORECASE,
+)
+UNSUPPORTED_HANDLE_RE = re.compile(
+    r"<<<\s*(?:Image|Video|Audio|图片|视频|音频)\s*\d*\s*>>>|@\[[^\]\n]+\]|<\s*(?:视频|图片|音频)\s*\d*\s*>",
+    re.IGNORECASE,
+)
+EDIT_REF_TRAP_RE = re.compile(
+    rf"(?<!not\s)(?<!不要)(?:\breferences?\s+{VIDEO_HANDLE_PATTERN}"
+    rf"|\buse\s+{VIDEO_HANDLE_PATTERN}\s+as\s+a?\s*reference"
+    rf"|参考\s*(?:{VIDEO_HANDLE_PATTERN}|<\s*视频\s*\d*\s*>))",
+    re.IGNORECASE,
+)
+
+
+def check_craft_heuristics(issues: list[Issue], text: str, mode: str) -> None:
+    """Warn on field-observed prompt traps documented in desk-prompt-patterns.md."""
+
+    bad_handle = UNSUPPORTED_HANDLE_RE.search(text)
+    if bad_handle:
+        add(
+            issues,
+            "warning",
+            "UNSUPPORTED_HANDLE_SYNTAX",
+            f"Un-normalized handle '{bad_handle.group(0)}' found; use active surface handles such as '@Image 1', '@Video 1', or '@Audio 1'.",
+        )
+
+    if mode == "generation":
+        morph_remainder = NEGATED_MORPH_RE.sub(" ", text)
+        morph_match = POSITIVE_MORPH_RE.search(morph_remainder)
+        if morph_match:
+            add(
+                issues,
+                "warning",
+                "MORPH_TOKEN_RISK",
+                f"'{morph_match.group(0)}' can trigger slow mesh melting during transformations; prefer '闪切' ('flash-cut') with an impact flash and identical pose lock.",
+            )
+
+    if STYLE_2D_RE.search(text):
+        lens_remainder = NEGATED_LENS_RE.sub(" ", text)
+        lens_match = LIVE_ACTION_LENS_RE.search(lens_remainder)
+        if lens_match:
+            add(
+                issues,
+                "warning",
+                "STYLE_2D_LENS_CONFLICT",
+                f"2D animation style combined with optical lens/DOF term '{lens_match.group(0)}' can pull renders toward 3D-CG or fake tilt-shift; use 2D layer/multiplane terms instead.",
+            )
+
+
 def check_timeline(issues: list[Issue], text: str) -> None:
     ranges = timeline_ranges(text)
     for start, end in ranges:
@@ -394,6 +464,13 @@ def check_mode(issues: list[Issue], text: str, mode: str) -> None:
             add(issues, "warning", "EXTENSION_INSTANCE", "State that each subject remains one continuous instance without duplication or splitting.")
         if not re.search(r"\b(audio state|audio environment|ambience|sound|dialogue|silence)\b", low):
             add(issues, "warning", "EXTENSION_AUDIO", "Describe audio continuity or an explicit silent state at the boundary.")
+    if mode in ("edit", "extension") and EDIT_REF_TRAP_RE.search(text):
+        add(
+            issues,
+            "warning",
+            "EDIT_REFERENCE_TRAP",
+            "Do not phrase the editing master or extension source as 'Reference @Video N' ('参考 <视频N>'); use 'Edit @Video N' or 'Extend @Video N' so the task router does not misclassify the job as ordinary reference generation.",
+        )
 
 
 def check_content(issues: list[Issue], text: str, allow_music: bool, allow_template_placeholders: bool) -> None:
@@ -441,6 +518,7 @@ def lint(
     check_timeline(issues, text)
     check_dialogue_density(issues, text)
     check_negation_conflicts(issues, text)
+    check_craft_heuristics(issues, text, selected_mode)
     check_anchor_syntax(issues, text, anchor_mode)
     check_mode(issues, text, selected_mode)
     check_content(issues, text, allow_music, allow_template_placeholders)
@@ -549,6 +627,30 @@ The white lamp inherits every appearance timing, motion, and occlusion of the re
     clean = "Avoid: no freeze frames. Each hit lands with an impact flash and a camera jolt. 两帧冲击停顿（不是定格）。"
     _, issues = lint(clean)
     assert "NEGATION_CONFLICT" not in {i.code for i in issues}, issues
+
+    _, issues = lint("Reference @Video 1 and replace the lamp.", "edit", videos=1)
+    assert "EDIT_REFERENCE_TRAP" in {i.code for i in issues}, issues
+    _, issues = lint("参考 @Video 1 向后延长视频。", "extension", videos=1)
+    assert "EDIT_REFERENCE_TRAP" in {i.code for i in issues}, issues
+    _, issues = lint(good_edit, "edit", images=1, videos=1, audio=0)
+    assert "EDIT_REFERENCE_TRAP" not in {i.code for i in issues}, issues
+
+    _, issues = lint("女战士变形为机甲，冲向巨龙。")
+    assert "MORPH_TOKEN_RISK" in {i.code for i in issues}, issues
+    _, issues = lint("The warrior morphs into a giant obsidian mecha.")
+    assert "MORPH_TOKEN_RISK" in {i.code for i in issues}, issues
+    _, issues = lint("闪白 → 发光线稿 → 闪切 2D 漫画 → 落定为机甲。不要变形，no morphing.")
+    assert "MORPH_TOKEN_RISK" not in {i.code for i in issues}, issues
+
+    _, issues = lint("Hand-drawn 2D cel-shaded anime style. Medium close-up with creamy bokeh and shallow depth of field.")
+    assert "STYLE_2D_LENS_CONFLICT" in {i.code for i in issues}, issues
+    _, issues = lint("Hand-drawn 2D cel-shaded anime style over a painted gouache background. Avoid: no bokeh, no shallow depth of field.")
+    assert "STYLE_2D_LENS_CONFLICT" not in {i.code for i in issues}, issues
+
+    _, issues = lint("Dynamic tracking shot. Character <<<Image1>>> sprints across a roof.")
+    assert "UNSUPPORTED_HANDLE_SYNTAX" in {i.code for i in issues}, issues
+    _, issues = lint("Character @[ref1] enters the room.")
+    assert "UNSUPPORTED_HANDLE_SYNTAX" in {i.code for i in issues}, issues
     print("prompt_lint self-test: PASS")
 
 

@@ -116,6 +116,8 @@ Keep the remaining actions, camera, cuts, audio, and event order from @Video 1.
 
 If the user explicitly wants only named retained objects, replace the local-preservation sentence with a closed removal instruction: retain the named targets, remove all other visible subjects, and add nothing unspecified.
 
+Never phrase the editing master as `"Reference @Video 1"` (`参考 <视频1>` or `参考 @Video 1`). Always introduce the master video with an edit verb (`Edit @Video 1`, `编辑 @Video 1`, `@Video 1 is the sole editing master`) so the backend router treats the task as locked timeline editing rather than ordinary reference-to-video generation. Supporting assets (`@Image N`) retain their reference-role phrasing.
+
 ### Editing variants
 
 - **Local attribute change**: name the object/region, time interval, A-to-B property, environmental response, and all preserved content.
@@ -158,7 +160,7 @@ If the user requires a character to speak using `@Audio N` but supplies no dialo
 
 ## Forward and backward extension
 
-For BytePlus ModelArk, use `ratio=adaptive` and a user-set extension duration. For best audio-visual continuity, use `mov` for both the input/source video and output when the surface accepts it; selecting only an output container does not retroactively make a non-MOV source a MOV input. Direction is core information; ask when it is genuinely unknown.
+For BytePlus ModelArk, use `ratio=adaptive` and a user-set extension duration. For best audio-visual continuity, use `mov` for both the input/source video and output when the surface accepts it; selecting only an output container does not retroactively make a non-MOV source a MOV input. Direction is core information; ask when it is genuinely unknown. Never write `"Reference @Video 1"` (`参考 <视频1>`) for the extension source video; always use an extension verb (`Extend @Video 1 forward/backward`, `延长 @Video 1`, `@Video 1 is the source video to extend`) so the task is not misrouted as ordinary reference generation.
 
 For a subject visible at the source boundary, use only a name or role confirmed by the user. If the user supplied only `person` or `subject`, retain that neutral term; do not infer a profession, demographic, performance type, or story identity from action, posture, clothing, or filename.
 

@@ -169,6 +169,18 @@ Use this workflow only when the user supplies the generated result and the inten
 4. **Trace repairs to evidence:** connect each repair to a documented rule in this skill or to a directly inspected reference fact. Common evidence-grounded repairs include clearer one-to-one mapping, a closed edit inventory, one dominant state change per stage, explicit ownership/end states, strict-anchor routing, boundary continuity, and separated audio roles.
 5. **Return the next executable artifact:** rewrite the appropriate generation, editing, or extension prompt. Put external parameter corrections in a `Parameter Note:`. If an explanation is useful, label any unverified causal explanation as `Hypothesis:` and keep it outside the submit-ready prompt.
 
+### Cost-aware iteration and repair ladder
+
+Because 30-second single-pass and multi-reference generations carry higher compute cost, apply these field-tested workflow practices when advising on iteration or repairing a supplied take (present them as operational guidance outside the creative prompt, never as first-party guarantees):
+
+1. **Draft-first validation (`draft=true` / 480p Draft Mode):** When the active surface exposes Draft Mode (or the Volcengine/ModelArk `draft=true` parameter), validate multi-shot blocking, camera trajectory, and choreography at 480p first, then promote the approved take/seed to 1080p or 4K (`draft=false`) without re-rolling the motion.
+2. **Localized fragment repainting (`局部重拍`) over full 30s re-rolls:** If 80%+ of a generated clip succeeds and the defect is confined to one time window or prop, route the fix to a localized edit (`Edit @Video 1. Within X–Ys, modify only...`) instead of re-rolling the entire 30-second generation.
+3. **Three-attempt escalation cap:**
+   - **Attempts 1–2:** Change one causal variable per retry (move a missed camera instruction to the first clause of the shot, cut one crowded beat, or replace a negative ban with an affirmative state lock).
+   - **Attempt 3:** Redesign the shot (use a simpler angle, split into two clips, or supply a 3D blockout / `@Video` motion reference).
+   - **After 3 failed attempts:** Switch to localized edit, forward extension from the last clean boundary, or post-production rather than continuing full re-rolls.
+4. **30-second super-resolution (`超分`) pass:** Single-pass 30-second outputs trade off some micro-texture sharpness to hold long-horizon coherence; when fine detail matters on an approved 30s take, recommend running the platform's built-in upscaler (`超分`) or external super-resolution in an `Additional Note:`.
+
 Never diagnose a result from a thumbnail, filename, duration alone, or vague dissatisfaction when the missing visual/audio evidence matters. Never claim that a prompt change guarantees correction; it changes the control contract and likelihood of adherence.
 
 ## Capability disclosures

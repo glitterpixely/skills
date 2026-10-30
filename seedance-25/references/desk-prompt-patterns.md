@@ -383,6 +383,12 @@ Source: three user-supplied written prompts studied on 2026-10-30 (a boutique co
 - **Lock footwork against ice-skating.** For grounded combat or brisk movement, state "feet always plant, push, leap, or roll, never slide" and pair it with "no sliding or skidding across the floor" in the exclusions (unless a deliberate hip-slide is part of the choreography).
 - **Make every environmental hazard and hit recoil causal (`A -> B -> C`).** State that no explosion or hazard is background decoration—each one knocks a fighter off-line, opens a floor gap, or redirects a strike within the next beat—and recycle hit recoil directly into the next counter ("head whips back -> uses the backward lean to throw a spinning back-kick"). Let major blasts re-key lighting and audio together (e.g., orange fire underlight -> blue-white reactor arcs; muffled ringing -> vacuum silence).
 - **Punctuate long fluid master shots with one micro-insert (`快速细节切` / `Quick detail cut`).** In a 6–8s continuous action take, drop in one brief insert (such as a goggle reflection plus a fist or boot sole rushing straight at the lens) and immediately return to the wide exchange so the take stays kinetic without losing geography.
+- **Specify sub-object material physics (`独立物理细节`).** When props tear, shatter, or scatter (paper bills, petals, glass, armor plates), state their material texture and independent trajectories: "individual bills have fiber texture and flutter on independent paths after tearing rather than moving as one rigid block; strikes carry weight and recoil" (`单张纸币有纤维质感，断裂后各自独立飘散，而不是一整块刚性色块；打击有重量、有后坐力`).
+- **Separate 3D/live-action optical headers (`受控多段序列`) from 2D animation layer grammar.**
+  - For **3D CG or live-action** multi-shot clips, a format header can lock cut count and optical field-of-view angles per segment: `格式：受控五段序列，四次硬切。第1、5段使用47°深焦镜头；第2、3段使用29°人像镜头，浅景深` ("Controlled 5-segment sequence, 4 hard cuts. Shots 1 & 5 use a 47° deep-focus lens; Shots 2 & 3 use a 29° portrait lens, shallow DOF").
+  - For **2D hand-drawn, cel-shaded, or gouache/watercolor animation**, never use camera-sensor, focal-length, or bokeh/DOF vocabulary (`bokeh`, `shallow depth of field`, `85mm f/1.4`, `景深虚化`), which pulls 2D renders toward 3D-CG or fake tilt-shift. Direct in animation layer terms instead: `cel-shaded characters over a painted gouache background`, `multiplane background scroll`, `animated on twos with a burst on ones`, `hard two-tone cel shadow`. `prompt_lint.py` warns with `STYLE_2D_LENS_CONFLICT`.
+- **Re-anchor after multi-character occlusion in long wide shots.** When 3+ characters cross and occlude each other in a 30s wide shot, sparse temporal attention can drift background faces after the crossing. Either maintain visible depth separation (`air between bodies`) or follow heavy occlusion with a medium/close-up cut that re-tags the character (`Name, 2-word visual trait`).
+- **Weight clause order and prefer affirmative state locks.** Put camera movement in the opening clause of a shot when camera adherence is critical; keep the primary action after `0–1s` so reference geometry settles in the opening second; and convert negative ban lists into affirmative state locks ("her coat stays buttoned and deep green"), keeping the `Avoid` block focused on 3–5 hard exclusions (`no subtitles, no BGM, no extra characters`).
 - **Mark must-hit beats.** In dense action, mark three or four exchanges per shot as required. Apply [Stage density](#stage-density) and item 2 of [Literal multi-shot control](#literal-multi-shot-control) before adding more.
 
 ## Do not import from public dumps
@@ -393,7 +399,7 @@ Leave these out of the creative prompt unless the user explicitly requires them:
 - duration, aspect ratio, resolution, fps, or “4K masterpiece” boosters;
 - quality-word piles (`cinematic, photorealistic, highly detailed`);
 - music or BGM;
-- Dreamina `@Image N` syntax mixed into a MiniMax H3 prompt;
+- Dreamina `@Image N` syntax mixed into a MiniMax H3 prompt, or third-party wrapper handles (`<<<Image1>>>`, `@[ref]`, `<视频1>`) left un-normalized on a Dreamina/ModelArk surface (`prompt_lint.py` warns with `UNSUPPORTED_HANDLE_SYNTAX`);
 - decimal frame promises.
 
 Stills pipelines (Recraft / Seedream / Midjourney → Seedance) belong in upload notes, not in the Seedance prompt body.
