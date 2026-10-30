@@ -122,11 +122,11 @@ In addition to material limits, reference role bindings, timeline gaps/overlaps,
 <br />
 
 - **MiniMax H3 ([`h3-prompt-writing`](h3-prompt-writing/SKILL.md)):**
-  - Enforces a 5-stage causal spine (**Reference Mapping $\rightarrow$ Anchor Scene $\rightarrow$ Causal Motion Chain $\rightarrow$ Camera Trajectory $\rightarrow$ Synchronized Soundscape**) grounded in multimodal omni-reasoning and 3D full-attention DiT mechanics ([`omni-reasoning-research.md`](h3-prompt-writing/references/omni-reasoning-research.md)).
+  - Enforces a 5-stage causal spine (**Reference Mapping $\rightarrow$ Anchor Scene $\rightarrow$ Causal Motion Chain $\rightarrow$ Camera Trajectory $\rightarrow$ Synchronized Soundscape**) and a "state every inference" rule drawn from an independent 517-instance physical-reasoning benchmark of H3 (41.97% overall success on implicit prompts; [`omni-reasoning-research.md`](h3-prompt-writing/references/omni-reasoning-research.md)).
   - Separates first/last-frame interpolation bridges from delta-only video edits (`Keep ... unchanged; change only ...`).
 - **Kling 4.0 & Flash ([`kling-4-prompting`](kling-4-prompting/SKILL.md)):**
   - Selects deterministically between Text-to-Video, Image-to-Video (`I2V`), Start/End Keyframes, and Omni Multi-Reference workflows ([`kling-architecture-research.md`](kling-4-prompting/references/kling-architecture-research.md)).
-  - Eliminates "talking statue" failure modes in `I2V` by omitting redundant static portrait descriptions and specifying concrete physical weight transfers and micro-motions.
+  - Reduces "talking statue" failure modes in `I2V` by omitting redundant static portrait descriptions and specifying concrete physical weight transfers and micro-motions.
 
 </details>
 
@@ -135,7 +135,7 @@ In addition to material limits, reference role bindings, timeline gaps/overlaps,
 <br />
 
 - **Suno v6 ([`suno-song-builder`](suno-song-builder/SKILL.md)):**
-  - Supports the **Suno v6 model family** (`v6` flagship, `v6-wild` experimental exploration, and `v6-mini` fast sketching), **8-minute** continuous generation, **`Style` ($\le$1,000 chars)** and **`Lyrics` ($\le$5,000 chars)** caps, **`Max Mode`** (`2x` credits for long-form/cover consistency), and **`Variety: Off (0)`** for verbatim `Style` tag locking ([`suno-controls.md`](suno-song-builder/references/suno-controls.md)).
+  - Supports the **Suno v6 model family** (`v6` flagship, `v6-wild` exploration, `v6-mini` for all users), **`Max Mode`** (extra credits; Suno recommends it for songs over two minutes, close covers, and style transfer), and **`Variety` at `0`** to keep full control of style tags ([`suno-controls.md`](suno-song-builder/references/suno-controls.md)).
   - Integrates **v6 natural-language song editing** (plain-text section, ensemble, or single-word lyric swaps) and **Suno Studio** finishing (Clip Settings, semitone+cent fine pitch, Auto-Stretch, and 12-stem export).
 - **MiniMax Music 3.0 ([`minimax-music-30`](minimax-music-30/SKILL.md)):**
   - Provides **1,000 bilingual production templates** across 100 genres ([`templates/`](minimax-music-30/templates)) plus an 8-layer `Caption` formula and stressed-meter `Lyrics` validator ([`lint_music_prompt.py`](minimax-music-30/scripts/lint_music_prompt.py)).
