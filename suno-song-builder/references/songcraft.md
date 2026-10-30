@@ -208,7 +208,7 @@ Separate exploration from convergence:
 - convergence: preserve an owned seed and strengthen adherence;
 - change one variable per A/B batch;
 - choose composition before polish;
-- preserve the strongest section and replace only failures;
+- preserve the strongest section and replace only failures (using v6 natural-language section/lyric editing or Song Editor);
 - rebuild a defining part with an owned recording, instrument, sample, or MIDI performance;
 - remaster only after composition and performance are locked.
 
@@ -222,7 +222,7 @@ Classify problems before revising:
 | Vocal feels synthetic | delivery and source identity | use an owned voice seed or re-record the lead |
 | Instruments feel fake | exposed generated timbre | replace or layer the defining stem |
 | Prompt ignored | overload or contradiction | retain one lane, one contrast, and fewer audible rules |
-| Good song, weak passage | local generation failure | replace that section, not the whole song |
+| Good song, weak passage | local generation failure | use v6 natural-language editing or Song Editor to replace that section, not the whole song |
 | Polished but forgettable | no signature mechanism | impose one motif, sound, or structural rule |
 
 ## Quality gate
