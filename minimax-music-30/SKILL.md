@@ -1,164 +1,104 @@
 ---
 name: minimax-music-30
-description: Create, optimize, audit, and operationalize production-ready MiniMax Music 3.0 songs and prompts from ideas, lyrics, references, or generation results. Use for structured Music 3.0 captions, original lyrics and section tags, vocal or instrumental tracks, full-song arrangement planning, hosted MiniMax API payloads, open-weight SGLang-Omni or Diffusers requests, native ComfyUI workflows, deterministic seed and duration planning, prompt repair, and explicitly requested hosted music-cover companion workflows.
+description: Create, optimize, audit, and serialize production-ready MiniMax Music 3.0 songs, three-part Structured Captions, section-tagged lyrics, and runtime payloads. Invoke whenever the user requests a MiniMax Music 3.0 prompt, song package, structured music caption (Global Metadata / Vocal Details / Arrangement), section-tagged lyrics, instrumental cue, hosted MiniMax /v1/music_generation API payload, open-weight SGLang-Omni or Diffusers Music 3.0 call, native ComfyUI Music 3.0 workflow, template-library routing, or Music 3.0 render repair.
 ---
 
 # MiniMax Music 3.0
 
-Build a complete Music 3.0 package while preserving the provider-native separation between the music description and the lyrics. Route by the actual generation surface before choosing fields or limits.
+Build complete, production-ready MiniMax Music 3.0 packages that strictly preserve the provider's dual-input architecture (`Caption` $\neq$ `Lyrics`) and target-surface serialization rules.
 
-## Non-negotiable rules
+## 1. Non-Negotiable Invariants
 
-- Treat `Caption` and `Lyrics` as separate inputs. Never bury lyrics inside the caption.
-- Put every lyric section tag on its own line. Never place sung text after a leading tag on the same line.
-- Keep hosted API, SGLang-Omni, Diffusers, and ComfyUI controls separate. Never transfer a field merely because another surface supports it.
-- Use Music 3.0 facts only. Do not import Suno controls, Music 2.6 assumptions, TTS voice fields, or generic diffusion knobs.
-- Treat tempo, key, instrumentation, words, and structure as generative direction rather than symbolic guarantees.
-- Describe musical traits instead of requesting a clone of a living artist or a copyrighted recording. Preserve user-owned lyrics and references, but do not imply that generation clears rights.
-- Do not claim that the open weights are Apache or MIT licensed. They use the MiniMax-Music3 Community License; read [model-contract.md](references/model-contract.md) before giving licensing or deployment guidance.
+1. **Strict Dual-Input Separation (`arXiv:2502.13128`)**: Treat `Caption` and `Lyrics` as separate inputs. Never bury lyrics inside the caption or place production essays inside the lyrics field.
+2. **Newline-Isolated Section Tags (`arXiv:2506.07520`)**: Place every lyric section tag (`[Intro]`, `[Verse]`, `[Pre-Chorus]`, `[Chorus]`, `[Bridge]`, `[Solo]`, `[Instrumental]`, `[Outro]`) strictly alone on its own line, with blank lines between sections. Never place sung text on the same line after a leading tag.
+3. **Surface Isolation**: Keep hosted API, SGLang-Omni, Diffusers, and ComfyUI controls separate. Do not import Suno controls, Music 2.6 assumptions, TTS voice fields, or generic diffusion parameters.
+4. **Generative Honesty & Rights**: Treat BPM, key, instrumentation, and structure as generative conditioning rather than symbolic MIDI guarantees. Describe abstract musical traits rather than cloning living artists.
+5. **Licensing Boundary**: Never claim the open weights are Apache or MIT licensed; they use the MiniMax-Music3 Community License. Read [model-contract.md](references/model-contract.md) before giving licensing or deployment guidance.
 
-## Route the request
+## 2. Request Routing Decision Tree
 
-Choose one primary route:
+Select one primary execution route:
 
-1. **Creative package**: concept, structured caption, lyrics, and iteration plan.
-2. **Caption only**: transform a brief into the provider-authored three-part Structured Caption.
-3. **Lyrics only**: write or repair original, singable, section-tagged lyrics.
-4. **Hosted MiniMax API**: emit a valid `/v1/music_generation` or `/v1/lyrics_generation` request.
-5. **Open-weight SGLang-Omni**: emit `input` plus `instructions` and local runtime parameters.
-6. **Open-weight Diffusers**: emit `prompt`, `lyrics`, `audio_duration`, and a seeded pipeline call.
-7. **Native ComfyUI**: provide the Caption and Lyrics field contents plus workflow settings.
-8. **Repair**: compare the intended package with the generated audio or reported failure, then change the smallest causal layer.
-9. **Hosted cover companion**: only when explicitly requested; identify it as the separate `music-cover` model, not an open-weight Music 3.0 feature.
+| Route | Deliverable | Required Reference Loading |
+| --- | --- | --- |
+| **1. Creative Package** | Concept + 3-part Structured Caption + tagged Lyrics + iteration plan | Read [prompt-architecture.md](references/prompt-architecture.md) for every prompt-writing or repair task, plus [genre-router.md](references/genre-router.md). |
+| **2. Caption Only** | Provider-authored 3-part Structured Caption (`Global Metadata`, `Vocal Details`, `Arrangement`) | Read [genre-router.md](references/genre-router.md) and [prompt-architecture.md](references/prompt-architecture.md). |
+| **3. Lyrics Only** | Original, singable, prosody-checked, section-tagged lyrics | Read [songcraft-and-originality.md](references/songcraft-and-originality.md) when writing lyrics, adapting references, scoring picture, or diagnosing musical weakness. |
+| **4. Hosted MiniMax API** | Valid `/v1/music_generation` or `/v1/lyrics_generation` JSON payload | Read [runtime-surfaces.md](references/runtime-surfaces.md) for routes 4–9 and [examples.md](references/examples.md) when a payload or formatting pattern is useful. |
+| **5. Open-Weight SGLang-Omni** | `instructions` (Caption) + `input` (non-empty tagged Lyrics) + 25 fps frame cap | Read [runtime-surfaces.md](references/runtime-surfaces.md) and [music-generation-research.md](references/music-generation-research.md). |
+| **6. Open-Weight Diffusers** | `prompt`, `lyrics`, `audio_duration`, and seeded `torch.Generator` call | Read [runtime-surfaces.md](references/runtime-surfaces.md). |
+| **7. Native ComfyUI** | Separate Caption and Lyrics node inputs + workflow settings (`max_duration`, seed, tiled decode) | Read [runtime-surfaces.md](references/runtime-surfaces.md). |
+| **8. Render Repair** | Single-layer causal diagnosis and minimal targeted revision | Read [prompt-architecture.md](references/prompt-architecture.md) and [music-generation-research.md](references/music-generation-research.md). |
+| **9. Hosted Cover Companion** | Explicit `music-cover` hosted workflow (only when requested; not an open-weight Music 3.0 feature) | Read [runtime-surfaces.md](references/runtime-surfaces.md). |
 
-Read [runtime-surfaces.md](references/runtime-surfaces.md) for routes 4–9. Read [prompt-architecture.md](references/prompt-architecture.md) for every prompt-writing or repair task. Read [songcraft-and-originality.md](references/songcraft-and-originality.md) when writing lyrics, adapting references, scoring picture, or diagnosing musical weakness. Read [examples.md](references/examples.md) only when a concrete payload or formatting pattern is useful.
+Read [source-coverage.md](references/source-coverage.md) before asserting current availability, rate limits, installation, or licensing details.
 
-## Applicability Gate
+## 3. Execution Protocol
 
-Before building a package, record a compact contract:
+### Step 1: Establish the Contract & Song Architecture
+1. Extract target surface, vocal vs. instrumental mode, target duration (advertised complete-song target is **up to 5 minutes**; local 9,000-frame / 6-minute cap is an implementation ceiling, not a coherence promise), language, genre/groove, emotional arc, vocal timbre, instrumentation, and exclusions.
+2. **Align Caption & Lyric Chronology (`Qwen3-8B` 25 fps Global LLM, `references/music-generation-research.md`)**:
+   - Design the section order (`[Intro]` $\rightarrow$ `[Verse]` $\rightarrow$ `[Pre-Chorus]` $\rightarrow$ `[Chorus]` $\rightarrow$ `[Bridge]` $\rightarrow$ `[Outro]`) before drafting prose.
+   - Give every section a distinct dynamic and instrumental delta (`YuE`, `arXiv:2503.08638`) so the model does not loop a static backing loop.
+   - Budget lyric length to duration ($\text{frames} = \text{seconds} \times 25$; `DiffRhythm`, `arXiv:2503.01183`). Keep hooks shorter and more open-voweled than verses.
 
-- selected surface and route;
-- vocal/instrumental state and active inputs;
-- hard constraints, exclusions, and provider fields;
-- the audible result that would count as success;
-- any observed defect from a prior render.
+### Step 2: Author or Preserve Section-Tagged Lyrics
+- Preserve user-supplied lyrics verbatim unless revision is requested.
+- Place each portable tag (`[Intro]`, `[Verse]`, `[Pre-Chorus]`, `[Chorus]`, `[Bridge]`, `[Solo]`, `[Instrumental]`, `[Outro]`) alone on its line with blank lines between sections.
+- Keep parentheticals strictly to brief performable ad-libs or the local-runtime instrumental placeholder (`[Intro]\n(instrumental)\n\n[Outro]\n(instrumental)`).
 
-Keep a successful package's architecture tied to the tested surface and context. Do not transfer controls from Suno, Music 2.6, TTS, or another runtime merely because the concepts sound similar. On repair, classify the failure first—representation, field routing, lyrics/tag parsing, guidance misapplied, runtime/material failure, or missing listening/validation evidence—then change one causal layer and rerun the linter or audition check.
-
-## Build the brief
-
-Extract what is known without interrogating the user unnecessarily:
-
-- target surface and requested deliverable
-- vocal song or instrumental
-- target duration and use case
-- language, lyrical premise, point of view, and content boundaries
-- primary genre, secondary influence, groove, meter, and tempo feel
-- emotional starting state, turn, peak, and resolution
-- lead vocal configuration, timbre, register, delivery, harmonies, and effects
-- primary instruments, supporting instruments, bass and percussion behavior
-- section order, hook location, instrumental or solo moments, and ending behavior
-- production era, density, dynamics, stereo space, and finish
-- reference tracks or artists translated into abstract musical traits
-- hard requirements and exclusions
-
-Mark unsupported details as unspecified. Infer conservatively when the choice is reversible; ask only when a missing answer would materially change the song or execution surface.
-
-## Design the song before wording the caption
-
-1. Choose an energy arc with a clear contrast between sections.
-2. Allocate lyric density to the available duration. Do not write a five-minute lyric sheet for a short audition.
-3. Give each major section a musical job: establish, tighten, release, contrast, peak, or resolve.
-4. Track instrument lifecycles. State what enters, leaves, widens, strips back, or changes pattern.
-5. Reserve the strongest melodic, lyrical, and production event for the intended payoff.
-6. For picture, map story turns and edit points to musical sections before writing lyrics.
-
-Treat five minutes as the provider-advertised complete-song target. Some local runtimes expose a 9,000-frame ceiling equal to six minutes; do not turn that implementation ceiling into a promise of six-minute song coherence.
-
-## Write or preserve lyrics
-
-- Keep user-supplied lyric wording unchanged unless editing was requested.
-- Use concise, singable lines with deliberate stress, vowel shape, rhyme pressure, and breath space.
-- Make the hook shorter and more repeatable than the verse language.
-- Use a portable core tag set unless the chosen surface requires otherwise: `[Intro]`, `[Verse]`, `[Pre-Chorus]`, `[Chorus]`, `[Bridge]`, `[Solo]`, `[Instrumental]`, `[Outro]`.
-- Put tags alone on their lines. Use blank lines between sections.
-- Do not place production essays, camera directions, or parenthetical paragraphs in the lyrics field.
-- Use short parentheticals only for performable ad-libs or a minimal local-runtime instrumental placeholder.
-
-See the surface-specific tag spellings and contradictions in [prompt-architecture.md](references/prompt-architecture.md).
-
-## Build the Structured Caption
-
-Use MiniMax's official progressive-disclosure library for substantial caption work:
-
+### Step 3: Synthesize the Three-Part Structured Caption (250–450 Words)
+Use progressive disclosure across the 1,000-template library without scanning all templates:
 1. Read the official progressive-disclosure entry point, [genre-router.md](references/genre-router.md).
-2. Read one primary family index and, only for a real fusion, one secondary family index.
-3. Select at most three cards with distinct roles: `Foundation`, `Modifier`, and `Arrangement`.
-4. Read only the selected complete files under [templates/](templates/). Never scan all templates.
-5. Synthesize a new caption around the user's brief. Do not copy template sentences or inherit unsupported specifics.
+2. Open at most 1 primary family index (plus 1 secondary index only for genuine genre fusions).
+3. Select at most 3 template cards (`Foundation`, `Modifier`, `Arrangement`) under `templates/` and synthesize fresh prose tailored to the user's brief (never copy template sentences verbatim).
 
-Return these headings in this order:
+Output these exact three headings in order:
+- `### Global Metadata`: Genre/subgenres, tempo feel (include exact BPM/key only when requested or musically load-bearing), emotional progression, use-case scenario, and overall mix aesthetic.
+- `### Vocal Details`: Lead configuration, timbre, register, articulation, harmonies/backing layers, and restrained vocal processing. For instrumentals, state explicitly that the track is instrumental and name the lead melodic instrument.
+- `### Arrangement`: Chronological section-by-section timeline matching the lyric tags, tracking instrument entrances/exits, bass/percussion groove shifts, vocal-accompaniment frequency clearance (`arXiv:2503.08638`), transitions, and spatial dynamics.
 
-### Global Metadata
+### Step 4: Serialize for the Target Surface
+Follow [runtime-surfaces.md](references/runtime-surfaces.md) to Serialize fields without cross-surface leakage:
+- **Hosted API (`/v1/music_generation`)**: `prompt` = Caption ($\le$2,000 chars); `lyrics` = Lyrics ($\le$3,500 chars). For instrumentals, set `is_instrumental: true` and omit `lyrics`. Never send `seed` or `max_new_tokens`. Streamed responses require `output_format: "hex"`.
+- **SGLang-Omni**: `instructions` = Caption; `input` = non-empty tagged Lyrics (use `[Intro]\n(instrumental)...` placeholder for instrumentals). `max_new_tokens` caps frames at **25 fps** (max 9,000), `stream` must be `false`.
+- **Diffusers**: Pass `prompt`, `lyrics`, `audio_duration` (upper bound), and a seeded `torch.Generator` (outputs 44.1 kHz stereo vs. SGLang's 32 kHz).
+- **Native ComfyUI**: Supply Caption and Lyrics in their dedicated node inputs; keep `max_duration`, `seed`, and tiled decoding in workflow settings.
 
-Specify genre and subgenres, tempo, emotional progression, scenario when useful, and the overall sonic and production profile. Include exact BPM, key, or scale only when explicit or musically justified.
+## 4. Diagnostic Repair Matrix
 
-### Vocal Details
+When repairing a prior render, keep the seed fixed (where supported) and modify only the single causal layer responsible:
 
-For vocal music, specify lead configuration, timbre, register, delivery, harmonies or backing vocals, and restrained vocal effects. For instrumental music, explicitly say it is instrumental and identify the lead melodic role.
+| Observed Defect | Root Cause (`references/music-generation-research.md`) | Deterministic Repair Action |
+| --- | --- | --- |
+| **Skipped lyric line or mangled hook** | Section tag shared a line with sung text or line exceeded syllable budget. | Isolate `[Tag]` on its own line; trim overcrowded line syllables. |
+| **Track ends early below duration cap** | Global LLM exhausted lyric tokens and emitted `<EOS>` early. | Add structural sections (`[Instrumental]`, `[Bridge]`, repeat `[Chorus]`) or expand lyric bars. |
+| **Track cuts off abruptly mid-phrase** | Hit `max_new_tokens` (25 fps) or `audio_duration` ceiling. | Increase frame/duration cap or condense lyric section count before touching the seed. |
+| **Opening works, middle/end drifts or flattens** | `Arrangement` lacks section-specific instrument lifecycles. | Specify explicit entrances, dropouts, register shifts, and final-chorus lift per section. |
+| **Muddy mix or buried vocals** | Polyphonic masking across overlapping midrange instruments (`arXiv:2503.08638`). | Reduce simultaneous competing instruments; specify midrange clearance in `Arrangement` and projection in `Vocal Details`. |
+| **Vocal appears on an instrumental request** | Missing `is_instrumental: true` (Hosted) or stray sung words in `input` (Local). | Set `is_instrumental: true` and omit `lyrics` (Hosted), or use only `[Intro]\n(instrumental)` tags (Local) and declare instrumental lead in `Vocal Details`. |
 
-### Arrangement
+## 5. Verification Gate (Black-Box Linter Execution)
 
-Describe a section-by-section timeline with instrument lifecycles, groove and low-end development, transitions, texture, dynamics, and spatial changes. Prefer observable musical changes to adjective stacks.
-
-Default to roughly 250–450 English words for a full structured caption, but obey the target surface's hard length limit. Keep lyrics, title, routing notes, template IDs, and hidden reasoning out of the caption.
-
-## Serialize for the chosen surface
-
-Follow [runtime-surfaces.md](references/runtime-surfaces.md) exactly.
-
-- **Hosted API**: `prompt` receives the caption and `lyrics` receives lyrics. Do not add `seed` or `max_new_tokens`. Use `is_instrumental: true` with no lyrics for an instrumental.
-- **SGLang-Omni**: `instructions` receives the caption and `input` receives non-empty tagged lyrics. Use a minimal instrumental placeholder when needed. `max_new_tokens` is a frame cap at 25 frames per second, not a guaranteed duration.
-- **Diffusers**: use `prompt`, `lyrics`, `audio_duration`, and a seeded `torch.Generator`. Treat duration as an upper bound.
-- **ComfyUI**: supply the three-part Caption and tagged Lyrics separately; set `max_duration`, seed, and tiled decoding in the workflow rather than inserting them into prose.
-
-If the user wants copy/paste output, use one standalone fenced block per field or payload with minimal wrapper text.
-
-## Repair a result
-
-Classify the failure before rewriting:
-
-- **Wrong genre or generic arrangement**: strengthen Global Metadata and the primary groove/instrument identity.
-- **Correct opening, later drift**: make section-level instrument, energy, and vocal changes explicit in Arrangement.
-- **Wrong or disappearing vocal**: clarify Vocal Details and ensure the lyrics are present and proportionate to duration.
-- **Skipped lyric line**: check that no tag shares a line with text.
-- **Truncated local render**: raise the duration/frame cap or shorten the lyric plan; do not change the seed first.
-- **Track ends early below the cap**: the model may have emitted its end token; change structure or lyrics rather than assuming an infrastructure failure.
-- **Muddy mix**: reduce simultaneous roles and define foreground, support, low end, and space.
-- **Static song**: write entrances, exits, drops, lifts, breakdowns, and final-chorus deltas.
-- **Prompt followed but song is weak**: repair hook, prosody, contrast, and payoff using [songcraft-and-originality.md](references/songcraft-and-originality.md).
-
-Change one causal layer at a time and keep the seed fixed where the surface exposes one. Change the seed only to explore another take after the contract is sound.
-
-## Validate before returning
-
-Check that:
-
-- the selected surface is explicit or safely inferable
-- caption and lyrics are separate
-- every tag is alone on its line
-- every explicit constraint and exclusion is preserved
-- an instrumental request remains instrumental
-- no exact BPM, key, singer identity, or technique was fabricated without reason
-- the emotional and arrangement arcs evolve across sections
-- prompt fields and limits belong to the selected surface
-- no template wording, track title, or artist imitation leaked into the result
-- the package is paste-ready and contains no commentary inside provider fields
-
-For saved artifacts, run:
+Do not read the full source of `scripts/lint_music_prompt.py` into context unless debugging the script. Save artifacts to temporary files and run the linter as a black-box CLI check:
 
 ```bash
-python3 scripts/lint_music_prompt.py --surface <surface> --caption-file <caption.txt> --lyrics-file <lyrics.txt>
+python3 scripts/lint_music_prompt.py --surface <hosted|sglang|diffusers|comfyui> --caption-file <caption.txt> --lyrics-file <lyrics.txt>
+# Optional JSON payload check:
+python3 scripts/lint_music_prompt.py --surface <hosted|sglang> --request-json <request.json>
 ```
 
-Use `--request-json <request.json>` for payload validation. Read [source-coverage.md](references/source-coverage.md) before asserting current availability, rate limits, installation commands, licensing, or runtime requirements; those facts can drift.
+When modifying skill files, also run `python3 scripts/validate_coverage.py`. Verify that no commentary, template IDs, or track titles leaked inside provider fields.
+
+## 6. Resource Index
+
+- [`references/model-contract.md`](references/model-contract.md): Audited architecture, 32 kHz vs. 44.1 kHz and Qwen3-8B vs. Qwen3.5-8B source discrepancies, and MiniMax-Music3 Community License terms.
+- [`references/music-generation-research.md`](references/music-generation-research.md): Hybrid-LM + 8-layer RVQ + Flow-Matching mechanics and full-song alignment research (`YuE` `arXiv:2503.08638`, `DiffRhythm` `arXiv:2503.01183` / `2507.12890`, `SongGen` `arXiv:2502.13128`, `LeVo` `arXiv:2506.07520`).
+- [`references/runtime-surfaces.md`](references/runtime-surfaces.md): Exact field schemas, limits, and serialization for Hosted API, SGLang-Omni, Diffusers, ComfyUI, and `music-cover`.
+- [`references/prompt-architecture.md`](references/prompt-architecture.md): Dual-input contract, three-part Structured Caption grammar, and section-tag discipline.
+- [`references/songcraft-and-originality.md`](references/songcraft-and-originality.md): Prosody, hook construction, reference translation, and picture scoring.
+- [`references/genre-router.md`](references/genre-router.md): Entry router to the 18 genre family indexes and 1,000 official caption templates in `templates/`.
+- [`references/examples.md`](references/examples.md): Complete end-to-end payloads and formatting patterns across surfaces.
+- [`references/source-coverage.md`](references/source-coverage.md): Audited repository commit hashes, rate-limit snapshots, and provenance.
+- [`scripts/lint_music_prompt.py`](scripts/lint_music_prompt.py): Deterministic caption, lyrics, and JSON payload validator.
+- [`scripts/validate_coverage.py`](scripts/validate_coverage.py): Repository structure, routing-link, and 1,000-template coverage validator.

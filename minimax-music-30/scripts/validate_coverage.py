@@ -13,6 +13,7 @@ REQUIRED_FILES = [
     "SKILL.md",
     "agents/openai.yaml",
     "references/model-contract.md",
+    "references/music-generation-research.md",
     "references/runtime-surfaces.md",
     "references/prompt-architecture.md",
     "references/songcraft-and-originality.md",
@@ -25,6 +26,7 @@ REQUIRED_FILES = [
 CANONICAL_DOCS = [
     "SKILL.md",
     "references/model-contract.md",
+    "references/music-generation-research.md",
     "references/runtime-surfaces.md",
     "references/prompt-architecture.md",
     "references/songcraft-and-originality.md",
