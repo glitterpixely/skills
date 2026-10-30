@@ -73,6 +73,171 @@ Give each shot one dominant exchange or state change. Keep connected sub-beats o
 
 For an unresolved ending, retain a readable final position and an active threat or renewed approach when requested. A stable, trackable boundary does not require a motionless pose. Specify contact sounds and environmental audio when useful; preserve the no-music default. Keep failure guards specific to identity, geography, contact, effects, and the requested outcome rather than copying an exhaustive negative list.
 
+## Bilingual combat VFX & spatiotemporal prompting
+
+Seedance 2.5 is natively bilingual, but combat physics, anime impact frames, and martial-arts kinematics are heavily weighted toward Chinese captions in its training distribution.
+
+### Key execution rules
+
+- **Bypass middleware rewriters**: Global API wrappers and UI "Prompt Enhance" layers often rewrite or translate snappy tokens like `闪切` (flash-cut) into generic English (`transform`, `morph`), which triggers mesh melting. Disable "Prompt Enhance" when using this mode.
+- **Hybrid token injection**: Even when structuring schemas or prompts in English, inject native Chinese action and physics tokens directly into the prompt payload to lock onto high-density motion weights.
+
+### Principle 1: Impact frames (`冲击帧`) & transformation logic
+
+Raw AI transformations take ~2 seconds and look mushy. Use hard style-cut tokens in the prompt, then compress in post-production.
+
+- **Prompt formula**:
+  `闪白 → 发光线稿 → 闪切 2D 漫画 → 同一姿势落定`
+  *(White flash → glowing line art → flash-cut 2D manga → settle into 3D model in the exact same pose)*
+- **Strict lexical constraint**:
+  - **USE**: `闪切` (flash-cut)
+  - **BANNED**: `变形` (morph / transform / shape-shift) — causes melting, sticky transitions.
+- **Pacing contrast (Bullet Time)**:
+  Precede high-speed combat with a slow macro dolly shot:
+  `子弹时间：微距贴着刀刃慢慢移` *(Bullet time: macro camera glides slowly along the blade edge)*.
+
+### Principle 2: Specific anatomical targets (`攻击位置`) & color locking
+
+Generic prompts like `机甲攻击巨龙` ("Mecha attacks giant dragon") produce repetitive, identical swings.
+
+- **Multi-vector target rule**: Every strike in a combo must pair an **exact anatomical target** with a **directional slash vector** (alternating up, down, left, right):
+  1. `额头 · 横切` — Forehead: Horizontal slash
+  2. `头顶 / 两角之间 · 斜劈` — Crown / Between horns: Diagonal downward chop
+  3. `龙头 / 下颚 · 由下往上挑` — Dragon head / Jaw: Upward rising slash (with ground sparks)
+  4. `前腿 / 龙腹 · 低位撞` — Front leg / Belly: Low-angle collision strike
+- **Skill color-locking (`一个技能锁一个颜色`)**: Bind one distinct color per VFX element to prevent visual muddiness:
+  - Blade Energy: Violet (`刀光 紫` / `#A855F7`)
+  - Whirlwind: Cyan (`旋风 青` / `#06B6D4`)
+  - Tsunami / Water: Deep Blue (`海啸 深蓝` / `#1E3A8A`)
+  - Dragon Flame: Orange-Red (`龙焰 橙红` / `#EA580C`)
+
+### Principle 3: Velocity & force modifiers (`速度` / `加速度词`)
+
+Standard movement verbs like `飞向` ("flies toward") generate slow, floaty trajectories (`软绵绵`).
+
+- **Mandatory pre-action modifiers**: Prepend kinetic force tokens before movement verbs:
+  - `瞬间` (instantly)
+  - `极速` (at extreme speed)
+  - `蹬地` (kicks violently off the ground)
+  - `残影` (afterimage / motion trail)
+  - `连闪` (consecutive rapid flashes)
+- **Canonical syntax**:
+  `机甲蹬地化作紫色残影冲上半空，绕龙连闪七次`
+  *(Mecha kicks off the ground, turning into a violet afterimage shooting into mid-air, flashing seven times consecutively around the dragon).*
+
+### Post-processing & frame schedule
+
+Treat sub-second frame counts as NLE finishing targets applied after generation, not guaranteed model-native frame timing.
+
+#### A. 0.3-second impact transformation (18 frames @ 60fps)
+
+Slice the 2-second raw transformation into 5 rapid flashes (2–5 frames per style pass):
+
+| Pass | Visual Filter / Shader | Chinese Term | Duration (60fps) | Time (sec) |
+| :--- | :--- | :--- | :--- | :--- |
+| **1** | Pure White Flash (`#FFFFFF`) | `白闪` | 3 frames | 0.05s |
+| **2** | Inverted High-Contrast Line Art | `反色线稿` | 3 frames | 0.05s |
+| **3** | 2D Manga Halftone + RGB Chromatic Aberration | `漫画 + 色散` | 5 frames | 0.08s |
+| **4** | Deep Purple/Black Posterization (Threshold) | `色调分离` | 4 frames | 0.07s |
+| **5** | Pure White Flash (`#FFFFFF`) | `白闪` | 2 frames | 0.03s |
+| **6** | 3D Mecha Settles (Identical Pose Lock) | `3D 机甲落定` | Hold / Continue | — |
+
+#### B. Climax explosion / tsunami impact
+
+- **Rule**: Insert **3 pure white frames (`爆发前插 3 帧纯白`)** immediately before the climax impact or wave split.
+
+### Reference implementation (Female Valkyrie Mecha vs. Dragon)
+
+Preserve the user's surface handle format (`@Image 1` on Dreamina/ModelArk, or `@Image1` when the user's workflow specifies compact handles).
+
+#### A. Keyframe binding prompts
+
+- **`@Image1` (Human Start Frame)**: Medium close-up of a fierce female warrior with windswept black hair, arms crossed in a defensive katana stance, sleek black tactical armor, stormy ocean background, golden rim lighting, 3D CG render, 8k.
+- **`@Image2` (Mecha Target Frame)**: Medium close-up in the exact same crossed-arm pose as `@Image1`. Female obsidian valkyrie mecha armor, angular wing thrusters, glowing violet chest core and visor, stormy ocean background, 3D CG render, 8k.
+- **`@Image3` (Boss Anchor)**: Wide low-angle shot of a colossal white-maned Eastern dragon with golden horns and glowing orange eyes rising from dark ocean waves, 3D CG render, 8k.
+
+#### B. Spatiotemporal planning JSON (`seed-110-temporal-v2.5`)
+
+Use this schema when the user requests a structured spatiotemporal planning contract (strip JSON wrappers when delivering a paste-ready Dreamina prompt body):
+
+```json
+{
+  "schema_version": "seed-110-temporal-v2.5",
+  "project_metadata": {
+    "title": "Valkyrie_Mecha_Dragon_Duel",
+    "duration_sec": 12.0,
+    "fps": 60,
+    "aspect_ratio": "16:9",
+    "color_locks": {
+      "blade_energy": "violet (#A855F7)",
+      "whirlwind": "cyan (#06B6D4)",
+      "tsunami": "deep_blue (#1E3A8A)",
+      "dragon_flame": "orange_red (#EA580C)"
+    }
+  },
+  "reference_bindings": {
+    "@Image1": "Female warrior in black armor, crossed-arm blade stance, ocean backdrop",
+    "@Image2": "Obsidian valkyrie mecha in identical crossed-arm pose, violet core glow",
+    "@Image3": "Colossal horned Eastern sea dragon emerging from ocean waves"
+  },
+  "temporal_schedule": [
+    {
+      "shot_id": "SHOT_01_FLASH_TRANSFORM",
+      "time_range": "00:00.0 - 00:02.0",
+      "references": ["@Image1", "@Image2"],
+      "camera_kinematics": "Static locked medium close-up, micro-shake on impact",
+      "action_prompt": "@Image1 女战士双臂交叉，紫色能量爆发。闪白 → 发光线稿 → 闪切 2D 漫画 → 同一姿势落定为 @Image2 3D女性暗黑机甲，胸口紫光闪烁。",
+      "negative_constraints": "变形, slow morphing, melting mesh",
+      "audio_anchor": "Electric surge, sub-bass drop, metallic armor lock"
+    },
+    {
+      "shot_id": "SHOT_02_BULLET_TIME_BLADE",
+      "time_range": "00:02.0 - 00:04.0",
+      "references": ["@Image2", "@Image3"],
+      "camera_kinematics": "Extreme macro dolly pan tracking slowly from hilt to tip along the katana edge",
+      "action_prompt": "子弹时间，微距镜头贴着刀刃慢慢移动，刀光紫能量流淌，背景 @Image3 巨龙虚化。",
+      "audio_anchor": "Time-dilation whoosh, crystalline blade ring"
+    },
+    {
+      "shot_id": "SHOT_03_FOUR_POINT_COMBO",
+      "time_range": "00:04.0 - 00:08.0",
+      "references": ["@Image2", "@Image3"],
+      "camera_kinematics": "Dynamic whip-pans and snap-zooms tracking 4 strike vectors",
+      "action_prompt": "@Image2 极速攻击 @Image3 四个位置：1. 额头横切（刀光紫）；2. 头顶两角之间斜劈；3. 龙头下颚由下往上挑，擦出火花；4. 巨龙前腿低位撞击。",
+      "audio_anchor": "Four rapid metallic slashes, heavy impacts, dragon roar"
+    },
+    {
+      "shot_id": "SHOT_04_AFTERIMAGE_TSUNAMI_FINALE",
+      "time_range": "00:08.0 - 00:12.0",
+      "references": ["@Image2", "@Image3"],
+      "camera_kinematics": "High-angle orbital tracking shot pulling back into ultra-wide reveal",
+      "action_prompt": "@Image2 瞬间蹬地化作紫色残影冲上半空，在青色旋风与橙红龙焰中绕龙连闪七次，随后一刀紫光垂直劈开深蓝海啸巨浪。",
+      "audio_anchor": "Sonic boom, seven teleport zaps, roaring tsunami split"
+    }
+  ]
+}
+```
+
+#### C. Compiled bracketed prompts
+
+Native Chinese Physics Prompt (Recommended):
+
+```text
+[00:00-00:02] @Image1 女战士双臂交叉，紫色能量爆发。闪白 → 发光线稿 → 闪切 2D 漫画 → 同一姿势落定为 @Image2 3D女性暗黑机甲，胸口紫光闪烁。
+[00:02-00:04] 子弹时间，微距镜头贴着刀刃慢慢移动，刀光紫能量流淌，背景 @Image3 巨龙虚化。
+[00:04-00:08] @Image2 极速攻击 @Image3 四个位置：1. 额头横切（刀光紫）；2. 头顶两角之间斜劈；3. 龙头下颚由下往上挑，擦出火花；4. 巨龙前腿低位撞击。
+[00:08-00:12] @Image2 瞬间蹬地化作紫色残影冲上半空，在青色旋风与橙红龙焰中绕龙连闪七次，随后一刀紫光垂直劈开深蓝海啸巨浪。
+```
+
+English Prompt:
+
+```text
+[00:00-00:02 | Shot 1: Medium Close-Up, Locked Camera] @Image1 female warrior stands against ocean waves, violet energy erupting around her crossed arms. White flash -> glowing line art -> flash-cut 2D manga -> settle into @Image2 3D obsidian female mecha in the exact same pose, violet core glowing. (SFX: Electric surge, heavy bass impact, metallic lock).
+[00:02-00:04 | Shot 2: Extreme Macro, Slow Dolly Pan] Bullet-time macro camera glides slowly along the katana blade from hilt to tip as violet energy and sparks ripple across the steel, with @Image3 giant dragon blurred in the background. (SFX: Slow-motion hum, blade ring).
+[00:04-00:08 | Shot 3: Dynamic Action Tracking, Whip-Pans] @Image2 attacks @Image3 at extreme speed across four distinct anatomical targets: 1. Horizontal violet slash across the dragon's forehead; 2. Diagonal chop onto the top of the skull between the horns; 3. Upward slash from beneath the dragon's jaw kicking up orange sparks; 4. Low-angle collision strike against the dragon's front leg. (SFX: Four rapid energy slashes, heavy impacts).
+[00:08-00:12 | Shot 4: Aerial Orbit to Wide Reveal] @Image2 kicks off the ground, instantly turning into a violet afterimage shooting into mid-air, flashing seven times consecutively around @Image3 amidst a cyan whirlwind and orange-red dragon flames, then plunging a vertical violet blade beam to cleave a massive deep-blue tsunami in half. (SFX: Sonic boom, rapid teleport flashes, massive wave split).
+```
+
 ## Continuous-action prompting
 
 Use when the user wants uninterrupted kinetic flow, reactive choreography, or adaptation of a successful action prompt. It also applies to a single-reference chase or playful physical sequence; combat, multiple references, and dense VFX are not prerequisites. Do not impose it on a quiet performance, product demonstration, or an explicitly paced scene with pauses.
