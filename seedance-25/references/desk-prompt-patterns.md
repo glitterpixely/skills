@@ -405,6 +405,36 @@ Evidence boundary: distilled from an inspected 3-clip multi-shot production work
   - *Escalating single-subject montage (5 cuts):* Medium low-angle chant -> tighter close-up -> extreme macro on mouth/jaw -> extreme macro on eye or goggle lens reflecting fire -> medium-wide low-angle payoff.
   - *Duel 2-shot to OTS reverse coverage (4 cuts):* Wide 2-shot charge and weapon lock -> close-up OTS over Fighter A's shoulder onto Fighter B straining -> reverse close-up OTS over Fighter B's shoulder onto Fighter A -> reverse OTS back to Fighter B igniting a close-range counter.
   - *Foreground-anchored interaction to detail insert (2 cuts):* Low-angle medium shot framed past foreground elements (`@Image 1`) as Character A (`@Image 3`) acts and Subject B (`@Image 2`) snatches a prop across the frame -> `[Cut to]` tight low-angle medium close-up on Subject B interacting with the snatched prop.
+- **Reusable 5-part `[Cut to]` coverage template:**
+
+```text
+Visual Style & Continuity:
+<Shared lens, film stock/medium, lighting, and atmosphere lock across all cuts.>
+
+Scene Setup & Reference Binding:
+Use @Image 1 as <exact start frame / staging and lighting reference, preserving foreground elements>.
+<Character A> corresponds to @Image 2 (<key costume/hair traits>; ignore the blank white face circles and use the face close-up panel).
+<Character B> corresponds to @Image 3 (<key costume/prop traits>).
+
+Shot 1:
+<Framing + angle + camera movement>. <Character A> <physical preparation + action + exact spoken delivery>. <Environmental response: sparks, mud, rain, firelight>.
+
+[Cut to]
+
+Shot 2:
+<New framing / OTS reverse / extreme macro insert>. <Connected continuation of the action or reaction from Shot 1>.
+
+[Cut to]
+
+Shot N:
+<Payoff framing and observable end state>.
+
+Technical Exclusions:
+- No floating or weightless movement.
+- No morphing weapons or disappearing armor details.
+- No white, blue, or green placeholder shapes or markers rendered.
+- No subtitles, text overlays, or watermarks.
+```
 
 ## Research-grounded model mechanics
 
