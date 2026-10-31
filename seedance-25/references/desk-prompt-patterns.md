@@ -391,6 +391,18 @@ Source: three user-supplied written prompts studied on 2026-10-30 (a boutique co
 - **Weight clause order and prefer affirmative state locks.** Put camera movement in the opening clause of a shot when camera adherence is critical; keep the primary action after `0–1s` so reference geometry settles in the opening second; and convert negative ban lists into affirmative state locks ("her coat stays buttoned and deep green"), keeping the `Avoid` block focused on 3–5 hard exclusions (`no subtitles, no BGM, no extra characters`).
 - **Mark must-hit beats.** In dense action, mark three or four exchanges per shot as required. Apply [Stage density](#stage-density) and item 2 of [Literal multi-shot control](#literal-multi-shot-control) before adding more.
 
+## Diegetic phone-camera comedy
+
+Source: one user-supplied written prompt studied on 2026-10-30 (two friends goofing around an apartment with a phone front camera, 8 shots, about 30 seconds, hand-drawn sketch style). This is a prompt-reading hypothesis. No generated result was reviewed. Use it for selfie, vlog, found-footage, or any prompt where a character holds the camera.
+
+- **Treat the phone as the camera and as a prop.** Name the holder and the hand in every shot, also when nothing changed: "the camera, now in Yuki's right hand"; "still in Yuki's hand"; "Sumi, phone in her right hand". The holder tells the model whose body drives the shake, and the hand fixes screen side.
+- **Let the camera object cause each transition.** Make every change of place come from the phone: a snatch ends the shot in a whip pan; a drop cuts "the instant the phone hits the floor"; the next shot opens with "the phone already lies face up, locked-off camera looking at the ceiling"; a grab ends it with "Cut as the phone lifts off the floor". State the rule once in the global line: "Every change of place comes through a whip pan or a cut from the phone itself."
+- **Declare one global energy rule.** Write the camera behavior once in the style block: "handheld, restless, constantly bobbing and tilting with whoever holds it, quick crash zooms and whip pans" and "nobody stands still". This rule permits two moves in one shot ("pulls back, then spins with them") as an exception to one camera move per shot. Change the motion source per shot: "the camera heaves with Sumi's breathing"; "the camera jolts once".
+- **Mark time in the scene header.** Use "Continuous" for an unbroken handoff and "Later" for a comic ellipsis. "Later" lets a shot open in a new state (phone already on the floor) without showing how it got there.
+- **Put temperament in the reference header and repeat it.** Give each character one performance trait next to the looks: "flat deadpan face" against "loud and easily flustered". Repeat the contrast in each shot: "face completely deadpan"; "still deadpan"; "Sumi shrieks". A deadpan character's one line gets the same tag: "Yuki's line (flat, deadpan): 'Boo.'"
+- **Track a temporary look as state.** When a gag changes a character's look, restate it while it lasts and close it: "hair over her whole face" (Shots 4–5), "her hair still over her face", then "Yuki's hair now neat" (Shot 8).
+- **End on contact with the lens.** Finish on a diegetic blackout instead of a settling pose or fade: "the clip cuts to black as the fingertip covers it". Other lens-contact beats from the same prompt: a face pressed almost against the lens, a sheet lowered in front of the lens.
+
 ## Reference-plate preparation and single-clip coverage
 
 Evidence boundary: distilled from an inspected 3-clip multi-shot production workflow and its 17 reference plates/sheets. Upstream still-image preparation happens before Seedance submission; keep image-prep tool names out of the Seedance prompt body.
