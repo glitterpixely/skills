@@ -403,6 +403,26 @@ Source: one user-supplied written prompt studied on 2026-10-30 (two friends goof
 - **Track a temporary look as state.** When a gag changes a character's look, restate it while it lasts and close it: "hair over her whole face" (Shots 4–5), "her hair still over her face", then "Yuki's hair now neat" (Shot 8).
 - **End on contact with the lens.** Finish on a diegetic blackout instead of a settling pose or fade: "the clip cuts to black as the fingertip covers it". Other lens-contact beats from the same prompt: a face pressed almost against the lens, a sheet lowered in front of the lens.
 
+## Result-backed notes: two-character door-to-door comedy
+
+Source: one render supplied by the user on 2026-10-30 (480×854, 24 fps, 30.08 s). The prompt was skill-built: one group image bound per side ("the figure on the left of @Image 1"), eight untimed `Shot N` blocks, a per-shot prop ledger, cut-on-action endings, no spoken words, and a lens-contact ending. The user judged it the better of two prompts. Evidence: frames sampled at 2 fps, scene-cut detection, and luma on the final frames. Audio was not assessed. Small gags that last less than 0.5 s can fall between samples.
+
+What held:
+
+- **Per-side binding from one group image.** Both identities and costumes held through all eight shots: hat and bow, crescent-moon patch, stripes, pumpkin bucket. The faces never merged.
+- **Untimed `Shot N` still paced evenly.** Cuts were detected near 3.3, 7.0, 8.1, 13.3, 16.8, 19.8, 23.8 and 27.0 s. All eight shots appeared in the written order without timestamps.
+- **Cut-on-action transitions.** A broom swipe across the lens, a run up a garden path seen from behind, and a door close-up each carried the move to a new place.
+- **Hands-only adults.** "Adults appear only as hands and sleeves reaching out of doorways, never faces" held in every sampled frame. "Three different adult hands" produced three hands with different skin tones.
+- **A temporary look as state.** The hat popped off in the air and landed back on.
+- **Lens-contact ending.** The chocolate bar filled the frame, and the last frames darkened to an average luma of about 20/255.
+
+What failed, and the next repair to try (hypotheses until a re-render is reviewed):
+
+- **The wrapper-text negative was ignored.** "Candy wrappers carry no writing" still produced a giant bar with pseudo-brand lettering, plus letters on the small candies. Try an affirmative design lock: "plain solid-color wrappers; the giant bar has a plain brown wrapper with only a small orange pumpkin drawing and no letters".
+- **An insert lost prop ownership.** A close insert of "the bucket on the white-haired friend's left arm" showed a different bucket (glossy, black handle) standing on the ground. Try keeping an owner anchor in the insert frame: "the striped sleeve and hand holding the handle stay visible at the frame edge".
+- **Micro-gags inside busy shots did not show.** The candy scooped from the air (the candy hit the ground instead), the doorbell jab with the broom, and the skeleton jerking upright were not visible in the samples. Give each must-hit gag its own beat or its own short shot. Otherwise expect it to drop.
+- **A dive into cover hides identity.** In the leaf-pile shot both bodies disappeared for about 2 s and reappeared lying down. The candy burst was not visible. Ask for a body part that stays visible (hat tip, striped legs) when characters plunge into cover.
+
 ## Reference-plate preparation and single-clip coverage
 
 Evidence boundary: distilled from an inspected 3-clip multi-shot production workflow and its 17 reference plates/sheets. Upstream still-image preparation happens before Seedance submission; keep image-prep tool names out of the Seedance prompt body.
