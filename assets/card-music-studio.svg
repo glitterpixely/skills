@@ -1,17 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 230" width="420" height="230">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 230" width="460" height="230">
   <defs>
     <pattern id="dotGridM" width="16" height="16" patternUnits="userSpaceOnUse">
       <circle cx="4" cy="4" r="0.9" fill="#DDD7EC"/>
     </pattern>
   </defs>
   <!-- Stationery folder tab -->
-  <path d="M24 18 L142 18 C148 18 152 22 155 28 L160 36 L24 36 Z" fill="#E5DCF9" stroke="#5B516B" stroke-width="1.4" stroke-linejoin="round"/>
-  <text x="40" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif" font-size="10.5" font-weight="700" fill="#5B516B" letter-spacing="0.8">DESK 02 · MUSIC</text>
+  <path d="M24 8 L166 8 C172 8 176 12 179 18 L185 31 L24 31 Z" fill="#E5DCF9" stroke="#5B516B" stroke-width="1.4" stroke-linejoin="round"/>
+  <text x="38" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif" font-size="10.5" font-weight="700" fill="#5B516B" letter-spacing="0.8">DESK 02 · MUSIC</text>
 
   <!-- Card shadow & body -->
-  <rect x="14" y="34" width="396" height="184" rx="16" fill="#E3DBF5"/>
-  <rect x="10" y="30" width="396" height="184" rx="16" fill="#FFFDFB" stroke="#5B516B" stroke-width="1.5"/>
-  <rect x="18" y="38" width="380" height="168" rx="12" fill="url(#dotGridM)"/>
+  <rect x="14" y="34" width="436" height="184" rx="16" fill="#E3DBF5"/>
+  <rect x="10" y="30" width="436" height="184" rx="16" fill="#FFFDFB" stroke="#5B516B" stroke-width="1.5"/>
+  <rect x="18" y="38" width="420" height="168" rx="12" fill="url(#dotGridM)"/>
 
   <!-- Cute cassette tape icon -->
   <g transform="translate(30, 52)">
@@ -28,23 +28,23 @@
 
   <!-- Skill pills -->
   <g transform="translate(30, 104)">
-    <rect x="0" y="0" width="356" height="28" rx="8" fill="#F6F2FD" stroke="#DDD3F2" stroke-width="1"/>
+    <rect x="0" y="0" width="396" height="28" rx="8" fill="#F6F2FD" stroke="#DDD3F2" stroke-width="1"/>
     <circle cx="14" cy="14" r="4" fill="#BFAEEB"/>
     <text x="26" y="18" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#4F4363">suno-song-builder</text>
-    <text x="158" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.5" fill="#746888">Suno v6 / v6-wild / v6-mini · Studio</text>
+    <text x="174" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.5" fill="#746888">Suno v6 / v6-wild / v6-mini · Studio</text>
   </g>
 
   <g transform="translate(30, 138)">
-    <rect x="0" y="0" width="356" height="28" rx="8" fill="#FFF9E6" stroke="#ECE0B9" stroke-width="1"/>
+    <rect x="0" y="0" width="396" height="28" rx="8" fill="#FFF9E6" stroke="#ECE0B9" stroke-width="1"/>
     <circle cx="14" cy="14" r="4" fill="#EED07E"/>
     <text x="26" y="18" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#5E4F32">minimax-music-30</text>
-    <text x="158" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.5" fill="#7D6E4F">1,000 templates · Bilingual · Linter</text>
+    <text x="174" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.5" fill="#7D6E4F">1,000 templates · Bilingual · Linter</text>
   </g>
 
   <g transform="translate(30, 172)">
-    <rect x="0" y="0" width="356" height="28" rx="8" fill="#FDF2F5" stroke="#ECCAD4" stroke-width="1"/>
+    <rect x="0" y="0" width="396" height="28" rx="8" fill="#FDF2F5" stroke="#ECCAD4" stroke-width="1"/>
     <circle cx="14" cy="14" r="4" fill="#F2AFC3"/>
     <text x="26" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.5" font-weight="600" fill="#5A444D">Craft Guarantees</text>
-    <text x="136" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.5" fill="#7D6770">Zero artist copying · Stressed prosody</text>
+    <text x="174" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.5" fill="#7D6770">Zero artist copying · Stressed prosody</text>
   </g>
 </svg>

@@ -82,7 +82,7 @@ The [`seedance-25`](seedance-25/SKILL.md) skill combines first-party capability 
 ### Core Envelope & Duration Rules
 
 - **Duration:** **30 seconds** by default (`Standard` mode, 4–30s single-pass generation). Dreamina web also exposes a **Long Video** mode (**30–180 seconds**) when explicitly requested (`--long-video` in `prompt_lint.py`). Multi-clip segmentation plans remain available for multi-call workflows above 30s.
-- **Multimodal references:** Up to **50 total assets** per request (up to 30 images, 10 videos totaling $\le$30s, and 10 audio clips totaling $\le$30s) bound with explicit roles (`@Image 1`, `@Video 1`, `@Audio 1`) and `[Unused Materials]` exclusions.
+- **Multimodal references:** Up to **50 total assets** per request (up to 30 images, 10 videos totaling ≤30s, and 10 audio clips totaling ≤30s) bound with explicit roles (`@Image 1`, `@Video 1`, `@Audio 1`) and `[Unused Materials]` exclusions.
 - **Primary operations:** One operation per prompt—**Generation** (including keyframes, storyboards, 3D blockouts, one-click, and seamless transitions), **Editing** (`@Video 1 is the sole editing master`), or **Extension** (`Extend @Video 1 forward/backward`). Never phrase an editing master or extension source as `"Reference @Video 1"` (`参考 <视频1>`), which misroutes the job to ordinary reference generation.
 - **Cost-aware workflow:** Validate multi-shot blocking in **Draft Mode** (`draft=true` / 480p preview) before promoting the seed to 1080p/4K (`draft=false`), and use **localized time-window editing (`局部重拍`)** to repair a 2–4s flaw rather than re-rolling a full 30s clip.
 
@@ -91,7 +91,7 @@ The [`seedance-25`](seedance-25/SKILL.md) skill combines first-party capability 
 | Paper | arXiv ID | Core Mechanism | What It Means for Prompts |
 | --- | --- | --- | --- |
 | **Seedance 1.0** | [`2506.09113`](https://arxiv.org/abs/2506.09113) | Decoupled spatial/temporal DiT + **Multi-Shot MM-RoPE** + native cut-boundary pre-training | Explicit `Shot N` labels and cut counts (`受控多段序列`) trigger learned hard-cut transitions inside a single pass. |
-| **Seedance 1.5 Pro** | [`2512.13507`](https://arxiv.org/abs/2512.13507) | **Dual-Branch MMDiT** joint audio-video co-denoising + >10$\times$ distillation | Sound effects (`<...>`), ambience, and lip phonemes denoise simultaneously with video frames; concrete sound cues tighten visual timing. |
+| **Seedance 1.5 Pro** | [`2512.13507`](https://arxiv.org/abs/2512.13507) | **Dual-Branch MMDiT** joint audio-video co-denoising + >10× distillation | Sound effects (`<...>`), ambience, and lip phonemes denoise simultaneously with video frames; concrete sound cues tighten visual timing. |
 | **Seedance 2.0** | [`2604.14148`](https://arxiv.org/abs/2604.14148) | Unified multi-modal backbone across text, `@image`, `@video`, and `@audio` | Give each reference asset one non-overlapping job (`identity` vs. `environment` vs. `motion` vs. `voice`). |
 | **Phantom** | [`2502.11079`](https://arxiv.org/abs/2502.11079) | Cross-modal alignment on non-frame text-image-video triplets (`Phantom-Data`) | Exclude both background and static pose on portrait references (`do not copy its background or static standing pose`) to prevent pose leakage. |
 | **HuMo** & **OmniHuman-1** | [`2509.08519`](https://arxiv.org/abs/2509.08519), [`2502.01061`](https://arxiv.org/abs/2502.01061) | **Time-Adaptive CFG** (layout/camera early; `@Image` identity & `@Audio` lip-sync late) | Front-load the 180° stage map and camera move in clause 1; allow `0–1s` for geometry to settle; add **rhythm carriers** (breathing, weight shift) so speaking bodies do not freeze. |
@@ -108,13 +108,13 @@ For complex multi-shot clips, [`desk-prompt-patterns.md`](seedance-25/references
 3. **Avoid block:** Concise hard exclusions (`no subtitles, no BGM, no extra foreground characters, no fade-out`) checked for self-contradiction against the body.
 4. **Global premise & 180° stage map:** 1-sentence story summary + `screen left / screen right` landmark coordinates + `air between bodies` depth separation.
 5. **Scene header:** Continuity mode, speed/time state, and scene-scoped visual/audio shifts.
-6. **Shot breakdown (`Shot N`):** Camera framing & move in clause 1 $\rightarrow$ per-shot prop state restatement $\rightarrow$ causal `A -> B -> C` action chain with 2-word character anchors (`Kira, lilac buns`) $\rightarrow$ isolated speaker + closed-mouth listeners ($\le$2.5 words/s) $\rightarrow$ kinetic `Cut as <active motion>` trigger.
+6. **Shot breakdown (`Shot N`):** Camera framing & move in clause 1 → per-shot prop state restatement → causal `A -> B -> C` action chain with 2-word character anchors (`Kira, lilac buns`) → isolated speaker + closed-mouth listeners (≤2.5 words/s) → kinetic `Cut as <active motion>` trigger.
 
 ### Automated Checks in `seedance-25/scripts/prompt_lint.py`
 
 In addition to material limits, reference role bindings, timeline gaps/overlaps, and mode contracts, `prompt_lint.py` checks for:
 
-- `DIALOGUE_DENSITY` — warns when a timed shot exceeds $\ge$3.0 spoken Latin-script words per second.
+- `DIALOGUE_DENSITY` — warns when a timed shot exceeds ≥3.0 spoken Latin-script words per second.
 - `NEGATION_CONFLICT` — catches contradictions between `Avoid` bans (`no freeze frames`, `no slow motion`) and body instructions (`hit-stop`, `定格`, `speed ramp`, `子弹时间`).
 - `EDIT_REFERENCE_TRAP` — warns if an edit or extension prompt phrases the master/source video as `Reference @Video N` (`参考 <视频N>`).
 - `MORPH_TOKEN_RISK` — flags non-negated `变形` / `morph into` / `shape-shift into` in generation prompts in favor of `闪切` (`flash-cut`).
@@ -128,7 +128,7 @@ In addition to material limits, reference role bindings, timeline gaps/overlaps,
 <br />
 
 - **MiniMax H3 ([`h3-prompt-writing`](h3-prompt-writing/SKILL.md)):**
-  - Enforces a 5-stage causal spine (**Reference Mapping $\rightarrow$ Anchor Scene $\rightarrow$ Causal Motion Chain $\rightarrow$ Camera Trajectory $\rightarrow$ Synchronized Soundscape**) and a "state every inference" rule drawn from an independent 517-instance physical-reasoning benchmark of H3 (41.97% overall success on implicit prompts; [`omni-reasoning-research.md`](h3-prompt-writing/references/omni-reasoning-research.md)).
+  - Enforces a 5-stage causal spine (**Reference Mapping → Anchor Scene → Causal Motion Chain → Camera Trajectory → Synchronized Soundscape**) and a "state every inference" rule drawn from an independent 517-instance physical-reasoning benchmark of H3 (41.97% overall success on implicit prompts; [`omni-reasoning-research.md`](h3-prompt-writing/references/omni-reasoning-research.md)).
   - Separates first/last-frame interpolation bridges from delta-only video edits (`Keep ... unchanged; change only ...`).
 - **Kling 4.0 & Flash ([`kling-4-prompting`](kling-4-prompting/SKILL.md)):**
   - Selects deterministically between Text-to-Video, Image-to-Video (`I2V`), Start/End Keyframes, and Omni Multi-Reference workflows ([`kling-architecture-research.md`](kling-4-prompting/references/kling-architecture-research.md)).
@@ -301,5 +301,5 @@ Released under the [MIT License](LICENSE).
     <a href="https://x.com/glitterpixely"><img src="assets/badge-x.svg" alt="X @glitterpixely" height="26" /></a>
     <a href="https://www.tiktok.com/@glitterpixely"><img src="assets/badge-tiktok.svg" alt="TikTok @glitterpixely" height="26" /></a>
   </p>
-  <img src="assets/footer-stamp.svg" alt="crafted with care · glitterpixely studio" width="260" />
+  <img src="assets/footer-stamp.svg" alt="crafted with care · glitterpixely studio" width="320" />
 </div>
