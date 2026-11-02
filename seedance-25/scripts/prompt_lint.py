@@ -51,10 +51,21 @@ HANDLE_RE = re.compile(
 VIDEO_HANDLE_PATTERN = r"(?:@Video(?:[ \t]*\d+)?|\[Video[ \t]*\d+\]|<Video[ \t]*\d+>)"
 IMAGE_HANDLE_PATTERN = r"(?:@Image[ \t]*\d+|\[Image[ \t]*\d+\]|<Image[ \t]*\d+>)"
 RANGE_RE = re.compile(
-    r"(?P<start>\d+(?:\.\d+)?)\s*(?:sec(?:ond)?s?|s)?\s*[-–—]\s*"
-    r"(?P<end>\d+(?:\.\d+)?)\s*(?:sec(?:ond)?s?|s)",
+    r"(?:(?P<start_mm>\d{1,2}):(?P<start_ss>\d{2}(?:\.\d+)?)\s*[-–—]\s*"
+    r"(?P<end_mm>\d{1,2}):(?P<end_ss>\d{2}(?:\.\d+)?))"
+    r"|(?:(?P<start>\d+(?:\.\d+)?)\s*(?:sec(?:ond)?s?|s)?\s*[-–—]\s*"
+    r"(?P<end>\d+(?:\.\d+)?)\s*(?:sec(?:ond)?s?|s))",
     re.IGNORECASE,
 )
+
+
+def _match_bounds(match: re.Match[str]) -> tuple[float, float]:
+    if match.group("start_mm") is not None:
+        start = int(match.group("start_mm")) * 60 + float(match.group("start_ss"))
+        end = int(match.group("end_mm")) * 60 + float(match.group("end_ss"))
+        return start, end
+    return float(match.group("start")), float(match.group("end"))
+
 TIME_POINT_RE = re.compile(r"\bat\s+(\d+(?:\.\d+)?)\s*(?:s|sec(?:ond)?s?)\b", re.IGNORECASE)
 TODO_MARKER_RE = re.compile(r"\bTODO\b", re.IGNORECASE)
 TEMPLATE_PLACEHOLDER_RE = re.compile(
@@ -186,28 +197,28 @@ def timeline_matches(text: str) -> list[re.Match[str]]:
         timeline_punctuation = re.match(r"\s*(?:\]|:|—|–|\.{2,})", suffix) is not None
         preceded_by_inline_separator = re.search(r"(?:\.{2,}|\])\s*(?:\[\s*)?$", line_prefix) is not None
         shot_header = (
-            re.search(r"\bShot\s+\d+\s*[(\[]\s*$", line_prefix, re.IGNORECASE) is not None
-            and re.match(r"\s*[)\]]", suffix) is not None
+            re.search(r"\bShot\s+\d+\s*(?:[(\[]|[,|:]\s*)\s*$", line_prefix, re.IGNORECASE) is not None
+            and re.match(r"\s*(?:[)\]]|[.:—–])", suffix) is not None
         )
         if bracketed or starts_line or timeline_punctuation or preceded_by_inline_separator or shot_header:
             accepted.append(match)
     if len(accepted) >= 2:
-        first_start, first_end = float(accepted[0].group("start")), float(accepted[0].group("end"))
-        second_start, second_end = float(accepted[1].group("start")), float(accepted[1].group("end"))
+        first_start, first_end = _match_bounds(accepted[0])
+        second_start, second_end = _match_bounds(accepted[1])
         first_prefix = text[text.rfind("\n", 0, accepted[0].start()) + 1 : accepted[0].start()]
-        is_shot_container = re.search(r"\bShot\s+\d+\s*[(\[]\s*$", first_prefix, re.IGNORECASE) is not None
+        is_shot_container = re.search(r"\bShot\s+\d+\s*(?:[(\[]|[,|:]\s*)\s*$", first_prefix, re.IGNORECASE) is not None
         if (
             is_shot_container
             and second_start == first_start
             and second_end < first_end
-            and all(float(m.group("end")) <= first_end for m in accepted[1:])
+            and all(_match_bounds(m)[1] <= first_end for m in accepted[1:])
         ):
             return accepted[1:]
     return accepted
 
 
 def timeline_ranges(text: str) -> list[tuple[float, float]]:
-    return [(float(m.group("start")), float(m.group("end"))) for m in timeline_matches(text)]
+    return [_match_bounds(m) for m in timeline_matches(text)]
 
 
 # Dialogue introduced as `<Name>'s line (tone): "..."`, `says: "..."`, or the
@@ -255,7 +266,7 @@ def check_dialogue_density(issues: list[Issue], text: str) -> None:
         )
 
     for index, match in enumerate(matches):
-        start, end = float(match.group("start")), float(match.group("end"))
+        start, end = _match_bounds(match)
         duration = end - start
         if duration <= 0:
             continue
@@ -797,6 +808,18 @@ Shot 1 (0-30s): [Front camera of her phone, one continuous take]
     scoped_ramp = "Avoid: no slow motion except one brief speed ramp at the final impact. Shot 15 (24-25s): Palm hits the floor with a brief speed ramp at contact."
     _, issues = lint(scoped_ramp)
     assert "NEGATION_CONFLICT" not in {i.code for i in issues}, issues
+
+    mmss_and_pipe_headers = """0:00-0:04
+Night walk.
+0:04-0:07
+Close-up of note.
+0:08-0:10
+Car drives away."""
+    _, issues = lint(mmss_and_pipe_headers)
+    assert "TIMELINE_GAP" in {i.code for i in issues}, issues
+
+    comma_and_pipe_shots = "Shot 1 | 0-2s. First strike.\nShot 2, 2-4s. Second strike."
+    assert timeline_ranges(comma_and_pipe_shots) == [(0.0, 2.0), (2.0, 4.0)]
     print("prompt_lint self-test: PASS")
 
 
