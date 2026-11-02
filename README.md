@@ -15,7 +15,13 @@
   <a href="LICENSE"><img src="assets/badge-mit.svg" alt="MIT License" height="26" /></a>
 </p>
 
-A curated studio collection by **[glitterpixely](https://github.com/glitterpixely)**, built for directing video and music models through any AI assistant.
+<p>
+  <a href="https://www.instagram.com/glitterpixely"><img src="assets/badge-instagram.svg" alt="Instagram @glitterpixely" height="26" /></a>
+  <a href="https://x.com/glitterpixely"><img src="assets/badge-x.svg" alt="X @glitterpixely" height="26" /></a>
+  <a href="https://www.tiktok.com/@glitterpixely"><img src="assets/badge-tiktok.svg" alt="TikTok @glitterpixely" height="26" /></a>
+</p>
+
+A curated studio collection by **[glitterpixely](https://github.com/glitterpixely)** ([Instagram](https://www.instagram.com/glitterpixely) · [X](https://x.com/glitterpixely) · [TikTok](https://www.tiktok.com/@glitterpixely)), built for directing video and music models through any AI assistant.
 
 [**Studio Desks**](#studio-desks) · [**Choose a Skill**](#choose-a-skill) · [**Model Guides**](#model-guides--research-lineage) · [**Install**](#installation) · [**Sample Briefs**](#example-briefs) · [**Validators**](#validation) · [**Contribute**](CONTRIBUTING.md)
 
@@ -290,5 +296,10 @@ Released under the [MIT License](LICENSE).
 
 <div align="center">
   <br />
+  <p>
+    <a href="https://www.instagram.com/glitterpixely"><img src="assets/badge-instagram.svg" alt="Instagram @glitterpixely" height="26" /></a>
+    <a href="https://x.com/glitterpixely"><img src="assets/badge-x.svg" alt="X @glitterpixely" height="26" /></a>
+    <a href="https://www.tiktok.com/@glitterpixely"><img src="assets/badge-tiktok.svg" alt="TikTok @glitterpixely" height="26" /></a>
+  </p>
   <img src="assets/footer-stamp.svg" alt="crafted with care · glitterpixely studio" width="260" />
 </div>
