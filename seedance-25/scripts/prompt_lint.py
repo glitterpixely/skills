@@ -284,8 +284,21 @@ POSITIVE_MORPH_RE = re.compile(
     re.IGNORECASE,
 )
 STYLE_2D_RE = re.compile(
-    r"\b2D\s+(?:cel|anime|animation|hand[- ]drawn)\b|\bcel[- ]shaded\b|\bgouache\b"
+    r"\b2D\s+(?:cel|anime|animation|hand[- ]drawn)\b|\bcel[- ]shaded\b|\bcel[- ]painted\b|\bgouache\b"
     r"|\bhand[- ]drawn\s+2D\b|赛璐璐|手绘2D|二维动画",
+    re.IGNORECASE,
+)
+AIRBRUSH_PAINTERLY_RE = re.compile(
+    r"\bairbrush(?:ed)?\b|\bsemi[- ]realistic\b|\blineless\b|厚涂|半写实|柔光厚涂",
+    re.IGNORECASE,
+)
+CEL_OUTLINE_RE = re.compile(
+    r"\bcel[- ](?:shaded|painted)\b|\b2D\s+stylized\s+anime\b|\bflat\s+cel\b|赛璐璐|平涂",
+    re.IGNORECASE,
+)
+NEGATED_CEL_RE = re.compile(
+    r"(?:\bno\b|\bnot\b|\bwithout\b|\bavoid\b|\bnever\b|不要|没有|不是|非|无|禁止|避免)"
+    r"[^\n.。;；]{0,45}?(?:\bcel[- ](?:shaded|painted|shading)\b|\b2D\s+stylized\s+anime\b|\bflat\s+cel\b|赛璐璐|平涂)",
     re.IGNORECASE,
 )
 NEGATED_LENS_RE = re.compile(
@@ -332,7 +345,16 @@ def check_craft_heuristics(issues: list[Issue], text: str, mode: str) -> None:
                 f"'{morph_match.group(0)}' can trigger slow mesh melting during transformations; prefer '闪切' ('flash-cut') with an impact flash and identical pose lock.",
             )
 
-    if STYLE_2D_RE.search(text):
+    cel_unnegated = NEGATED_CEL_RE.sub(" ", text)
+    if AIRBRUSH_PAINTERLY_RE.search(text) and CEL_OUTLINE_RE.search(cel_unnegated):
+        add(
+            issues,
+            "warning",
+            "AIRBRUSH_CEL_CONFLICT",
+            "Mixing airbrushed/semi-realistic painterly style with 'cel-shaded'/'cel-painted'/'2D stylized anime' pulls non-anchor cuts into hard black outlines and flat cartoon fills.",
+        )
+
+    if STYLE_2D_RE.search(cel_unnegated):
         lens_remainder = NEGATED_LENS_RE.sub(" ", text)
         lens_match = LIVE_ACTION_LENS_RE.search(lens_remainder)
         if lens_match:
