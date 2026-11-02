@@ -301,6 +301,15 @@ NEGATED_CEL_RE = re.compile(
     r"[^\n.。;；]{0,45}?(?:\bcel[- ](?:shaded|painted|shading)\b|\b2D\s+stylized\s+anime\b|\bflat\s+cel\b|赛璐璐|平涂)",
     re.IGNORECASE,
 )
+NEGATED_CARTOON_OVERACT_RE = re.compile(
+    r"(?:\bno\b|\bnot\b|\bwithout\b|\bavoid\b|\bnever\b|不要|没有|不是|非|无|禁止|避免)"
+    r"[^\n.。;；]{0,75}?(?:\bsing[- ]song\s+lilt\b|\boffended\s+gasp\b|\bstartled\s+yelp\b|\beyes\s+(?:snapping\s+)?wide\s+into\s+(?:\w+\s+)?circles\b|\bpuffs?\s+(?:her|his|their)\s+(?:\w+\s+)?cheeks\b|\bpuffed\s+balloon\s+cheeks\b)",
+    re.IGNORECASE,
+)
+CARTOON_OVERACT_RE = re.compile(
+    r"\bsing[- ]song\s+lilt\b|\boffended\s+gasp\b|\bstartled\s+yelp\b|\beyes\s+(?:snapping\s+)?wide\s+into\s+(?:\w+\s+)?circles\b|\bpuffs?\s+(?:her|his|their)\s+(?:\w+\s+)?cheeks\b",
+    re.IGNORECASE,
+)
 NEGATED_LENS_RE = re.compile(
     r"(?:\bno\b|\bnot\b|\bwithout\b|\bavoid\b|\bnever\b|不要|没有|不是|非|无|禁止|避免)"
     r"[^\n.。;；]{0,30}?(?:\bbokeh\b|\bshallow\s+depth\s+of\s+field\b|\banamorphic\s+lens\b|\bf/\d(?:\.\d)?\b|景深虚化|大光圈虚化|背景虚化)",
@@ -352,6 +361,16 @@ def check_craft_heuristics(issues: list[Issue], text: str, mode: str) -> None:
             "warning",
             "AIRBRUSH_CEL_CONFLICT",
             "Mixing airbrushed/semi-realistic painterly style with 'cel-shaded'/'cel-painted'/'2D stylized anime' pulls non-anchor cuts into hard black outlines and flat cartoon fills.",
+        )
+
+    overact_unnegated = NEGATED_CARTOON_OVERACT_RE.sub(" ", text)
+    overact_match = CARTOON_OVERACT_RE.search(overact_unnegated)
+    if overact_match:
+        add(
+            issues,
+            "warning",
+            "CARTOON_OVERACTING_RISK",
+            f"'{overact_match.group(0)}' can synthesize loud cartoon gasps or distort semi-realistic faces (bug-eyes / balloon cheeks); prefer grounded conversational delivery and natural micro-expressions.",
         )
 
     if STYLE_2D_RE.search(cel_unnegated):

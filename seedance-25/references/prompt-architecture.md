@@ -251,7 +251,11 @@ Language + user-requested regional variety/accent + emotional state (what the sp
 ```
 
 - Label every speaker separately.
-- Always state how the speaker is feeling and pair that emotion with visible facial micro-expressions (brow shape, eye crinkle, lip curve, cheek flush, head tilt) and vocal inflection (playful lilt, flustered crack, sulky groan, warm chuckle). Avoid words like `flat`, `deadpan`, `calm`, `subtle`, or `monotone` unless the user explicitly wants a robotic or stone-faced gag—in inspected renders, those terms flatten TTS prosody into a robotic voice and freeze the face into a blank stare.
+- Keep vocal and facial direction in the **conversational human middle ground**—neither deadpan nor cartoon-exaggerated:
+  - **Avoid prosody flatteners** (`flat`, `deadpan`, `calm`, `subtle`, `monotone`) unless the user explicitly wants a robotic or stone-faced gag—in inspected renders (`Untitled_(2).mp4`), those terms flatten TTS prosody into a robotic voice and freeze the face into a mannequin stare.
+  - **Avoid cartoon over-acting triggers** (`inhales excitedly`, `offended gasp`, `sharp yelp`, `sing-song lilt`, `high-pitched voice that cracks`, `eyes snapping wide into circles`, `brows shooting into bangs`, `mouth dropping open`, `puffs her cheeks`)—in inspected renders (`Untitled_(3).mp4`), pre-line breath/gasp words cause TTS to synthesize loud `"HAAAH!"` gasps and children's-cartoon dubbing, while extreme eye/mouth/cheek terms warp semi-realistic faces into bug-eyed grimaces and balloon cheeks.
+  - **Use grounded conversational delivery + natural micro-expressions:** state how the speaker feels paired with warm, natural human vocal inflection (`smooth teasing conversational voice`, `natural puzzled tone`, `startled disbelieving little laugh`, `dry incredulous voice`, `relaxed dryly amused tone`) and anatomically natural facial cues (`slow arch of one eyebrow`, `blinking twice in confusion`, `brows knitting together`, `amused eye roll`, `crooked half-smile`).
+  - **Keep each spoken sentence inside one on-camera shot:** do not split a spoken sentence mid-clause across a cut into an off-screen object insert, which resets TTS prosody at the seam and makes the second half sound like detached voiceover.
 - Do not infer an accent or dialect from the written language.
 - If non-Chinese dialogue may be spoken in Chinese, reinforce the intended language.
 - Add a regional accent only when the user requests it.
