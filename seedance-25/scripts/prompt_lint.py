@@ -206,15 +206,33 @@ DIALOGUE_RE = re.compile(
     re.IGNORECASE,
 )
 LATIN_WORD_RE = re.compile(r"[A-Za-z0-9]+(?:['’][A-Za-z]+)?")
-DIALOGUE_WPS_WARN = 3.0
+DIALOGUE_WPS_WARN = 2.0
+CLIP_MAX_DIALOGUE_LINES = 3
+CLIP_MAX_DIALOGUE_WORDS = 24
 
 
 def check_dialogue_density(issues: list[Issue], text: str) -> None:
-    """Warn when timed shots carry more spoken Latin-script words than fit naturally.
+    """Warn when timed shots or whole multi-shot clips carry too much speech.
 
     Craft heuristic from desk-prompt-patterns.md, not a first-party limit.
     CJK dialogue is not counted.
     """
+
+    all_dialogues = list(DIALOGUE_RE.finditer(text))
+    total_lines = len(all_dialogues)
+    total_words = sum(
+        len(LATIN_WORD_RE.findall(d.group("quoted") or d.group("braced") or ""))
+        for d in all_dialogues
+    )
+    if total_lines > CLIP_MAX_DIALOGUE_LINES or total_words > CLIP_MAX_DIALOGUE_WORDS:
+        add(
+            issues,
+            "warning",
+            "CLIP_DIALOGUE_OVERLOAD",
+            f"Clip contains {total_lines} spoken line(s) ({total_words} words total). "
+            f"Over {CLIP_MAX_DIALOGUE_LINES} lines or {CLIP_MAX_DIALOGUE_WORDS} total words in one clip causes TTS voice drift toward a robotic cadence; "
+            "trim to 2-3 short lines (3-5 words each) with silent physical reaction shots in between.",
+        )
 
     matches = timeline_matches(text)
     for index, match in enumerate(matches):
@@ -234,7 +252,7 @@ def check_dialogue_density(issues: list[Issue], text: str) -> None:
                 "warning",
                 "DIALOGUE_DENSITY",
                 f"{start:g}-{end:g}s carries {words} spoken words ({words / duration:.1f} words/s). "
-                "Aim for about 2.5 words/s or less, fewer when the shot also carries several actions.",
+                "Aim for 1.0-1.5 words/s (below 2.0 words/s) so TTS prosody stays natural and unhurried.",
             )
 
 
@@ -730,6 +748,10 @@ The white lamp inherits every appearance timing, motion, and occlusion of the re
     assert "PROSODY_FLATTENER_RISK" in {i.code for i in issues}, issues
     _, issues = lint('Shot 1: She speaks: {"Double the pumpkins, lock the moon—"} Cut as the drop falls.\n[Cut to]\nShot 2: Her voice continues: {"—Halloween stays till next June!"}')
     assert "SPLIT_DIALOGUE_ACROSS_CUT" in {i.code for i in issues}, issues
+
+    overloaded_clip = 'Shot 1: {"Line one here."} Shot 2: {"Line two here."} Shot 3: {"Line three here."} Shot 4: {"Line four here."}'
+    _, issues = lint(overloaded_clip)
+    assert "CLIP_DIALOGUE_OVERLOAD" in {i.code for i in issues}, issues
     print("prompt_lint self-test: PASS")
 
 
