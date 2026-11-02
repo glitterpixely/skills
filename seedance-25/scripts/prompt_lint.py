@@ -303,12 +303,25 @@ NEGATED_CEL_RE = re.compile(
 )
 NEGATED_CARTOON_OVERACT_RE = re.compile(
     r"(?:\bno\b|\bnot\b|\bwithout\b|\bavoid\b|\bnever\b|不要|没有|不是|非|无|禁止|避免)"
-    r"[^\n.。;；]{0,75}?(?:\bsing[- ]song\s+lilt\b|\boffended\s+gasp\b|\bstartled\s+yelp\b|\beyes\s+(?:snapping\s+)?wide\s+into\s+(?:\w+\s+)?circles\b|\bpuffs?\s+(?:her|his|their)\s+(?:\w+\s+)?cheeks\b|\bpuffed\s+balloon\s+cheeks\b)",
+    r"[^\n.。;；]{0,90}?(?:\bsing[- ]song\s+lilt\b|\boffended\s+gasp\b|\bstartled\s+yelp\b|\binhales?\s+excitedly\b|\bhigh[- ]pitched\s+voice\s+that\s+cracks\b|\beyes\s+(?:snapping\s+)?wide\s+into\s+(?:\w+\s+)?circles\b|\bbrows\s+shooting\s+into\b|\bpuffs?\s+(?:her|his|their)\s+(?:\w+\s+)?cheeks\b|\bpuffed\s+balloon\s+cheeks\b)",
     re.IGNORECASE,
 )
 CARTOON_OVERACT_RE = re.compile(
-    r"\bsing[- ]song\s+lilt\b|\boffended\s+gasp\b|\bstartled\s+yelp\b|\beyes\s+(?:snapping\s+)?wide\s+into\s+(?:\w+\s+)?circles\b|\bpuffs?\s+(?:her|his|their)\s+(?:\w+\s+)?cheeks\b",
+    r"\bsing[- ]song\s+lilt\b|\boffended\s+gasp\b|\bstartled\s+yelp\b|\binhales?\s+excitedly\b|\bhigh[- ]pitched\s+voice\s+that\s+cracks\b|\beyes\s+(?:snapping\s+)?wide\s+into\s+(?:\w+\s+)?circles\b|\bbrows\s+shooting\s+into\b|\bpuffs?\s+(?:her|his|their)\s+(?:\w+\s+)?cheeks\b",
     re.IGNORECASE,
+)
+NEGATED_PROSODY_FLATTENER_RE = re.compile(
+    r"(?:\bno\b|\bnot\b|\bwithout\b|\bavoid\b|\bnever\b|不要|没有|不是|非|无|禁止|避免)"
+    r"[^\n.。;；]{0,60}?(?:\bdeadpan\b|\bmonotone\b|\bflat\s+(?:voice|tone|delivery|resignation)\b)",
+    re.IGNORECASE,
+)
+PROSODY_FLATTENER_RE = re.compile(
+    r"\bdeadpan\s+(?:voice|tone|delivery)\b|\bmonotone\s+(?:voice|tone|delivery)\b|\bflat\s+(?:voice|tone|delivery|resignation)\b|\bkeep\s+(?:her|his|their)\s+expressions?\s+subtle,\s+cool,\s+and\s+deadpan\b",
+    re.IGNORECASE,
+)
+SPLIT_DIALOGUE_CUT_RE = re.compile(
+    r"\{[^{}\n]*?[-–—]\s*[\"”']?\s*\}[^{}]{0,260}?\[Cut\s+to\][^{}]{0,360}?\{\s*[\"“']?\s*[-–—]",
+    re.IGNORECASE | re.DOTALL,
 )
 NEGATED_LENS_RE = re.compile(
     r"(?:\bno\b|\bnot\b|\bwithout\b|\bavoid\b|\bnever\b|不要|没有|不是|非|无|禁止|避免)"
@@ -371,6 +384,24 @@ def check_craft_heuristics(issues: list[Issue], text: str, mode: str) -> None:
             "warning",
             "CARTOON_OVERACTING_RISK",
             f"'{overact_match.group(0)}' can synthesize loud cartoon gasps or distort semi-realistic faces (bug-eyes / balloon cheeks); prefer grounded conversational delivery and natural micro-expressions.",
+        )
+
+    flattener_unnegated = NEGATED_PROSODY_FLATTENER_RE.sub(" ", text)
+    flattener_match = PROSODY_FLATTENER_RE.search(flattener_unnegated)
+    if flattener_match and DIALOGUE_RE.search(text):
+        add(
+            issues,
+            "warning",
+            "PROSODY_FLATTENER_RISK",
+            f"'{flattener_match.group(0)}' flattens TTS prosody into a robotic monotone and freezes the face; use grounded conversational inflection instead.",
+        )
+
+    if SPLIT_DIALOGUE_CUT_RE.search(text):
+        add(
+            issues,
+            "warning",
+            "SPLIT_DIALOGUE_ACROSS_CUT",
+            "A spoken sentence appears split across a '[Cut to]' boundary, which resets TTS prosody at the seam; keep each spoken sentence self-contained inside one on-camera shot.",
         )
 
     if STYLE_2D_RE.search(cel_unnegated):
@@ -692,6 +723,13 @@ The white lamp inherits every appearance timing, motion, and occlusion of the re
     assert "UNSUPPORTED_HANDLE_SYNTAX" in {i.code for i in issues}, issues
     _, issues = lint("Character @[ref1] enters the room.")
     assert "UNSUPPORTED_HANDLE_SYNTAX" in {i.code for i in issues}, issues
+
+    _, issues = lint('She inhales excitedly and speaks in a sing-song lilt: {"Hello there!"}')
+    assert "CARTOON_OVERACTING_RISK" in {i.code for i in issues}, issues
+    _, issues = lint('She speaks in a flat tone: {"Hello there."}')
+    assert "PROSODY_FLATTENER_RISK" in {i.code for i in issues}, issues
+    _, issues = lint('Shot 1: She speaks: {"Double the pumpkins, lock the moon—"} Cut as the drop falls.\n[Cut to]\nShot 2: Her voice continues: {"—Halloween stays till next June!"}')
+    assert "SPLIT_DIALOGUE_ACROSS_CUT" in {i.code for i in issues}, issues
     print("prompt_lint self-test: PASS")
 
 
