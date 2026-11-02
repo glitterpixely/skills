@@ -191,6 +191,18 @@ def timeline_matches(text: str) -> list[re.Match[str]]:
         )
         if bracketed or starts_line or timeline_punctuation or preceded_by_inline_separator or shot_header:
             accepted.append(match)
+    if len(accepted) >= 2:
+        first_start, first_end = float(accepted[0].group("start")), float(accepted[0].group("end"))
+        second_start, second_end = float(accepted[1].group("start")), float(accepted[1].group("end"))
+        first_prefix = text[text.rfind("\n", 0, accepted[0].start()) + 1 : accepted[0].start()]
+        is_shot_container = re.search(r"\bShot\s+\d+\s*[(\[]\s*$", first_prefix, re.IGNORECASE) is not None
+        if (
+            is_shot_container
+            and second_start == first_start
+            and second_end < first_end
+            and all(float(m.group("end")) <= first_end for m in accepted[1:])
+        ):
+            return accepted[1:]
     return accepted
 
 
@@ -208,6 +220,7 @@ DIALOGUE_RE = re.compile(
 LATIN_WORD_RE = re.compile(r"[A-Za-z0-9]+(?:['’][A-Za-z]+)?")
 DIALOGUE_WPS_WARN = 2.0
 CLIP_MAX_DIALOGUE_LINES = 3
+CLIP_MAX_TIMED_SHORT_LINES = 5
 CLIP_MAX_DIALOGUE_WORDS = 24
 
 
@@ -220,21 +233,27 @@ def check_dialogue_density(issues: list[Issue], text: str) -> None:
 
     all_dialogues = list(DIALOGUE_RE.finditer(text))
     total_lines = len(all_dialogues)
-    total_words = sum(
+    line_word_counts = [
         len(LATIN_WORD_RE.findall(d.group("quoted") or d.group("braced") or ""))
         for d in all_dialogues
+    ]
+    total_words = sum(line_word_counts)
+    matches = timeline_matches(text)
+    max_lines = (
+        CLIP_MAX_TIMED_SHORT_LINES
+        if matches and all(w <= 5 for w in line_word_counts)
+        else CLIP_MAX_DIALOGUE_LINES
     )
-    if total_lines > CLIP_MAX_DIALOGUE_LINES or total_words > CLIP_MAX_DIALOGUE_WORDS:
+    if total_lines > max_lines or total_words > CLIP_MAX_DIALOGUE_WORDS:
         add(
             issues,
             "warning",
             "CLIP_DIALOGUE_OVERLOAD",
             f"Clip contains {total_lines} spoken line(s) ({total_words} words total). "
-            f"Over {CLIP_MAX_DIALOGUE_LINES} lines or {CLIP_MAX_DIALOGUE_WORDS} total words in one clip causes TTS voice drift toward a robotic cadence; "
+            f"Over {CLIP_MAX_DIALOGUE_LINES} lines (or {CLIP_MAX_TIMED_SHORT_LINES} ultra-short timed lines) or {CLIP_MAX_DIALOGUE_WORDS} total words in one clip causes TTS voice drift toward a robotic cadence; "
             "trim to 2-3 short lines (3-5 words each) with silent physical reaction shots in between.",
         )
 
-    matches = timeline_matches(text)
     for index, match in enumerate(matches):
         start, end = float(match.group("start")), float(match.group("end"))
         duration = end - start
@@ -259,15 +278,20 @@ def check_dialogue_density(issues: list[Issue], text: str) -> None:
 NEGATED_EFFECT_RE = {
     "freeze frames": re.compile(
         r"(?:\bno\b|\bnot\b|\bwithout\b|\bavoid\b|不要|没有|不是|非|无|禁止|避免)[^\n.。;；]{0,30}?"
-        r"(?:freeze[- ]?frames?|freezes?|定格)",
+        r"(?:freeze[- ]?frames?|freezes?|定格)(?!\s*(?:except|save\s+for|other\s+than|除了))",
         re.IGNORECASE,
     ),
     "slow motion": re.compile(
         r"(?:\bno\b|\bnot\b|\bwithout\b|\bavoid\b|不要|没有|不是|非|无|禁止|避免)[^\n.。;；]{0,30}?"
-        r"(?:slow[- ]?motion|slow[- ]?mo\b|慢动作|慢镜头)",
+        r"(?:slow[- ]?motion|slow[- ]?mo\b|慢动作|慢镜头)(?!\s*(?:except|save\s+for|other\s+than|除了))",
         re.IGNORECASE,
     ),
 }
+SCOPED_EXCEPTION_RE = re.compile(
+    r"(?:\bexcept(?:\s+for)?\b|\bsave\s+for\b|\bother\s+than\b|除了)[^\n.。;；]{0,60}?"
+    r"(?:slow[- ]?motion|slow[- ]?mo\b|speed[- ]?ramp|bullet[- ]?time|freeze[- ]?frames?|hit[- ]?stop|慢动作|慢镜头|子弹时间|定格)",
+    re.IGNORECASE,
+)
 POSITIVE_EFFECT_RE = {
     "freeze frames": re.compile(r"hit[- ]?stop|freeze[- ]?frames?|定格", re.IGNORECASE),
     "slow motion": re.compile(r"slow[- ]?motion|slow[- ]?mo\b|speed[- ]?ramp|bullet[- ]?time|慢动作|慢镜头|子弹时间", re.IGNORECASE),
@@ -279,6 +303,8 @@ def check_negation_conflicts(issues: list[Issue], text: str) -> None:
 
     for effect, negated in NEGATED_EFFECT_RE.items():
         if not negated.search(text):
+            continue
+        if SCOPED_EXCEPTION_RE.search(text):
             continue
         remainder = negated.sub(" ", text)
         positive = POSITIVE_EFFECT_RE[effect].search(remainder)
@@ -752,6 +778,25 @@ The white lamp inherits every appearance timing, motion, and occlusion of the re
     overloaded_clip = 'Shot 1: {"Line one here."} Shot 2: {"Line two here."} Shot 3: {"Line three here."} Shot 4: {"Line four here."}'
     _, issues = lint(overloaded_clip)
     assert "CLIP_DIALOGUE_OVERLOAD" in {i.code for i in issues}, issues
+
+    nested_one_take = """@Image 1 defines the streamer and her room.
+Shot 1 (0-30s): [Front camera of her phone, one continuous take]
+0-4s: She sits at her desk. {"Room tour. Try not."}
+4-8s: She lifts the phone off its stand.
+8-9s: One step brings her to the shelf.
+9-13s: She presents the doll. {"She judges everyone."}
+13-17s: She shows the jar. {"He is all smiles."}
+17-21s: She leans by the portrait. {"Family resemblance."}
+21-24s: She turns back. {"And the scariest? Me."}
+24-25s: One second of total silence.
+25-28s: Autofocus hunts and softens into blur.
+28-30s: Focus snaps back onto her face."""
+    _, issues = lint(nested_one_take, images=1)
+    assert not {"TIMELINE_OVERLAP", "TIMELINE_GAP", "CLIP_DIALOGUE_OVERLOAD", "DIALOGUE_DENSITY"} & {i.code for i in issues}, issues
+
+    scoped_ramp = "Avoid: no slow motion except one brief speed ramp at the final impact. Shot 15 (24-25s): Palm hits the floor with a brief speed ramp at contact."
+    _, issues = lint(scoped_ramp)
+    assert "NEGATION_CONFLICT" not in {i.code for i in issues}, issues
     print("prompt_lint self-test: PASS")
 
 
