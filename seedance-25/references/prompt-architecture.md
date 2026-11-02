@@ -247,10 +247,11 @@ If `<>` marks sound effects, write character names without angle brackets.
 For each dialogue line specify:
 
 ```text
-Language + user-requested regional variety/accent + delivery + speaker + {exact dialogue}
+Language + user-requested regional variety/accent + emotional state (what the speaker is feeling) + expressive facial & vocal delivery + speaker + {exact dialogue}
 ```
 
 - Label every speaker separately.
+- Always state how the speaker is feeling and pair that emotion with visible facial micro-expressions (brow shape, eye crinkle, lip curve, cheek flush, head tilt) and vocal inflection (playful lilt, flustered crack, sulky groan, warm chuckle). Avoid words like `flat`, `deadpan`, `calm`, `subtle`, or `monotone` unless the user explicitly wants a robotic or stone-faced gag—in inspected renders, those terms flatten TTS prosody into a robotic voice and freeze the face into a blank stare.
 - Do not infer an accent or dialect from the written language.
 - If non-Chinese dialogue may be spoken in Chinese, reinforce the intended language.
 - Add a regional accent only when the user requests it.
