@@ -135,7 +135,7 @@ If materials arrive without any generation, edit, or extension goal, ask for the
 
 ## Output contract
 
-Match the user's language and reference notation, with one deliberate exception for high-velocity combat: when the user requests a **fast-paced fight scene or high-cut action blitz (`>= 12 shots`)**, deliver the submit-ready prompt in **compact Chinese (`Mode 1: Hyper-cut sakuga blitz`)** (retaining English `@Image N defines only ...; do not use ...` role verbs so reference binding lints cleanly) even if the request was written in English, unless the user explicitly asks for an English-only prompt. Do not renumber explicit handles.
+Match the user's language and reference notation, with one deliberate exception for high-velocity action: when the user requests a **fast-paced fight, chase, hunt, or high-cut action sequence (`>= 12 shots`)**, deliver the submit-ready prompt in **compact Chinese (`Mode 1: 16–24 untimed shots`)** (retaining English `@Image N defines only ...; do not use ...` role verbs so reference binding lints cleanly) even if the request was written in English, unless the user explicitly asks for an English-only prompt. Do not renumber explicit handles.
 
 Default delivery:
 

@@ -421,6 +421,10 @@ ACTIVE_CATCH_VERB_RE = re.compile(
     r"\b(?:lunges?|lunging|reaches?|reaching|grabs?|grabbing|snatches?|snatching|scoops?|scooping|sweeps?|sweeping|dives?|diving|swipes?|swiping|yanks?|yanking|cupped\s+hands)\b",
     re.IGNORECASE,
 )
+OPENING_SETTLE_IN_ACTION_RE = re.compile(
+    r"\bsettl(?:e|es|ing)\b[^\n.。;；]{0,50}?\bbefore\s+the\s+(?:chase|fight|battle|combat|action|pursuit|duel)\b",
+    re.IGNORECASE,
+)
 
 
 def check_craft_heuristics(issues: list[Issue], text: str, mode: str) -> None:
@@ -466,6 +470,14 @@ def check_craft_heuristics(issues: list[Issue], text: str, mode: str) -> None:
                     f"Passive pursuit phrasing ('{clause.strip()[:60]}...') renders as stiff upright jogging with passive arms; pair pursuit with active upper-body catch mechanics (lunging with cupped hands, sweeping arms, pulling vines) and a narrow miss.",
                 )
                 break
+
+        if OPENING_SETTLE_IN_ACTION_RE.search(text):
+            add(
+                issues,
+                "warning",
+                "OPENING_SETTLE_IN_ACTION",
+                "Putting a 'settling before the chase/fight/action' beat in Shot 1 wastes the first 2-3s standing still; open fast-paced clips in medias res on the immediate physical trigger.",
+            )
 
         ranges = timeline_ranges(text)
         durations = [end - start for start, end in ranges if end > start]
@@ -896,6 +908,9 @@ Car drives away."""
     sluggish = "Shot 1 (0-5s): A.\nShot 2 (5-10s): B.\nShot 3 (10-15s): C.\nShot 4 (15-21s): D.\nShot 5 (21-27s): E.\nShot 6 (27-30s): F."
     _, issues = lint(sluggish)
     assert "SLUGGISH_UNIFORM_TIMING" in {i.code for i in issues}, issues
+
+    _, issues = lint("Shot 1: Wide shot settling briefly on the clearing before the chase erupts.")
+    assert "OPENING_SETTLE_IN_ACTION" in {i.code for i in issues}, issues
 
     print("prompt_lint self-test: PASS")
 
