@@ -397,6 +397,30 @@ EDIT_REF_TRAP_RE = re.compile(
     rf"|参考\s*(?:{VIDEO_HANDLE_PATTERN}|<\s*视频\s*\d*\s*>))",
     re.IGNORECASE,
 )
+NEGATED_STALEMATE_RE = re.compile(
+    r"(?:\bno\b|\bnot\b|\bwithout\b|\bavoid\b|\bnever\b|不要|没有|不是|非|无|禁止|避免|不在)"
+    r"[^\n.。;；]{0,35}?(?:对波僵持|僵持结束|死死对视|stalemate|lock\s+glares)",
+    re.IGNORECASE,
+)
+STALEMATE_CLASH_RE = re.compile(
+    r"硬生生对撞[^。;\n]{0,80}?死死对视"
+    r"|\bclash(?:es|ing)?\s+point[- ]blank\b[^.\n]{0,120}?\block(?:ing)?\s+glares\b"
+    r"|\block(?:ed|ing)?\s+in\s+a\s+stalemate\b",
+    re.IGNORECASE,
+)
+NEGATED_PASSIVE_PURSUIT_RE = re.compile(
+    r"(?:\bno\b|\bnot\b|\bwithout\b|\bavoid\b|\bnever\b|不要|没有|不是|非|无|禁止|避免)"
+    r"[^\n.。;；]{0,40}?\b(?:runs?|running|jogs?|jogging|chases?|chasing|follows?|following)\s+(?:stiffly\s+|upright\s+)?(?:after|behind)\b",
+    re.IGNORECASE,
+)
+PASSIVE_PURSUIT_SENTENCE_RE = re.compile(
+    r"[^.\n;；。]*\b(?:runs?|jogs?|chases?|follows?)\s+(?:stiffly\s+|upright\s+)?(?:after|behind)\s+(?:him|her|it|them|the\s+\w+)[^.\n;；。]*",
+    re.IGNORECASE,
+)
+ACTIVE_CATCH_VERB_RE = re.compile(
+    r"\b(?:lunges?|lunging|reaches?|reaching|grabs?|grabbing|snatches?|snatching|scoops?|scooping|sweeps?|sweeping|dives?|diving|swipes?|swiping|yanks?|yanking|cupped\s+hands)\b",
+    re.IGNORECASE,
+)
 
 
 def check_craft_heuristics(issues: list[Issue], text: str, mode: str) -> None:
@@ -420,6 +444,48 @@ def check_craft_heuristics(issues: list[Issue], text: str, mode: str) -> None:
                 "warning",
                 "MORPH_TOKEN_RISK",
                 f"'{morph_match.group(0)}' can trigger slow mesh melting during transformations; prefer '闪切' ('flash-cut') with an impact flash and identical pose lock.",
+            )
+
+        stalemate_remainder = NEGATED_STALEMATE_RE.sub(" ", text)
+        if STALEMATE_CLASH_RE.search(stalemate_remainder):
+            add(
+                issues,
+                "warning",
+                "STALEMATE_CLASH_ENDING",
+                "Ending on a mutual clash/glare lock freezes the final beat into a generic split-screen stalemate; dedicate the last 4-5 shots to a decisive finishing chain (break projectile -> shatter guard & land clean hit -> wide knockdown -> winner lands in foreground with defeated opponent downed in background).",
+            )
+
+        pursuit_remainder = NEGATED_PASSIVE_PURSUIT_RE.sub(" ", text)
+        for clause_match in PASSIVE_PURSUIT_SENTENCE_RE.finditer(pursuit_remainder):
+            clause = clause_match.group(0)
+            if not ACTIVE_CATCH_VERB_RE.search(clause):
+                add(
+                    issues,
+                    "warning",
+                    "PASSIVE_PURSUIT_RISK",
+                    f"Passive pursuit phrasing ('{clause.strip()[:60]}...') renders as stiff upright jogging with passive arms; pair pursuit with active upper-body catch mechanics (lunging with cupped hands, sweeping arms, pulling vines) and a narrow miss.",
+                )
+                break
+
+        ranges = timeline_ranges(text)
+        durations = [end - start for start, end in ranges if end > start]
+        is_one_take = re.search(
+            r"\bShot\s+1\s*\(\s*0\s*[-–—]\s*\d+\s*s\s*\)\s*:\s*\[[^\]]*one\s+continuous\s+take",
+            text,
+            re.IGNORECASE,
+        )
+        if (
+            len(durations) >= 5
+            and sum(durations) >= 20.0
+            and not is_one_take
+            and not DIALOGUE_RE.search(text)
+            and all(d >= 4.0 for d in durations[:-1])
+        ):
+            add(
+                issues,
+                "warning",
+                "SLUGGISH_UNIFORM_TIMING",
+                "All non-final timed shot windows are 4-6s long, which stretches action/chases into slow motion and causes early static holds. Prefer untimed 'Shot N' (10-20 cuts) with 'Cut as <action>' triggers, or accordion 1-3s windows with a <=3s final payoff.",
             )
 
     cel_unnegated = NEGATED_CEL_RE.sub(" ", text)
@@ -820,6 +886,17 @@ Car drives away."""
 
     comma_and_pipe_shots = "Shot 1 | 0-2s. First strike.\nShot 2, 2-4s. Second strike."
     assert timeline_ranges(comma_and_pipe_shots) == [(0.0, 2.0), (2.0, 4.0)]
+
+    _, issues = lint("Shot 20: 红围巾角少年的赤金重拳与六眼黄袍法师的青金晶矛在两人面门之间硬生生对撞，红瞳与六只金竖瞳死死对视。")
+    assert "STALEMATE_CLASH_ENDING" in {i.code for i in issues}, issues
+
+    _, issues = lint("The fire spirit bolts across the grass and the forest nymph runs after him across the clearing.")
+    assert "PASSIVE_PURSUIT_RISK" in {i.code for i in issues}, issues
+
+    sluggish = "Shot 1 (0-5s): A.\nShot 2 (5-10s): B.\nShot 3 (10-15s): C.\nShot 4 (15-21s): D.\nShot 5 (21-27s): E.\nShot 6 (27-30s): F."
+    _, issues = lint(sluggish)
+    assert "SLUGGISH_UNIFORM_TIMING" in {i.code for i in issues}, issues
+
     print("prompt_lint self-test: PASS")
 
 
