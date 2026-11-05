@@ -221,28 +221,45 @@ def timeline_ranges(text: str) -> list[tuple[float, float]]:
     return [_match_bounds(m) for m in timeline_matches(text)]
 
 
-# Dialogue introduced as `<Name>'s line (tone): "..."`, `says: "..."`, or the
-# documented `{...}` dialogue syntax. Bare quotes are not treated as speech.
+# Dialogue introduced as `<Name>'s line (tone): "..."`, `Dialogue (...): "..."`,
+# `Line 1 (...): "..."`, `says: "..."`, or the documented `{...}` dialogue syntax.
+# Bare quotes are not treated as speech.
 DIALOGUE_RE = re.compile(
-    r"(?:\b(?:line|lines|says|said|asks|shouts|whispers|dialogue)\b[^\n:\"“]{0,60}:\s*[\"“](?P<quoted>[^\"”\n]+)[\"”])"
+    r"(?:\b(?:line(?:\s+\d+)?|lines|says|said|asks|shouts|whispers|dialogue)\b"
+    r"(?:\s*\([^()]{0,220}\)|[^\n:\"“]{0,90}){0,2}:\s*[\"“](?P<quoted>[^\"”]{1,280})[\"”])"
     r"|\{(?P<braced>[^{}\n]+)\}",
     re.IGNORECASE,
 )
-LATIN_WORD_RE = re.compile(r"[A-Za-z0-9]+(?:['’][A-Za-z]+)?")
+LATIN_WORD_RE = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿ0-9]+(?:['’][A-Za-zÀ-ÖØ-öø-ÿ]+)?")
 DIALOGUE_WPS_WARN = 2.0
 CLIP_MAX_DIALOGUE_LINES = 3
 CLIP_MAX_TIMED_SHORT_LINES = 5
 CLIP_MAX_DIALOGUE_WORDS = 24
+CLIP_MAX_DRAMA_DIALOGUE_LINES = 10
+CLIP_MAX_DRAMA_DIALOGUE_WORDS = 38
 
 
 def check_dialogue_density(issues: list[Issue], text: str) -> None:
     """Warn when timed shots or whole multi-shot clips carry too much speech.
 
     Craft heuristic from desk-prompt-patterns.md, not a first-party limit.
-    CJK dialogue is not counted.
+    CJK dialogue is not counted. When both a top-level transcript block and a
+    [Shot list] section are present, count inside [Shot list] to avoid
+    double-counting repeated lines.
     """
 
-    all_dialogues = list(DIALOGUE_RE.finditer(text))
+    shot_list_split = re.split(
+        r"^\s*\[Shot\s+list\]\s*$",
+        text,
+        maxsplit=1,
+        flags=re.IGNORECASE | re.MULTILINE,
+    )
+    dialogue_scope = (
+        shot_list_split[1]
+        if len(shot_list_split) == 2 and DIALOGUE_RE.search(shot_list_split[1])
+        else text
+    )
+    all_dialogues = list(DIALOGUE_RE.finditer(dialogue_scope))
     total_lines = len(all_dialogues)
     line_word_counts = [
         len(LATIN_WORD_RE.findall(d.group("quoted") or d.group("braced") or ""))
@@ -250,19 +267,42 @@ def check_dialogue_density(issues: list[Issue], text: str) -> None:
     ]
     total_words = sum(line_word_counts)
     matches = timeline_matches(text)
-    max_lines = (
-        CLIP_MAX_TIMED_SHORT_LINES
-        if matches and all(w <= 5 for w in line_word_counts)
-        else CLIP_MAX_DIALOGUE_LINES
+    durations = [_match_bounds(m)[1] - _match_bounds(m)[0] for m in matches]
+    total_timed_seconds = sum(d for d in durations if d > 0)
+
+    speaking_windows = 0
+    for index, match in enumerate(matches):
+        block_end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        if DIALOGUE_RE.search(text[match.end() : block_end]):
+            speaking_windows += 1
+
+    is_timed_slow_dialogue_drama = (
+        len(durations) >= 5
+        and total_timed_seconds >= 24.0
+        and speaking_windows >= 4
+        and bool(line_word_counts)
+        and all(w <= 8 for w in line_word_counts)
+        and (total_words / total_timed_seconds) <= 1.35
     )
-    if total_lines > max_lines or total_words > CLIP_MAX_DIALOGUE_WORDS:
+
+    if is_timed_slow_dialogue_drama:
+        max_lines = CLIP_MAX_DRAMA_DIALOGUE_LINES
+        max_words = CLIP_MAX_DRAMA_DIALOGUE_WORDS
+    elif matches and all(w <= 5 for w in line_word_counts):
+        max_lines = CLIP_MAX_TIMED_SHORT_LINES
+        max_words = CLIP_MAX_DIALOGUE_WORDS
+    else:
+        max_lines = CLIP_MAX_DIALOGUE_LINES
+        max_words = CLIP_MAX_DIALOGUE_WORDS
+
+    if total_lines > max_lines or total_words > max_words:
         add(
             issues,
             "warning",
             "CLIP_DIALOGUE_OVERLOAD",
             f"Clip contains {total_lines} spoken line(s) ({total_words} words total). "
-            f"Over {CLIP_MAX_DIALOGUE_LINES} lines (or {CLIP_MAX_TIMED_SHORT_LINES} ultra-short timed lines) or {CLIP_MAX_DIALOGUE_WORDS} total words in one clip causes TTS voice drift toward a robotic cadence; "
-            "trim to 2-3 short lines (3-5 words each) with silent physical reaction shots in between.",
+            f"Over {CLIP_MAX_DIALOGUE_LINES} lines / {CLIP_MAX_DIALOGUE_WORDS} words in standard clips (or {CLIP_MAX_DRAMA_DIALOGUE_LINES} short clauses / {CLIP_MAX_DRAMA_DIALOGUE_WORDS} words in a 25-30s timed dialogue drama) causes TTS prosody drift; "
+            "trim or split across two generations around a silent reaction beat.",
         )
 
     for index, match in enumerate(matches):
@@ -276,13 +316,14 @@ def check_dialogue_density(issues: list[Issue], text: str) -> None:
         for dialogue in DIALOGUE_RE.finditer(block):
             spoken = dialogue.group("quoted") or dialogue.group("braced") or ""
             words += len(LATIN_WORD_RE.findall(spoken))
-        if words and words / duration >= DIALOGUE_WPS_WARN:
+        wps_limit = 2.5 if is_timed_slow_dialogue_drama else DIALOGUE_WPS_WARN
+        if words and words / duration >= wps_limit:
             add(
                 issues,
                 "warning",
                 "DIALOGUE_DENSITY",
                 f"{start:g}-{end:g}s carries {words} spoken words ({words / duration:.1f} words/s). "
-                "Aim for 1.0-1.5 words/s (below 2.0 words/s) so TTS prosody stays natural and unhurried.",
+                "Aim for 1.0-1.5 words/s (below 2.0 words/s, or <= 2.4 words/s when split into short clauses in a slow dialogue drama) so TTS prosody stays natural and unhurried.",
             )
 
 
@@ -425,6 +466,19 @@ OPENING_SETTLE_IN_ACTION_RE = re.compile(
     r"\bsettl(?:e|es|ing)\b[^\n.。;；]{0,50}?\bbefore\s+the\s+(?:chase|fight|battle|combat|action|pursuit|duel)\b",
     re.IGNORECASE,
 )
+EXCLUSION_BLOCK_RE = re.compile(
+    r"(?:^\s*\[(?:Strictly\s+exclude|Exclusions?|Technical\s+Exclusions?|Avoid)\]\s*$"
+    r"|^\s*(?:Strictly\s+exclude|Avoid)\s*:)"
+    r"(?P<body>.*?)(?=^\s*\[[A-Za-z][^\]]*\]\s*$|\Z)",
+    re.IGNORECASE | re.MULTILINE | re.DOTALL,
+)
+BLOATED_EXCLUSION_WORDS_WARN = 80
+NEGATED_MUSIC_CLAUSE_RE = re.compile(
+    r"(?:\bno\b|\bnot\b|\bwithout\b|\bremove\b|\bexclude\b|\bnever\b|不要|没有|无|禁止)"
+    r"[^.!?;；。]{0,160}?\b(?:BGM|background\s+music|music(?:\s+plays)?|instrumental\s+music|soundtrack|score)\b"
+    r"|\bsoundtrack\s+is\s+only\s+(?:the\s+)?(?:two\s+)?voices\b",
+    re.IGNORECASE | re.DOTALL,
+)
 
 
 def check_craft_heuristics(issues: list[Issue], text: str, mode: str) -> None:
@@ -438,6 +492,18 @@ def check_craft_heuristics(issues: list[Issue], text: str, mode: str) -> None:
             "UNSUPPORTED_HANDLE_SYNTAX",
             f"Un-normalized handle '{bad_handle.group(0)}' found; use active surface handles such as '@Image 1', '@Video 1', or '@Audio 1'.",
         )
+
+    for excl_match in EXCLUSION_BLOCK_RE.finditer(text):
+        excl_words = len(LATIN_WORD_RE.findall(excl_match.group("body") or ""))
+        if excl_words > BLOATED_EXCLUSION_WORDS_WARN:
+            add(
+                issues,
+                "warning",
+                "BLOATED_EXCLUSION_LIST",
+                f"Exclusion block contains {excl_words} words (recommended <= {BLOATED_EXCLUSION_WORDS_WARN} words / 3-5 hard rules). "
+                "Seedance's decoder-only LLM text encoder processes the full prompt in one token stream, so long lists of banned props/garments/gestures inject those nouns into cross-attention; move wardrobe/prop invariance into affirmative character/scene locks.",
+            )
+            break
 
     if mode == "generation":
         morph_remainder = NEGATED_MORPH_RE.sub(" ", text)
@@ -692,7 +758,14 @@ def check_content(issues: list[Issue], text: str, allow_music: bool, allow_templ
     if re.search(r"\b(frame[- ]accurate|pixel[- ]identical|perfect adherence|no artifacts|guaranteed)\b", text, re.IGNORECASE):
         add(issues, "warning", "UNSUPPORTED_GUARANTEE", "Replace guarantees with observable goals and disclose documented limitations.")
     if not allow_music:
-        positive_music = re.search(r"(?<!no )(?<!remove )(?<!without )\b(?:BGM|background music|music plays|instrumental music|soundtrack)\b", text, re.IGNORECASE)
+        music_remainder = text
+        for _ in range(3):
+            music_remainder = NEGATED_MUSIC_CLAUSE_RE.sub(" ", music_remainder)
+        positive_music = re.search(
+            r"\b(?:BGM|background\s+music|music\s+plays|instrumental\s+music|soundtrack)\b",
+            music_remainder,
+            re.IGNORECASE,
+        )
         if positive_music:
             add(issues, "warning", "MUSIC_DEFAULT", "Music is present. Use --allow-music only when the user explicitly requested it.")
     if len(text.strip()) < 40:
@@ -911,6 +984,36 @@ Car drives away."""
 
     _, issues = lint("Shot 1: Wide shot settling briefly on the clearing before the chase erupts.")
     assert "OPENING_SETTLE_IN_ACTION" in {i.code for i in issues}, issues
+
+    slow_drama = """Shot 1 (0-6s): He sets the fork down.
+Dialogue (the composer, low gravelly baritone, measured and unhurried): "So, Stephan."
+Dialogue (after a brief pause): "Das Huhn ist gut."
+Shot 2 (6-11s): Stephan nods once.
+Dialogue (Stephan, calm baritone, quiet and measured): "Sehr gut, Herr van Beethoven."
+Shot 3 (11-16s): He reaches for the cup.
+Dialogue (the composer, slightly quieter, almost to himself): "Die Kartoffeln auch."
+Dialogue (after a brief pause): "Nicht zu salzig."
+Shot 4 (16-22s): He sets the cup down.
+Dialogue (the composer, flat and matter-of-fact, a little louder): "Heute morgen war der Arzt da."
+Shot 5 (22-28s): Stephan looks across the table.
+Dialogue (Stephan, very quiet, careful): "Und?"
+Dialogue (the composer, quiet, dry): "Wie immer."
+[Audio]
+No score, no\nsoundtrack, no ambient music. The soundtrack is only the two voices and room tone."""
+    _, issues = lint(slow_drama)
+    assert not {
+        "CLIP_DIALOGUE_OVERLOAD",
+        "DIALOGUE_DENSITY",
+        "SLUGGISH_UNIFORM_TIMING",
+        "MUSIC_DEFAULT",
+    } & {i.code for i in issues}, issues
+
+    bloated_excl = (
+        "Shot 1 (0-5s): A man sits at a table.\n[Strictly exclude]\n"
+        + " ".join(["no modern props or extra plates or forks or spoons or knives"] * 9)
+    )
+    _, issues = lint(bloated_excl)
+    assert "BLOATED_EXCLUSION_LIST" in {i.code for i in issues}, issues
 
     print("prompt_lint self-test: PASS")
 
