@@ -68,7 +68,10 @@ What the r187 shader code does (`tonemapping_pars_fragment.glsl.js`):
 
 **Calibrating exposure.** Two methods; use one per project:
 
-1. **Grey-card method (relative units, recommended).** Put a Lambertian card with albedo 0.18 (`color.setRGB(0.18,0.18,0.18)`) facing the key light. Read the pixel back (`renderer.readRenderTargetPixels` on the final LDR target). Adjust `toneMappingExposure` until the card sits where your reference photo or grade wants mid-grey. AgX needs about +0.2 to +0.5 EV more than ACES for similar mid-tone brightness, because ACES carries a built-in 1/0.6 ≈ ×1.67 (+0.74 EV) pre-scale (*belief*: the +0.2 to +0.5 EV figure is a working range, not a measurement).
+1. **Grey-card method (relative units, recommended).** Put a Lambertian card with albedo 0.18 (`color.setRGB(0.18,0.18,0.18)`) facing the key light. Read the pixel back (`renderer.readRenderTargetPixelsAsync` on the final LDR target). Adjust `toneMappingExposure` until the card sits where your reference photo or grade wants mid-grey.
+   - **Measured r187 transfer at `toneMappingExposure = 1.0`** (`scripts/physical.mjs`, from `acesFilmicToneMapping`, `agxToneMapping`, and `neutralToneMapping` in `three.tsl.js`):
+     - At **18% linear mid-grey (`0.18`)**: `ACESFilmicToneMapping(0.18) = 0.2131` linear (`0.499` sRGB, `127/255`), `AgXToneMapping(0.18) = 0.2145` linear (`0.501` sRGB, `128/255`), and `NeutralToneMapping(0.18) = 0.1400` linear (`0.410` sRGB, `105/255`, because Khronos PBR Neutral subtracts a `0.04` toe offset up to `StartCompression = 0.76`).
+     - **EV offsets to match ACES**: At `0.18` mid-grey, AgX and ACES are already matched within **`-0.012 EV`** (`exposure = 0.992`), whereas `NeutralToneMapping` requires **`+0.492 EV`** (`exposure = 1.406`) to match ACES's `0.2131` linear mid-grey. Above mid-grey (`0.50` linear diffuse highlight), ACES's `1/0.6` (+0.737 EV) pre-scale and steeper S-curve map `0.50 → 0.5576` linear vs AgX's gentler filmic shoulder `0.50 → 0.4251` linear (`+0.802 EV` / `exposure = 1.744` if matching upper-midtone punch).
 2. **EV100 method (absolute photometric units).** Exposure = 1 / (1.2 · 2^EV100) (Lagarde & de Rousiers, *Moving Frostbite to PBR*, 2014; saturation-based sensitivity):
 
 $$\text{exposure} = \frac{1}{1.2 \cdot 2^{EV_{100}}}$$

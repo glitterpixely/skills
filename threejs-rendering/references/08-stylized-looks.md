@@ -144,6 +144,69 @@ Algorithms (none ship as nodes in r187; build them in TSL, mostly on top of `pas
 | Hatching | Tonal art maps: 4–6 hatch textures of increasing density, blended by luminance; triplanar or screen-space mapping | Mipmapped TAMs keep stroke density constant with distance |
 | Posterized / graphic | `posterize( color, steps )` + `bayerDither( color, steps )` (`three/addons/tsl/math/Bayer.js`), `lut3D( node, lut, size, intensity )` with `LUTCubeLoader` / `LUT3dlLoader` / `LUTImageLoader` | Apply after `renderOutput()`, as `webgpu_postprocessing_3dlut` does |
 
+**GPU-verified TSL implementations (r187, WebGPU + WebGL2):**
+
+```js
+import { Fn, Loop, If, float, vec2, vec3, vec4, uv, screenSize, dot, cos, sin, sqrt, mix, smoothstep, fract, length } from 'three/tsl';
+
+// 1) 4-quadrant Kuwahara painterly filter (pass radius as a JS integer, e.g. 2..4, so Loop unrolls cleanly)
+// Note: TSL 2D Loop(endX, endY, ({ i, j }) => ...) automatically binds `i` and `j`; convert with .toFloat()
+export function kuwaharaFilter( texNode, texelSize = float( 1.0 ).div( screenSize ), radius = 3 ) {
+
+	return Fn( () => {
+
+		const baseUV = uv();
+		const bestMean = vec3( 0.0 ).toVar();
+		const bestVar = float( 1e9 ).toVar();
+		const invN = float( 1.0 / ( ( radius + 1 ) * ( radius + 1 ) ) );
+
+		for ( const [ ox, oy ] of [ [ - 1, - 1 ], [ 1, - 1 ], [ - 1, 1 ], [ 1, 1 ] ] ) {
+
+			const sum = vec3( 0.0 ).toVar();
+			const sumSq = vec3( 0.0 ).toVar();
+			Loop( radius + 1, radius + 1, ( { i, j } ) => {
+
+				const offset = vec2( i.toFloat().mul( ox ), j.toFloat().mul( oy ) ).mul( texelSize );
+				const c = texNode.sample( baseUV.add( offset ) ).rgb;
+				sum.addAssign( c );
+				sumSq.addAssign( c.mul( c ) );
+
+			} );
+			const mean = sum.mul( invN );
+			const variance = sumSq.mul( invN ).sub( mean.mul( mean ) );
+			const sigma2 = dot( variance, vec3( 0.2126, 0.7152, 0.0722 ) );
+			If( sigma2.lessThan( bestVar ), () => {
+
+				bestVar.assign( sigma2 );
+				bestMean.assign( mean );
+
+			} );
+
+		}
+
+		return vec4( bestMean, 1.0 );
+
+	} )();
+
+}
+
+// 2) Rotated screen-space comic halftone dot pass (frequency = cells across screen height, angle in radians)
+export const halftonePass = Fn( ( [ colorNode, frequency = float( 90.0 ), angle = float( 0.523599 ) ] ) => {
+
+	const c = colorNode.rgb;
+	const luma = dot( c, vec3( 0.2126, 0.7152, 0.0722 ) ).clamp( 0.0, 1.0 );
+	const aspect = screenSize.x.div( screenSize.y );
+	const p = uv().sub( 0.5 ).mul( vec2( aspect, float( 1.0 ) ) ).mul( frequency );
+	const ca = cos( angle ), sa = sin( angle );
+	const cell = fract( vec2( p.x.mul( ca ).sub( p.y.mul( sa ) ), p.x.mul( sa ).add( p.y.mul( ca ) ) ) ).sub( 0.5 );
+	const dist = length( cell );
+	const radius = sqrt( luma.oneMinus() ).mul( 0.7071 );
+	const ink = smoothstep( radius.sub( 0.06 ), radius.add( 0.06 ), dist );
+	return vec4( mix( c.mul( 0.15 ), c, ink ), 1.0 );
+
+} );
+```
+
 ### 8.5 Low-poly, pixel art and retro
 
 **Low-poly:**

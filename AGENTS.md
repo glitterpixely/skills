@@ -28,6 +28,8 @@ python3 seedance-25/scripts/validate_coverage.py
 python3 seedance-25/scripts/prompt_lint.py --self-test
 python3 minimax-music-30/scripts/validate_coverage.py
 python3 minimax-music-30/scripts/lint_music_prompt.py --self-test
+python3 threejs-rendering/scripts/validate_coverage.py
+node threejs-rendering/scripts/physical.mjs
 ```
 
 For Kling and Suno, check frontmatter and local reference links, and review the changed guidance. For shared documentation, verify links and instructions. Passing these checks is not proof of generated video or music quality.

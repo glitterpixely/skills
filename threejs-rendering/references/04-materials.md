@@ -63,7 +63,10 @@ Clearcoat IOR is fixed at 1.5 (F0 = 0.04). Clearcoat light is occluded by `aoMap
   - Velvet: `sheen: 1`, `sheenRoughness: 0.3–0.5`, `sheenColor` = a brighter, lower-saturation version of the fabric hue, base `roughness: 0.8–1`.
   - Cotton or wool: `sheenRoughness: 0.7–1`, weaker `sheenColor`.
   - Sheen is also occluded by AO.
-- **`diffuseRoughness`** (r187, with `diffuseRoughnessMap` in red): rough diffuse response that flattens terminators. Use for clay, plaster, moon dust and cloth, at 0.5–1.
+- **`diffuseRoughness` — EON Energy-Preserving Rough Diffuse BRDF** (r187 `#34379`, with `diffuseRoughnessMap` in `.r`; Portsmouth, Kutz & Hill 2025, *"EON: A Practical Energy-Preserving Rough Diffuse BRDF"*, *JCGT* 14(1), `arXiv:2410.18026`):
+  - **What `BRDF_EON` (`three.tsl.js`) computes:** combines single-scattering Fujii Oren-Nayar (`A = 1 / (1 + r · (0.5 − 2/(3π)))`) with an exact analytical multi-scattering energy-compensation lobe (`rhoMultiScatter = ρ² · E_avg / (1 − ρ · (1 − E_avg))`, weighted by `(1 − E(μ_V))(1 − E(μ_L)) / (π(1 − E_avg))` using a 4th-order polynomial fit `FON_DirectionalAlbedo` for directional albedo `E(μ)`). Also scales indirect diffuse via `EON_DirectionalAlbedo`.
+  - **Visual effect (GPU-verified on r187):** unlike classic Oren-Nayar (which loses energy at high roughness and darkens bright albedos), EON is strictly energy-preserving (`E ≤ 1`) and produces retroreflective limb brightening at grazing angles (on an `ior: 1.0` dielectric-free sphere under key light along `V`, limb-to-centre luminance ratio rises from `0.52` at `diffuseRoughness: 0.0` to `1.00` flat-disc response at `diffuseRoughness: 1.0`).
+  - **Typical ranges:** `0.5–0.8` for matte plaster, terracotta, unglazed ceramic, and dry concrete; `0.8–1.0` for chalk, clay, moon regolith, and dusty matte fabrics.
 - **Anisotropy:**
   - Brushed metal: `anisotropy: 0.6–0.9`, `anisotropyRotation` in radians.
   - `anisotropyMap`: RG = direction, B = strength (glTF KHR_materials_anisotropy).
@@ -83,7 +86,28 @@ Clearcoat IOR is fixed at 1.5 (F0 = 0.04). Clearcoat light is occluded by `aoMap
 - **AO** (`aomap_fragment`) multiplies **indirect diffuse**, and applies `computeSpecularOcclusion` to indirect specular. It never darkens direct light. A baked AO map that looks too strong usually means the IBL is too strong.
 - **`TangentSpaceNormalMap`** (default) is for anything deforming or reused across meshes. glTF uses the OpenGL (+Y) convention. GLTFLoader handles the flip when it falls back to derivative tangents, so do not flip glTF normals manually. For DirectX (−Y) maps from other sources, set `normalScale.y = -1`.
 - **`ObjectSpaceNormalMap`** suits rigid, non-instanced-with-rotation-variety static meshes (baked hero props). It needs no tangents and avoids seam issues, but cannot be skinned or reused.
-- **Specular aliasing from normal maps:** keep mipmaps on, use `texture.anisotropy = renderer.capabilities.getMaxAnisotropy()` (WebGL) or `renderer.getMaxAnisotropy()` (WebGPU), and pre-filter roughness against normal variance offline (Toksvig / LEAN) for high-frequency maps. TRAA covers the rest.
+- **Specular aliasing from normal maps & procedural normals (Kaplanyan & Antonov 2016):**
+  - Keep mipmaps on and set `texture.anisotropy = renderer.capabilities.getMaxAnisotropy()` (WebGL) or `renderer.getMaxAnisotropy()` (WebGPU).
+  - **Why normal maps still shimmer in r187:** Three.js's built-in geometric specular AA (`getGeometryRoughness` in `three.tsl.js`) computes `dxy = max(abs(dFdx(normalViewGeometry)), abs(dFdy(normalViewGeometry)))` from the *unperturbed vertex normal* (`normalViewGeometry`). It does **not** filter subpixel variance introduced by `normalMap`, `clearcoatNormalMap`, or procedural `normalNode` bumps.
+  - **TSL Screen-Space Normal-Variance Roughness Filter** (Kaplanyan & Antonov 2016, *"Filtering Distributions of Normals for Shading Antialiasing"*, *HPG*): feed screen-space derivatives of the *perturbed* `normalView` into GGX `alpha² = roughness⁴`:
+
+```js
+import { Fn, float, dot, min, clamp, sqrt, normalView } from 'three/tsl';
+
+// Filters subpixel normal-map / procedural-normal variance into perceptual roughness
+export const normalVarianceRoughness = Fn( ( [ baseRoughness, nView = normalView, strength = float( 0.5 ), maxKernelRoughness2 = float( 0.18 ) ] ) => {
+
+	const dndu = nView.dFdx();
+	const dndv = nView.dFdy();
+	const variance = dot( dndu, dndu ).add( dot( dndv, dndv ) );
+	const kernelRoughness2 = min( variance.mul( strength.mul( 2.0 ) ), maxKernelRoughness2 );
+	const alpha = baseRoughness.mul( baseRoughness );
+	const filteredAlpha2 = clamp( alpha.mul( alpha ).add( kernelRoughness2 ), float( 0.002 ), float( 1.0 ) );
+	return sqrt( sqrt( filteredAlpha2 ) );
+
+} );
+// Usage: material.roughnessNode = normalVarianceRoughness( float( 0.15 ), normalView, float( 0.5 ) );
+```
 
 ### 4.6 Extending materials without breaking PBR
 

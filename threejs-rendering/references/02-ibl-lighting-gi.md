@@ -49,29 +49,44 @@ export async function loadEnvironment( renderer, scene, url, { rotationY = 0, in
 
 ### 2.2 Splitting the sun out of the HDRI
 
-A clipped or compressed sun in the HDRI gives weak, shadowless key light. Paint the sun out (or clamp it), then add a shadow-casting `DirectionalLight` along the sun direction. Three's equirect lookup (`common.glsl.js`) is `u = atan(dir.z, dir.x)/2π + 0.5`, `v = asin(dir.y)/π + 0.5`. Inverting it for the brightest texel (`HDRLoader` sets `flipY = true`, so data row 0 is the top of the image, v = 1):
+A clipped or compressed sun in the HDRI gives weak, shadowless key light. Paint the sun out (or clamp it), then add a shadow-casting `DirectionalLight` along the sun direction. Three's equirect lookup (`equirectUV` in `three.tsl.js`) is `u = atan(dir.z, dir.x)/2π + 0.5`, `v = asin(dir.y)/π + 0.5`. Furthermore, `materialEnvRotation` and `backgroundRotation` in r187 transform the world-space sampling vector by `_m1.makeRotationFromEuler(rotation).transpose()`, so a texel at unrotated azimuth `phi0` appears in world space at `phi = phi0 - envRotationY` (or `dir.applyEuler(new THREE.Euler(0, -envRotationY, 0))`). Also weight each texel by solid angle `sin(theta)` so wide polar rows near the zenith do not bias the peak, and honour `texture.flipY` (`HDRLoader` sets `flipY = true`, so row 0 is `v = 1`; `EXRLoader` sets `flipY = false`, so row 0 is `v = 0`):
 
 ```js
-// data: Float32Array/Uint16 RGBA from equirect.image.data (convert half-floats with THREE.DataUtils.fromHalfFloat)
-function sunDirectionFromEquirect( lumAt, width, height, envRotationY = 0 ) {
+// image: equirect.image ({ width, height, data }); convert Uint16 half-floats with THREE.DataUtils.fromHalfFloat
+function sunDirectionFromEquirect( image, envRotationY = 0, flipY = true ) {
 
-	let best = - 1, bx = 0, by = 0;
-	for ( let y = 0; y < height; y ++ ) for ( let x = 0; x < width; x ++ ) {
+	const { width, height, data } = image;
+	let best = - 1, bestIdx = 0;
+	for ( let y = 0; y < height; y ++ ) {
 
-		const l = lumAt( x, y ); if ( l > best ) { best = l; bx = x; by = y; }
+		const v = flipY ? 1 - ( y + 0.5 ) / height : ( y + 0.5 ) / height;
+		const sinT = Math.sin( ( 1 - v ) * Math.PI );
+		for ( let x = 0; x < width; x ++ ) {
+
+			const i = ( y * width + x ) * 4;
+			const lum = ( 0.2126 * data[ i ] + 0.7152 * data[ i + 1 ] + 0.0722 * data[ i + 2 ] ) * sinT;
+			if ( lum > best ) { best = lum; bestIdx = y * width + x; }
+
+		}
 
 	}
 
-	const u = ( bx + 0.5 ) / width, v = 1 - ( by + 0.5 ) / height;
-	const phi = ( u - 0.5 ) * 2 * Math.PI, theta = ( v - 0.5 ) * Math.PI;
-	const dir = new THREE.Vector3( Math.cos( theta ) * Math.cos( phi ), Math.sin( theta ), Math.cos( theta ) * Math.sin( phi ) );
-	return dir.applyAxisAngle( new THREE.Vector3( 0, 1, 0 ), envRotationY ); // apply scene.environmentRotation.y
+	const ix = bestIdx % width, iy = ( bestIdx - ix ) / width;
+	const u = ( ix + 0.5 ) / width;
+	const v = flipY ? 1 - ( iy + 0.5 ) / height : ( iy + 0.5 ) / height;
+	const theta = ( 1 - v ) * Math.PI;
+	const phi = ( u - 0.5 ) * 2 * Math.PI - envRotationY; // minus envRotationY matches R_y(envRotationY)^T sampling
+	return new THREE.Vector3(
+		Math.sin( theta ) * Math.cos( phi ),
+		Math.cos( theta ),
+		Math.sin( theta ) * Math.sin( phi )
+	).normalize();
 	// sun.position.copy( dir ).multiplyScalar( D ); sun.target at scene centre
 
 }
 ```
 
-*(The inversion follows algebraically from the shader formula. I have not checked it on a GPU against a rendered reflection, and the sign of the `environmentRotation` application should be confirmed visually once.)*
+*(Verified on GPU in headless Chrome on both WebGPU and WebGL2 against both `scene.background` with `backgroundRotation.y` and a `PMREMGenerator` mirror sphere under `scene.environment` with `environmentRotation.y`; also unit-tested in `scripts/physical.mjs`.)*
 
 ### 2.3 Pairing IBL with direct lights
 
