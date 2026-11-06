@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<!--
+  Render-check harness for three.js looks. Serve the PROJECT root (so ./node_modules/three resolves), e.g.
+    python3 -m http.server 8765
+  then: node scripts/render-check/shoot.mjs "http://localhost:8765/<path>/harness.html?webgl" out.png
+  Replace buildScene() with the scene and pipeline under test. Set window.__done = true when frames are rendered.
+  Query flags: ?webgl forces the WebGL2 backend; add your own flags for stage ablation (e.g. ?noao&nobloom).
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0;background:#000;overflow:hidden}</style>
+<script type="importmap">
+{ "imports": {
+	"three": "/node_modules/three/build/three.webgpu.js",
+	"three/webgpu": "/node_modules/three/build/three.webgpu.js",
+	"three/tsl": "/node_modules/three/build/three.tsl.js",
+	"three/addons/": "/node_modules/three/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three/webgpu';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const flags = new URLSearchParams( location.search );
+window.__log = [];
+const log = ( m ) => { window.__log.push( m ); console.log( m ); };
+
+async function buildScene( renderer ) {
+
+	const scene = new THREE.Scene();
+	const camera = new THREE.PerspectiveCamera( 35, 16 / 9, 0.1, 50 );
+	camera.position.set( 3, 1.6, 4 ); camera.lookAt( 0, 0.4, 0 );
+	scene.environment = new THREE.PMREMGenerator( renderer ).fromScene( new RoomEnvironment(), 0.04 ).texture;
+	const floor = new THREE.Mesh( new THREE.PlaneGeometry( 10, 10 ), new THREE.MeshPhysicalMaterial( { color: 0x8c8378, roughness: 0.4 } ) );
+	floor.rotation.x = - Math.PI / 2; floor.receiveShadow = true; scene.add( floor );
+	const ball = new THREE.Mesh( new THREE.SphereGeometry( 0.4, 64, 32 ), new THREE.MeshPhysicalMaterial( { metalness: 1, roughness: 0.25 } ) );
+	ball.position.y = 0.4; ball.castShadow = true; scene.add( ball );
+	const sun = new THREE.DirectionalLight( 0xffffff, 3 ); sun.position.set( 3, 5, 2 ); sun.castShadow = true; scene.add( sun );
+	return { scene, camera, pipeline: null }; // return a RenderPipeline here to test post chains
+
+}
+
+try {
+
+	const renderer = new THREE.WebGPURenderer( { antialias: false, forceWebGL: flags.has( 'webgl' ) } );
+	await renderer.init();
+	log( 'backend: ' + ( renderer.backend.isWebGPUBackend ? 'WebGPU' : 'WebGL2' ) + ', three r' + THREE.REVISION );
+	renderer.setSize( 1280, 720 ); renderer.setPixelRatio( 1 );
+	renderer.toneMapping = THREE.AgXToneMapping;
+	renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
+	document.body.appendChild( renderer.domElement );
+
+	const { scene, camera, pipeline } = await buildScene( renderer );
+	const frame = () => ( pipeline ? pipeline.render() : renderer.render( scene, camera ) );
+	for ( let i = 0; i < 24; i ++ ) { frame(); await new Promise( ( r ) => requestAnimationFrame( r ) ); } // let TRAA/accumulation settle
+	renderer.info.autoReset = false; renderer.info.reset(); frame(); // one measured frame (drawCalls/triangles reset per frame)
+	log( `last frame: drawCalls ${ renderer.info.render.drawCalls }, triangles ${ renderer.info.render.triangles }` );
+	window.__done = true;
+
+} catch ( e ) { log( 'ERROR ' + ( e && e.stack || e ) ); window.__done = true; }
+</script>
+</body>
+</html>

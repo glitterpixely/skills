@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<!--
+  Gate harness for the three.js quality loop (references/11-quality-loop.md).
+  Copy this file and gates.js into the project, serve the project root, then run:
+    node <skill>/scripts/quality/run-gates.mjs --url http://localhost:8765/<path>/gate-harness.html --ceiling ceiling.json --out quality/pass-01
+  Replace mount() with the project's scene/pipeline. mount() must be repeatable (the soak calls it twice).
+  Query params (set by the runner): frame=N, seed=S, webgl (force WebGL2 backend), soak=0 to skip the soak.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0;background:#000;overflow:hidden}</style>
+<script type="importmap">
+{ "imports": {
+	"three": "/node_modules/three/build/three.webgpu.js",
+	"three/webgpu": "/node_modules/three/build/three.webgpu.js",
+	"three/tsl": "/node_modules/three/build/three.tsl.js",
+	"three/addons/": "/node_modules/three/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three/webgpu';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import * as G from './gates.js';
+
+// ---------------------------------------------------------------- project-specific: replace mount()
+async function mount( renderer ) {
+
+	const scene = new THREE.Scene();
+	const camera = new THREE.PerspectiveCamera( 35, 16 / 9, 0.1, 50 );
+	camera.position.set( 3, 1.6, 4 ); camera.lookAt( 0, 0.4, 0 );
+	const pmrem = new THREE.PMREMGenerator( renderer );
+	const room = new RoomEnvironment();
+	const envRT = pmrem.fromScene( room, 0.04 ); pmrem.dispose(); room.dispose(); // the soak catches a leak if room is not disposed
+	scene.environment = envRT.texture;
+	const floorGeo = new THREE.PlaneGeometry( 10, 10 ), ballGeo = new THREE.SphereGeometry( 0.4, 64, 32 );
+	const floorMat = new THREE.MeshPhysicalMaterial( { color: 0x8c8378, roughness: 0.4 } );
+	const ballMat = new THREE.MeshPhysicalMaterial( { metalness: 1, roughness: 0.25 } );
+	const floor = new THREE.Mesh( floorGeo, floorMat ); floor.rotation.x = - Math.PI / 2; floor.receiveShadow = true;
+	const ball = new THREE.Mesh( ballGeo, ballMat ); ball.position.y = 0.4; ball.castShadow = true;
+	const sun = new THREE.DirectionalLight( 0xffffff, 3 ); sun.position.set( 3, 5, 2 ); sun.castShadow = true;
+	scene.add( floor, ball, sun );
+	return {
+		scene, camera,
+		target: new THREE.Vector3( 0, 0.4, 0 ),             // orbit centre for the 3-angle contact sheet
+		managers: [],                                       // LoadingManagers to await
+		onTick: ( dt, elapsed ) => { ball.position.x = Math.sin( elapsed ) * 0.5; }, // deterministic animation
+		render: () => renderer.render( scene, camera ),     // or pipeline.render()
+		dispose: () => { floorGeo.dispose(); ballGeo.dispose(); floorMat.dispose(); ballMat.dispose(); envRT.dispose(); sun.shadow.dispose(); },
+	};
+
+}
+// ---------------------------------------------------------------- generic gate run
+
+const q = new URLSearchParams( location.search );
+const frameN = Number( q.get( 'frame' ) || 60 );
+const result = { warnings: [], frameN };
+window.__result = result;
+
+try {
+
+	G.installSeededRandom( Number( q.get( 'seed' ) || 1234 ) );
+	const renderer = new THREE.WebGPURenderer( { antialias: false, forceWebGL: q.has( 'webgl' ), trackTimestamp: true } );
+	await renderer.init();
+	renderer.setSize( 1280, 720 ); renderer.setPixelRatio( 1 );
+	renderer.toneMapping = THREE.AgXToneMapping;
+	renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
+	document.body.appendChild( renderer.domElement );
+	result.backend = renderer.backend.isWebGPUBackend ? 'WebGPU' : 'WebGL2';
+	result.revision = THREE.REVISION;
+
+	const app = await mount( renderer );
+	await G.awaitReady( { renderer, scene: app.scene, camera: app.camera, managers: app.managers } );
+	const stepper = G.createFixedStepper( { THREE, dtMs: 16, onTick: app.onTick } );
+	const frame = () => { stepper.tick(); app.render(); };
+
+	for ( let i = 0; i < frameN; i ++ ) frame();
+	result.frame = await G.captureCanvas( renderer );                          // G1 frame N
+	result.nonFinite = await G.countNonFinite( { THREE, renderer, scene: app.scene, camera: app.camera } );
+
+	// G4 motion burst: t, t+16 ms, t+32 ms
+	const burst = [ result.frame ];
+	for ( let i = 0; i < 2; i ++ ) { frame(); burst.push( await G.captureCanvas( renderer ) ); }
+	result.burst = await G.composeSheet( burst, [ 't', 't+16ms', 't+32ms' ] );
+	result.heatmap = await G.temporalHeatmap( burst );
+
+	// G4 contact sheet: 3 static angles orbiting app.target
+	const base = app.camera.position.clone(), target = app.target || new THREE.Vector3();
+	const angles = [];
+	for ( const yaw of [ 0, 0.7, - 0.7 ] ) {
+
+		app.camera.position.copy( base ).sub( target ).applyAxisAngle( new THREE.Vector3( 0, 1, 0 ), yaw ).add( target );
+		app.camera.lookAt( target ); app.render(); angles.push( await G.captureCanvas( renderer ) );
+
+	}
+
+	app.camera.position.copy( base ); app.camera.lookAt( target );
+	result.contact = await G.composeSheet( angles, [ 'front', '+40°', '−40°' ] );
+
+	// G2 metrics
+	const cpu = []; for ( let i = 0; i < 30; i ++ ) cpu.push( G.cpuFrameTimeMs( frame ) );
+	const gpu = []; for ( let i = 0; i < 10; i ++ ) { const t = await G.gpuFrameTimeMs( renderer, frame ); if ( t != null ) gpu.push( t ); }
+	const median = ( a ) => a.length ? a.slice().sort( ( x, y ) => x - y )[ a.length >> 1 ] : null;
+	renderer.info.autoReset = false; renderer.info.reset(); app.render();
+	result.metrics = { cpuMs: median( cpu ), gpuMs: median( gpu ), gpuTimer: gpu.length > 0, ...G.infoSnapshot( renderer ) };
+	renderer.info.autoReset = true;
+
+	// G3 automated audit
+	result.audit = G.auditRendering( { THREE, renderer, scene: app.scene, allowNoToneMapping: q.has( 'unmapped' ) } );
+	app.dispose();
+
+	// G2 lifecycle soak (fresh mounts)
+	if ( q.get( 'soak' ) !== '0' ) result.soak = await G.lifecycleSoak( { renderer, frames: 120, mount: async ( r ) => {
+
+		const a = await mount( r ); await G.awaitReady( { renderer: r, scene: a.scene, camera: a.camera, managers: a.managers } ); return a;
+
+	} } );
+
+} catch ( e ) {
+
+	result.error = String( e && e.stack || e );
+
+}
+
+window.__done = true;
+</script>
+</body>
+</html>

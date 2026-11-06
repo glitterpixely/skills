@@ -1,0 +1,21 @@
+{
+  "brief": "Product hero: gold watch on a stone plinth, studio HDRI, slow turntable",
+  "device": "M2 MacBook Air, Chrome stable, 1280x720 canvas at DPR 1.5",
+  "gpuMs": 8.0,
+  "cpuMs": 4.0,
+  "drawCalls": 150,
+  "triangles": 1500000,
+  "textures": 48,
+  "geometries": 120,
+  "perceptualRmse": 0.5,
+  "determinism": { "mode": "hardware" },
+  "webglParity": true,
+  "allowNoToneMapping": false,
+  "criticTarget": 8,
+  "checklist": [
+    "Watch case reads as polished gold (warm F0, sharp HDRI reflections)",
+    "Contact shadow grounds the watch on the plinth",
+    "No visible banding in the backdrop gradient",
+    "Turntable motion shows no shimmer on the bezel"
+  ]
+}

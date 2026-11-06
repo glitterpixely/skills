@@ -67,6 +67,12 @@ Start with the model you plan to generate in. Open its `SKILL.md` for the core r
 | **[`suno-song-builder`](suno-song-builder/SKILL.md)** | **Suno v6 (`v6`, `v6-wild`, `v6-mini`)** — Original songs, hooks, stressed-meter lyrics, film/game scores, `Max Mode` / `Variety` calibration, natural-language edits, and Suno Studio workflows | [`songcraft.md`](suno-song-builder/references/songcraft.md), [`suno-controls.md`](suno-song-builder/references/suno-controls.md), [`controllable-song-research.md`](suno-song-builder/references/controllable-song-research.md) | 7-block schema & originality gate in [`SKILL.md`](suno-song-builder/SKILL.md) |
 | **[`minimax-music-30`](minimax-music-30/SKILL.md)** | **MiniMax Music 3.0** — 8-layer `Caption` design, section-tagged `Lyrics`, instrumental cues, and **1,000 bilingual genre templates** (`100 genres × 10 variants`) | [`genre-router.md`](minimax-music-30/references/genre-router.md), [`prompt-architecture.md`](minimax-music-30/references/prompt-architecture.md), [`music-generation-research.md`](minimax-music-30/references/music-generation-research.md) | [`lint_music_prompt.py`](minimax-music-30/scripts/lint_music_prompt.py), [`validate_coverage.py`](minimax-music-30/scripts/validate_coverage.py) |
 
+### 3D & Real-Time Rendering Skills
+
+| Skill | Target Engine & Best Use | Key References | Automated Checks |
+| --- | --- | --- | --- |
+| **[`threejs-rendering`](threejs-rendering/SKILL.md)** | **Three.js (`r165–r187+`) & React Three Fiber 9.8** — Photoreal & stylized WebGL2/WebGPU rendering, AgX/Neutral colour, HDRI/GI, shadow frustum math, TSL node shaders, animation, interaction, `BatchedMesh`/compute, and gated quality loop (`G0`–`G4`) | [`00-version-gates.md`](threejs-rendering/references/00-version-gates.md), [`11-quality-loop.md`](threejs-rendering/references/11-quality-loop.md), [`14-shaders-tsl.md`](threejs-rendering/references/14-shaders-tsl.md), [`15-react-three-fiber.md`](threejs-rendering/references/15-react-three-fiber.md) | [`check-three-api.mjs`](threejs-rendering/scripts/check-three-api.mjs), [`probe.mjs`](threejs-rendering/scripts/quality/probe.mjs), [`run-gates.mjs`](threejs-rendering/scripts/quality/run-gates.mjs) |
+
 <div align="center">
   <img src="assets/divider-pastel.svg" alt="" width="100%" />
 </div>
@@ -253,7 +259,8 @@ skills/
 ├── h3-prompt-writing/         # MiniMax H3 audiovisual directing & linter
 ├── kling-4-prompting/         # Kling 4.0 & Flash video directing
 ├── minimax-music-30/          # MiniMax Music 3.0 + 1,000 templates & linter
-└── suno-song-builder/         # Suno v6 songwriting, controls, & Studio workflow
+├── suno-song-builder/         # Suno v6 songwriting, controls, & Studio workflow
+└── threejs-rendering/         # Three.js r187 & R3F 9.8 rendering, TSL, & GPU quality gates
 ```
 
 Inside each skill:
