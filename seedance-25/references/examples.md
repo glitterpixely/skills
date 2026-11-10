@@ -10,6 +10,7 @@
 - [Anchor, storyboard, and blockout patterns](#anchor-storyboard-and-blockout-patterns)
 - [One-click and transition patterns](#one-click-and-transition-patterns)
 - [Performance, camera, and process patterns](#performance-camera-and-process-patterns)
+- [Canonical submit-ready prompt examples](#canonical-submit-ready-prompt-examples)
 - [BytePlus media-example index](#byteplus-media-example-index)
 
 ## How to use these patterns
@@ -244,6 +245,121 @@ Use a placed letter as the visible cause. Stop a cup gesture, look at the return
 Show an empty/off initial state, filling below a maximum line, reassembly and one button press, then stable mist with intact components and no leaked water.
 
 Lesson: convert “smart” or “reliable” into operations with observable outcomes.
+
+## Canonical submit-ready prompt examples
+
+Each fenced block below is a complete, lint-verified prompt body (`0` errors, `0` warnings under `scripts/prompt_lint.py`). Keep external parameters (`duration`, `ratio`, `resolution`, `omni_reference_task_type`, `output_format`) outside the prompt text.
+
+### 1. Multi-reference narrative scene (chronological asset order + 3-tier hierarchy)
+
+```text
+[Brief]
+Period fantasy drama in 6 shots across approximately 24 seconds: an astronomer discovers that a brass astrolabe responds to a bottled starlight moth.
+
+[Style & Reference Roles]
+Anamorphic 35mm live-action film, warm tungsten lantern light against deep midnight window light, natural film grain, grounded physical weight.
+@Image 1 defines only Elara's facial features, silver-streaked braided hair, and indigo wool coat; normal human eyes; no glowing eyes; do not use @Image 1's background or static portrait pose.
+@Image 2 defines only the engraved brass astrolabe's ring geometry and patina; do not use @Image 2's tabletop.
+@Image 3 defines only the glass apothecary jar holding one pale-gold glowing moth; do not use @Image 3's background.
+@Image 4 defines the stone observatory study's arched window, oak desk, and brass oil lamp.
+Stage map: Elara stands behind the oak desk facing camera; the arched window sits screen left; the brass astrolabe rests center-desk beside the oil lamp.
+
+[Shot list]
+Shot 1 (0-4s): Medium shot inside the @Image 4 observatory, slow dolly-in. Elara, silver-braided indigo coat, lets her shoulders settle with a quiet breath, leans over the oak desk, and turns the outer ring of the @Image 2 brass astrolabe with her right thumb until its pointer clicks into a notch. <Crisp brass ratchet click, quiet night wind outside stone glass.>
+Shot 2 (4-8s): Close-up low-angle insert on Elara's left hand setting the @Image 3 glass jar onto the oak desk six inches screen left of the @Image 2 astrolabe; the pale-gold moth flutters once against the glass wall, casting warm gold reflections across her knuckles. <Glass base thud on wood, delicate wing flutter.>
+Shot 3 (8-12s): Extreme close-up on the @Image 2 brass astrolabe. As golden light from screen left hits the engraved rings, fine brass gear teeth unlock on their own and spin smoothly counter-clockwise, lifting the central arm upward. <Low resonant metallic hum, interlocking clockwork ticks.>
+Shot 4 (12-17s): Medium close-up on Elara, silver-braided indigo coat, slow push-in. All facial expression lives in the brow and the eyes; the mouth is left natural. Her brows lift slightly as warm gold light reflects in her pupils; she pulls her hand back half an inch, pauses, then speaks softly in English in a quiet, awed conversational voice: {It remembers the sky.} Finish speaking by 16s; hold her silent gaze on the spinning rings until 17s.
+Shot 5 (17-21s): Over-the-shoulder shot past Elara's right shoulder toward the desk and @Image 4 arched window. She uncaps the @Image 3 jar lid an inch; a thin thread of golden dust rises from the jar and arcs into the spinning @Image 2 astrolabe rings without obscuring her profile. <Cork unsealing pop, soft crystalline shimmer.>
+Shot 6 (21-24s): Wide three-quarter shot across the @Image 4 observatory, slow pull-back. The @Image 2 astrolabe locks into an upright alignment pointing straight through the screen-left arched window toward the night sky while Elara rests both palms flat on the desk edge watching it hold steady. <Heavy brass lock clunk, quiet room tone.>
+
+[Audio & Exclusions]
+The audio contains only the spoken English line, brass clockwork foley, glass contact sounds, and quiet night room tone; no background music or score. No subtitles. Avoid extra people, floating props, or text overlays.
+```
+
+### 2. Readable choreography fight (`~3.3s` per shot, 9 untimed cuts over ~30s)
+
+```text
+[Brief]
+High-speed 2D hand-painted ink-and-watercolor duel across 9 untimed shots (approximately 30 seconds): a horned crimson-scarf martial artist breaks through a six-eyed mage's gravity rings in a rain-slick shrine courtyard and wins decisively.
+
+[Style & Reference Roles]
+Pure 2D hand-drawn sakuga animation with textured sumi-ink brush lines, layered watercolor washes, and flat two-tone shadow planes throughout.
+@Image 1 defines only Kael's curved dark horns, crimson scarf, sleeveless obsidian gi, and wide-open amber eyes (screen left); do not use @Image 1's background or standing pose.
+@Image 2 defines only Vael's six vertical golden eyes, tall collar, and ochre ring-cloak (screen right); do not use @Image 2's background or static pose.
+@Image 3 defines the rain-slick stone shrine courtyard, central stone lantern, and dark cedar treeline.
+
+[Shot list]
+Shot 1: Wide low-angle side-tracking shot opening directly in motion with zero pause. Kael, crimson scarf streaming, crouches deep onto wet flagstones and drives off his back foot in three explosive bounds, swinging a rising ember-orange heel kick at Vael's collarbone; Vael snaps one arm forward, deploying a deep-violet gravity ring that catches the heel in a spray of rainwater and skids Vael backward two paces. Cut as rainwater sheets off the vibrating ring.
+Shot 2: Medium tracking shot orbiting 45 degrees clockwise. Using the ring's rebound, Kael twists mid-air, plants his left palm onto a wet stone balustrade, vaults over Vael's sweeping violet whip-slash by inches so the whip shears the stone rail cap behind him, and lands low on Vael's flank. Cut as carved stone chips fly past the foreground.
+Shot 3: Medium-wide two-shot, brisk lateral dolly right. Vael spins his ochre cloak wide, detaching three spinning violet gravity rings; Kael drops beneath the first ring, shatters the second upward with an ember-sheathed forearm smash, and vault-kicks off the third ring straight toward Vael's chest. Cut as Kael launches off the third ring.
+Shot 4: Tight three-quarter close-up tracking backward ahead of Kael's charge. Kael chambers his right fist at his hip as ember-orange fire spirals tightly down his forearm; Vael's six golden eyes widen behind a double-layered violet barrier. Cut at the instant Kael's knuckles strike the outer barrier.
+Shot 5: Wide profile shot across the central stone lantern. Kael's punch cracks the outer barrier, Vael counters with a downward gravity pulse that slams Kael's boots two inches into cracked flagstones, and Kael braces both knees before ripping upward with a twin-palm uppercut that splits the inner barrier cleanly in two. Cut as the barrier halves burst outward.
+Shot 6: Dynamic over-the-shoulder tracking shot behind Vael. Reeling off-balance, Vael hurls a compressed violet sphere point-blank; Kael ducks his shoulder inside its arc so it grazes his scarf and blasts a background cedar trunk, leaving Vael's chest open at arm's reach. Cut as bark splinters erupt.
+Shot 7: Medium low-angle impact shot with a snap push-in. Kael plants his lead boot in ankle-deep water and drives a spinning back-fist squarely into Vael's solar plexus with a two-frame black-and-white ink impact flash, lifting Vael off his feet as rain blows outward in a clear ring. Cut as Vael launches backward.
+Shot 8: Wide whip-pan right across the @Image 3 courtyard. Vael crashes backward through the central stone lantern in a spray of dust and rain and slides to a halt against the shrine steps as every remaining violet ring flickers out. Cut as the lantern topples beside him.
+Shot 9: Low-angle medium-wide payoff shot. In the left foreground, Kael straightens from his follow-through stance and exhales steam as ember light fades from his knuckles; in the right background, Vael remains slumped motionless against the wet shrine steps. <Heavy stone impacts, whipping cloth, crackling flame bursts, pouring rain.>
+
+[Audio & Exclusions]
+The audio consists solely of martial impacts, stone debris, flame bursts, and pouring rain; no background music. No subtitles. No 3D glossy CG shading or stalemate freeze.
+```
+
+### 3. `8n + 1` frame-preserving localized video edit
+
+```text
+[Edit Goal]
+Edit @Video 1. Across the entire video, replace only the courier's matte-black motorcycle helmet with the weathered copper visor helmet in @Image 1.
+
+[Source Video Role]
+@Video 1 is the sole editing master. It defines the courier's body, leather jacket, gloves, motorcycle, wet neon street, camera tracking path, lighting reflections, audio, and exact event order.
+
+[Target Material Role]
+@Image 1 defines only the replacement helmet's brushed-copper shell, riveted brow ridge, and dark amber glass visor. Do not use @Image 1's studio background or pedestal.
+
+[Edit Objects and Scope]
+Modify only the single helmet worn on the courier's head throughout @Video 1. Remove the original matte-black helmet completely so no black shell remains.
+Except for the helmet explicitly replaced above, all other visible people, clothing, motorcycle parts, background vehicles, neon signs, rain reflections, and scene elements in @Video 1 remain unchanged and must not be replaced or removed.
+
+[Timeline Inheritance]
+The @Image 1 copper helmet inherits every head turn, lean angle, raindrop splash, neon highlight, motion blur, and frame boundary of the original helmet in @Video 1. Keep all remaining actions, camera movement, cuts, and street audio from @Video 1 unchanged.
+```
+
+### 4. Forward `.mov` extension
+
+```text
+@Video 1 is the source video to extend forward.
+@Image 1 defines only the sunlit alpine valley vista waiting beyond the tunnel mouth; do not use @Image 1 to replace the opening boundary frame.
+
+Extend @Video 1 forward. The first frame of the extended segment directly continues from the last frame of @Video 1, maintaining the red steam locomotive's forward velocity along wet iron rails, cab-side tracking framing, drifting coal smoke, and rhythmic wheel-and-rail audio state.
+
+0-4s: The locomotive bursts out of the dark stone tunnel mouth into crisp morning sunlight as exposure adapts smoothly, revealing the @Image 1 snow-dusted alpine valley and timber trestle bridge ahead while coal smoke whips past the cab window.
+4-8s: The camera glides wider beside the driving wheels as the locomotive crosses onto the timber trestle over rushing glacial water at steady forward speed.
+
+Throughout the extension, keep the single continuous red locomotive, brass boiler fittings, track gauge, camera direction, and steam-and-rail mechanical audio without duplication, splitting, background music, or subtitles. No music, no subtitles.
+```
+
+### 5. Timed two-person dialogue drama (upper-face isolation + clause micro-actions)
+
+```text
+[Brief]
+Intimate 35mm live-action interior drama in 5 timed shots across 26 seconds: two brothers divide their late father's pocket watch over soup at a winter kitchen table.
+
+[Style, Reference Roles, & Performance Locks]
+Naturalistic 35mm European cinema, soft overcast north-window daylight from screen right, muted slate and warm oak palette, subtle handheld breathing motion.
+@Image 1 defines only Lukas's lean face, short dark curls, and grey wool Henley (seated screen left facing right); do not use @Image 1's background or static pose.
+@Image 2 defines only Tomas's bearded face, wire-rimmed glasses, and brown corduroy jacket (seated screen right facing left); do not use @Image 2's background or static pose.
+@Image 3 defines only the tarnished silver pocket watch with a cracked enamel dial resting center-table; do not use @Image 3's background.
+Performance locks: All facial expression lives in the brow and the eyes; mouths remain natural and relaxed. Neither man speaks with food in his mouth; each finishes swallowing before speaking. Normal human eyes; no glowing eyes.
+
+[Shot list]
+Shot 1 (0-5s): Medium two-shot across the scarred oak kitchen table; Lukas sits screen left with a soup bowl, Tomas sits screen right with the @Image 3 silver pocket watch untouched between them. In 0-1s both men settle naturally in the quiet room. Lukas sets his spoon gently in his bowl, wipes his thumb against his napkin, and lifts his eyes to Tomas. Lukas alone speaks in English in a quiet, matter-of-fact voice: {You stayed the winter.} <Spoon clink on ceramic, distant radiator hiss.>
+Shot 2 (5-11s): Over-the-shoulder medium close-up past Lukas's shoulder onto Tomas, wire-rimmed glasses. Tomas looks down at the @Image 3 pocket watch, pushes it two inches across the oak grain toward Lukas, pulls his hand back, swallows once, and knits his brows slightly. Tomas alone speaks in English in a low, dryly affectionate tone: {He asked for you.} He exhales briefly through his nose and glances up: {Take the watch.}
+Shot 3 (11-14s): Macro tabletop insert on the @Image 3 silver pocket watch near Lukas's grey wool cuff; Lukas's fingertips enter from screen left and rest lightly atop the cracked glass without lifting it yet. <Faint mechanical watch tick, wool sleeve brush on wood.>
+Shot 4 (14-21s): Reverse over-the-shoulder close-up past Tomas's shoulder onto Lukas, grey wool Henley. Lukas keeps his eyes on the watch for a beat, blinks twice as his brow softens, closes his fingers around the silver case, and lifts only his eyes to meet Tomas's gaze. Lukas alone speaks in English in a warm, understated voice: {Then we split the orchard.} Finish speaking by 19s; hold Lukas's quiet half-nod in silence until 21s.
+Shot 5 (21-26s): Medium two-shot matching Shot 1, gentle slow pull-back. Lukas slips the @Image 3 pocket watch into his palm while Tomas gives one crooked corner-of-mouth nod and reaches for his bread crust. <Chair creak, quiet winter room tone.>
+
+[Audio & Exclusions]
+The audio consists solely of the four spoken English clauses, ceramic and wood tabletop foley, faint watch ticking, and room tone; no background music. No subtitles. Avoid extra people or costume drift.
+```
 
 ## BytePlus media-example index
 

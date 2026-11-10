@@ -135,7 +135,7 @@ If materials arrive without any generation, edit, or extension goal, ask for the
 
 ## Output contract
 
-Match the user's language and reference notation, with one deliberate exception for high-velocity action: when the user requests a **fast-paced fight, chase, hunt, or high-cut action sequence (`>= 12 shots`)**, deliver the submit-ready prompt in **compact Chinese (`Mode 1: 16–24 untimed shots`)** (retaining English `@Image N defines only ...; do not use ...` role verbs so reference binding lints cleanly) even if the request was written in English, unless the user explicitly asks for an English-only prompt. Do not renumber explicit handles.
+Match the user's language and reference notation by default — including **`8–12` sustained shots over 30s (`~2.5–3.75s` per shot)** in the user's language for readable fights and chases. Switch an English request into **compact Chinese (`Mode 1b: 16–24 untimed shots`)** only when the user explicitly asks for a hyper-cut anime sakuga blitz (`>= 12` rapid cuts) or Chinese combat prompting (`prompt_lint.py` natively supports both English and Chinese role bindings). Do not renumber explicit handles.
 
 Default delivery:
 
@@ -173,7 +173,7 @@ Use this workflow only when the user supplies the generated result and the inten
 
 Because 30-second single-pass and multi-reference generations carry higher compute cost, apply these field-tested workflow practices when advising on iteration or repairing a supplied take (present them as operational guidance outside the creative prompt, never as first-party guarantees):
 
-1. **Draft-first validation (`draft=true` / 480p Draft Mode):** When the active surface exposes Draft Mode (or the Volcengine/ModelArk `draft=true` parameter), validate multi-shot blocking, camera trajectory, and choreography at 480p first, then promote the approved take/seed to 1080p or 4K (`draft=false`) without re-rolling the motion.
+1. **Draft-first validation (`draft=true` at `480p` -> `draft_task` promotion to `1080p`):** When the active surface exposes Draft Mode, submit Step 1 with `"draft": true, "resolution": "480p"` (~`5.5x` fewer tokens than `1080p`, billed at the normal `480p` token rate on `Seedance 2.5` and cached for 14 days). Once blocking, camera path, and choreography pass inspection, promote the approved Draft ID in Step 2 via `"resolution": "1080p", "draft": false` and `"content": [{"type": "draft_task", "draft_task": {"id": "<DRAFT_ID>"}}]` (`4K` is unsupported on `Seedance 2.5`). **Never re-send** `content.text`, `content.*_url`, `duration`, `ratio`, `seed`, `generate_audio`, or `omni_reference_task_type` in Step 2, or ModelArk returns a parameter error.
 2. **Localized fragment repainting (`局部重拍`) over full 30s re-rolls:** If 80%+ of a generated clip succeeds and the defect is confined to one time window or prop, route the fix to a localized edit (`Edit @Video 1. Within X–Ys, modify only...`) instead of re-rolling the entire 30-second generation.
 3. **Three-attempt escalation cap:**
    - **Attempts 1–2:** Change one causal variable per retry (move a missed camera instruction to the first clause of the shot, cut one crowded beat, or replace a negative ban with an affirmative state lock).

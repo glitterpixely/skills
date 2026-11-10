@@ -33,23 +33,39 @@ class ReferenceMention:
 
 
 ROLE_WORDS = re.compile(
-    r"\b(defines?|corresponds?|references?|provides?|controls?|inherits?|"
+    r"(?:\b(defines?|corresponds?|references?|provides?|controls?|inherits?|"
     r"source video|sole editing master|first frame|last frame|keyframe|"
     r"before[- ]transition clip|after[- ]transition clip|transition source|"
-    r"transition target|used (?:only )?for|is used|do not use|not used)\b",
+    r"transition target|used (?:only )?for|is used|do not use|not used)\b"
+    r"|定义|对应|参考|提供|控制|继承|源视频|唯一编辑主视频|主视频|首帧|尾帧|关键帧|"
+    r"仅用于|用于|不要使用|不使用|切勿使用)",
     re.IGNORECASE,
 )
 
+KIND_NORM = {
+    "image": "image",
+    "图片": "image",
+    "图": "image",
+    "video": "video",
+    "视频": "video",
+    "audio": "audio",
+    "音频": "audio",
+}
+
 HANDLE_RE = re.compile(
-    r"(?<![\w@])(?:"
-    r"@(?P<at_kind>Image|Video|Audio)(?:[ \t]*(?P<at_number>\d+))?"
-    r"|\[(?P<bracket_kind>Image|Video|Audio)[ \t]*(?P<bracket_number>\d+)\]"
+    r"(?<![A-Za-z0-9_@])(?:"
+    r"@(?P<at_kind>Image|Video|Audio|图片|图|视频|音频)(?:[ \t]*(?P<at_number>\d+))?(?![A-Za-z0-9_])"
+    r"|\[(?P<bracket_kind>Image|Video|Audio|图片|图|视频|音频)[ \t]*(?P<bracket_number>\d+)\]"
     r"|<(?P<angle_kind>Image|Video|Audio)[ \t]*(?P<angle_number>\d+)>"
-    r")(?!\w)",
+    r")",
     re.IGNORECASE,
 )
-VIDEO_HANDLE_PATTERN = r"(?:@Video(?:[ \t]*\d+)?|\[Video[ \t]*\d+\]|<Video[ \t]*\d+>)"
-IMAGE_HANDLE_PATTERN = r"(?:@Image[ \t]*\d+|\[Image[ \t]*\d+\]|<Image[ \t]*\d+>)"
+VIDEO_HANDLE_PATTERN = (
+    r"(?:@(?:Video|视频)(?:[ \t]*\d+)?|\[(?:Video|视频)[ \t]*\d+\]|<Video[ \t]*\d+>)"
+)
+IMAGE_HANDLE_PATTERN = (
+    r"(?:@(?:Image|图片|图)[ \t]*\d+|\[(?:Image|图片|图)[ \t]*\d+\]|<Image[ \t]*\d+>)"
+)
 RANGE_RE = re.compile(
     r"(?:(?P<start_mm>\d{1,2}):(?P<start_ss>\d{2}(?:\.\d+)?)\s*[-–—]\s*"
     r"(?P<end_mm>\d{1,2}):(?P<end_ss>\d{2}(?:\.\d+)?))"
@@ -66,13 +82,21 @@ def _match_bounds(match: re.Match[str]) -> tuple[float, float]:
         return start, end
     return float(match.group("start")), float(match.group("end"))
 
+
 TIME_POINT_RE = re.compile(r"\bat\s+(\d+(?:\.\d+)?)\s*(?:s|sec(?:ond)?s?)\b", re.IGNORECASE)
 TODO_MARKER_RE = re.compile(r"\bTODO\b", re.IGNORECASE)
 TEMPLATE_PLACEHOLDER_RE = re.compile(
-    r"<(?:subject|scene|action|event|placeholder|specified|primary|name|N)"
-    r"(?:\s+[^<>]+)?>",
+    r"(?:<(?:subject|scene|action|event|placeholder|specified|primary|name|N|"
+    r"original\s+object/region|whole\s+video(?:\s+or\s+exact\s+scope)?|scope|target|"
+    r"speaker(?:\s+or\s+sound\s+category|/sound)?|video\s+type)(?:\s+[^<>]+)?>"
+    r"|<[AB]>)",
     re.IGNORECASE,
 )
+SHOT_HEADER_PREFIX_RE = re.compile(
+    r"(?:\b(?:Shot|Stage)\s+\d+|(?:镜头|分镜|阶段)\s*\d+)\s*(?:[([（]|[,|:：]\s*)\s*$",
+    re.IGNORECASE,
+)
+CJK_CHAR_RE = re.compile(r"[\u4e00-\u9fff]")
 
 
 def add(issues: list[Issue], severity: str, code: str, message: str) -> None:
@@ -82,12 +106,19 @@ def add(issues: list[Issue], severity: str, code: str, message: str) -> None:
 def infer_mode(text: str) -> str:
     if re.search(
         rf"\bextend(?:s|ed|ing)?\s+(?:{VIDEO_HANDLE_PATTERN}|forward|backward)"
-        rf"|\bcontinue\s+from\s+{VIDEO_HANDLE_PATTERN}",
+        rf"|\bcontinue\s+from\s+{VIDEO_HANDLE_PATTERN}"
+        rf"|(?:向前|向后|正向|反向)?(?:延长|延展|续写)\s*{VIDEO_HANDLE_PATTERN}"
+        rf"|{VIDEO_HANDLE_PATTERN}\s*(?:为|是)?(?:待延长|要延长|用于延长)的?源视频",
         text,
         re.IGNORECASE,
     ):
         return "extension"
-    if re.search(rf"\bedit\s+{VIDEO_HANDLE_PATTERN}|\bsole editing master\b", text, re.IGNORECASE):
+    if re.search(
+        rf"\bedit\s+{VIDEO_HANDLE_PATTERN}|\bsole editing master\b"
+        rf"|(?:编辑|修改)\s*{VIDEO_HANDLE_PATTERN}|唯一编辑主视频",
+        text,
+        re.IGNORECASE,
+    ):
         return "edit"
     return "generation"
 
@@ -99,16 +130,19 @@ def reference_mentions(text: str) -> list[ReferenceMention]:
         number_text = match.group("at_number") or match.group("bracket_number") or match.group("angle_number")
         if kind is None:
             continue
-        # Dreamina surfaces may expose singleton @Video and @Audio tokens. A
-        # bare @Image is not a documented identity-safe handle, so ignore it.
-        if number_text is None and kind.lower() == "image":
+        norm_kind = KIND_NORM.get(kind.lower())
+        if norm_kind is None:
             continue
-        mentions.append(ReferenceMention(kind.lower(), int(number_text) if number_text else None, match.group(0)))
+        # Dreamina surfaces may expose singleton @Video and @Audio tokens. A
+        # bare @Image / @图 is not a documented identity-safe handle, so ignore it.
+        if number_text is None and norm_kind == "image":
+            continue
+        mentions.append(ReferenceMention(norm_kind, int(number_text) if number_text else None, match.group(0)))
     return mentions
 
 
 def referenced_handles(text: str) -> dict[str, set[int]]:
-    found = {"image": set(), "video": set(), "audio": set()}
+    found: dict[str, set[int]] = {"image": set(), "video": set(), "audio": set()}
     for mention in reference_mentions(text):
         found[mention.kind].add(mention.effective_number)
     return found
@@ -122,12 +156,20 @@ def check_counts(
     audio: int | None,
     video_seconds: float | None,
     audio_seconds: float | None,
+    mode: str = "generation",
 ) -> None:
     counts = {"image": images, "video": videos, "audio": audio}
     hard = {"image": 30, "video": 10, "audio": 10}
     for kind, count in counts.items():
         if count is not None and count > hard[kind]:
             add(issues, "error", f"{kind.upper()}_LIMIT", f"{count} {kind}s exceeds the hard limit of {hard[kind]}.")
+        elif count is None and handles[kind] and max(handles[kind]) > hard[kind]:
+            add(
+                issues,
+                "error",
+                f"{kind.upper()}_LIMIT",
+                f"Prompt references @{kind.title()} {max(handles[kind])}, exceeding the hard limit of {hard[kind]}.",
+            )
         if count is not None and handles[kind] and max(handles[kind]) > count:
             add(
                 issues,
@@ -137,12 +179,43 @@ def check_counts(
             )
 
     known_counts = [x for x in (images, videos, audio) if x is not None]
+    total_handle_refs = sum(len(v) for v in handles.values())
     if len(known_counts) == 3 and sum(known_counts) > 50:
         add(issues, "error", "TOTAL_MATERIAL_LIMIT", f"{sum(known_counts)} total assets exceeds the hard limit of 50.")
+    elif len(known_counts) < 3 and total_handle_refs > 50:
+        add(
+            issues,
+            "error",
+            "TOTAL_MATERIAL_LIMIT",
+            f"Prompt references {total_handle_refs} distinct assets, exceeding the hard combined limit of 50.",
+        )
+
     if video_seconds is not None and video_seconds > 30:
         add(issues, "error", "VIDEO_DURATION_LIMIT", f"Reference videos total {video_seconds:g}s; the hard combined limit is 30s.")
+    elif mode == "edit" and video_seconds is not None and video_seconds < 4.0:
+        add(
+            issues,
+            "error",
+            "EDIT_VIDEO_MIN_DURATION",
+            f"Edit source video is {video_seconds:g}s; BytePlus ModelArk video editing requires 4-30s.",
+        )
+    elif video_seconds is not None and 0 < video_seconds < 2.0:
+        add(
+            issues,
+            "error",
+            "VIDEO_MIN_DURATION",
+            f"Reference video is {video_seconds:g}s; documented minimum per video is 2s.",
+        )
+
     if audio_seconds is not None and audio_seconds > 30:
         add(issues, "error", "AUDIO_DURATION_LIMIT", f"Reference audio totals {audio_seconds:g}s; the hard combined limit is 30s.")
+    elif audio_seconds is not None and 0 < audio_seconds < 2.0:
+        add(
+            issues,
+            "error",
+            "AUDIO_MIN_DURATION",
+            f"Reference audio is {audio_seconds:g}s; documented minimum per audio clip is 2s.",
+        )
 
     for kind, count in counts.items():
         if count is None:
@@ -180,11 +253,10 @@ def check_roles(issues: list[Issue], text: str, handles: dict[str, set[int]]) ->
 def timeline_matches(text: str) -> list[re.Match[str]]:
     """Extract documented timeline forms without treating every numeric range as time.
 
-    BytePlus supports both labeled blocks (`0-3s: ...`) and compact inline
-    sequences (`0-3 seconds...3-7 seconds...` or `[1s-4s]....`). Shot headers
-    such as `Shot 2 (3-6s):` are also accepted. A lone prose range such as
-    "a 5-10 seconds reference clip" is not an event timeline and must not
-    participate in gap/overlap checks.
+    Supports labeled blocks (`0-3s: ...`), inline sequences (`0-3 seconds...3-7 seconds...`),
+    bracketed windows (`[1s-4s]....`), and Shot/Stage/镜头 headers (`Shot 2 (3-6s):`,
+    `Stage 1 (0-4s):`, `镜头 1 (0-2s):`). Prose ranges like "a 5-10 seconds clip"
+    are excluded.
     """
 
     candidates = list(RANGE_RE.finditer(text))
@@ -194,11 +266,11 @@ def timeline_matches(text: str) -> list[re.Match[str]]:
         suffix = text[match.end() : match.end() + 12]
         bracketed = line_prefix.rstrip().endswith("[") and re.match(r"\s*\]", suffix) is not None
         starts_line = re.fullmatch(r"\s*(?:[-*]\s*)?(?:[*_\"'“‘]\s*)?", line_prefix) is not None
-        timeline_punctuation = re.match(r"\s*(?:\]|:|—|–|\.{2,})", suffix) is not None
+        timeline_punctuation = re.match(r"\s*(?:\]|:|：|—|–|\.{2,})", suffix) is not None
         preceded_by_inline_separator = re.search(r"(?:\.{2,}|\])\s*(?:\[\s*)?$", line_prefix) is not None
         shot_header = (
-            re.search(r"\bShot\s+\d+\s*(?:[(\[]|[,|:]\s*)\s*$", line_prefix, re.IGNORECASE) is not None
-            and re.match(r"\s*(?:[)\]]|[.:—–])", suffix) is not None
+            SHOT_HEADER_PREFIX_RE.search(line_prefix) is not None
+            and re.match(r"\s*(?:[)\]）]|[.:：—–])", suffix) is not None
         )
         if bracketed or starts_line or timeline_punctuation or preceded_by_inline_separator or shot_header:
             accepted.append(match)
@@ -206,7 +278,7 @@ def timeline_matches(text: str) -> list[re.Match[str]]:
         first_start, first_end = _match_bounds(accepted[0])
         second_start, second_end = _match_bounds(accepted[1])
         first_prefix = text[text.rfind("\n", 0, accepted[0].start()) + 1 : accepted[0].start()]
-        is_shot_container = re.search(r"\bShot\s+\d+\s*(?:[(\[]|[,|:]\s*)\s*$", first_prefix, re.IGNORECASE) is not None
+        is_shot_container = SHOT_HEADER_PREFIX_RE.search(first_prefix) is not None
         if (
             is_shot_container
             and second_start == first_start
@@ -221,12 +293,10 @@ def timeline_ranges(text: str) -> list[tuple[float, float]]:
     return [_match_bounds(m) for m in timeline_matches(text)]
 
 
-# Dialogue introduced as `<Name>'s line (tone): "..."`, `Dialogue (...): "..."`,
-# `Line 1 (...): "..."`, `says: "..."`, or the documented `{...}` dialogue syntax.
-# Bare quotes are not treated as speech.
 DIALOGUE_RE = re.compile(
-    r"(?:\b(?:line(?:\s+\d+)?|lines|says|said|asks|shouts|whispers|dialogue)\b"
-    r"(?:\s*\([^()]{0,220}\)|[^\n:\"“]{0,90}){0,2}:\s*[\"“](?P<quoted>[^\"”]{1,280})[\"”])"
+    r"(?:(?:\b(?:line(?:\s+\d+)?|lines|says|said|asks|asked|shouts|shouted|whispers|whispered|speaks|spoke|murmurs|murmured|replies|replied|yells|yelled|barks|barked|calls|called|mutters|muttered|exclaims|exclaimed|snaps|snapped|dialogue)\b"
+    r"|台词|对白|(?:开口|低语|冷笑|嘱咐|[说问喊喝叫讲唱念吼叹骂笑答怒])道?|[说问喊叫吼])"
+    r"(?:\s*\([^()]{0,220}\)|\s*（[^（）]{0,220}）|[^\n:：,，\"“「]{0,90}){0,2}[:：,，]\s*[\"“「](?P<quoted>[^\"”」]{1,280})[\"”」])"
     r"|\{(?P<braced>[^{}\n]+)\}",
     re.IGNORECASE,
 )
@@ -236,20 +306,25 @@ CLIP_MAX_DIALOGUE_LINES = 3
 CLIP_MAX_TIMED_SHORT_LINES = 5
 CLIP_MAX_DIALOGUE_WORDS = 24
 CLIP_MAX_DRAMA_DIALOGUE_LINES = 10
-CLIP_MAX_DRAMA_DIALOGUE_WORDS = 38
+CLIP_MAX_DRAMA_DIALOGUE_WORDS = 43
+
+
+def _spoken_word_equivalents(spoken: str) -> float:
+    """Count Latin words plus CJK characters (~0.45 English word-equivalents per CJK char)."""
+
+    return len(LATIN_WORD_RE.findall(spoken)) + 0.45 * len(CJK_CHAR_RE.findall(spoken))
 
 
 def check_dialogue_density(issues: list[Issue], text: str) -> None:
     """Warn when timed shots or whole multi-shot clips carry too much speech.
 
-    Craft heuristic from desk-prompt-patterns.md, not a first-party limit.
-    CJK dialogue is not counted. When both a top-level transcript block and a
-    [Shot list] section are present, count inside [Shot list] to avoid
-    double-counting repeated lines.
+    Craft heuristic from desk-continuity-and-coverage.md, not a first-party cap.
+    Supports both Latin words and CJK characters, and deduplicates top-level
+    transcript blocks when `[Shot list]` / `[分镜列表]` is present.
     """
 
     shot_list_split = re.split(
-        r"^\s*\[Shot\s+list\]\s*$",
+        r"^\s*\[(?:Shot\s+list|分镜列表|镜头列表|分镜)\]\s*$",
         text,
         maxsplit=1,
         flags=re.IGNORECASE | re.MULTILINE,
@@ -262,7 +337,7 @@ def check_dialogue_density(issues: list[Issue], text: str) -> None:
     all_dialogues = list(DIALOGUE_RE.finditer(dialogue_scope))
     total_lines = len(all_dialogues)
     line_word_counts = [
-        len(LATIN_WORD_RE.findall(d.group("quoted") or d.group("braced") or ""))
+        _spoken_word_equivalents(d.group("quoted") or d.group("braced") or "")
         for d in all_dialogues
     ]
     total_words = sum(line_word_counts)
@@ -281,14 +356,14 @@ def check_dialogue_density(issues: list[Issue], text: str) -> None:
         and total_timed_seconds >= 24.0
         and speaking_windows >= 4
         and bool(line_word_counts)
-        and all(w <= 8 for w in line_word_counts)
-        and (total_words / total_timed_seconds) <= 1.35
+        and all(w <= 8.5 for w in line_word_counts)
+        and (total_words / total_timed_seconds) <= 1.5
     )
 
     if is_timed_slow_dialogue_drama:
         max_lines = CLIP_MAX_DRAMA_DIALOGUE_LINES
         max_words = CLIP_MAX_DRAMA_DIALOGUE_WORDS
-    elif matches and all(w <= 5 for w in line_word_counts):
+    elif matches and all(w <= 5.5 for w in line_word_counts):
         max_lines = CLIP_MAX_TIMED_SHORT_LINES
         max_words = CLIP_MAX_DIALOGUE_WORDS
     else:
@@ -296,13 +371,14 @@ def check_dialogue_density(issues: list[Issue], text: str) -> None:
         max_words = CLIP_MAX_DIALOGUE_WORDS
 
     if total_lines > max_lines or total_words > max_words:
+        display_words = f"{total_words:g}"
         add(
             issues,
             "warning",
             "CLIP_DIALOGUE_OVERLOAD",
-            f"Clip contains {total_lines} spoken line(s) ({total_words} words total). "
-            f"Over {CLIP_MAX_DIALOGUE_LINES} lines / {CLIP_MAX_DIALOGUE_WORDS} words in standard clips (or {CLIP_MAX_DRAMA_DIALOGUE_LINES} short clauses / {CLIP_MAX_DRAMA_DIALOGUE_WORDS} words in a 25-30s timed dialogue drama) causes TTS prosody drift; "
-            "trim or split across two generations around a silent reaction beat.",
+            f"Clip contains {total_lines} spoken line(s) ({display_words} word-equivalents total). "
+            f"Above {CLIP_MAX_DIALOGUE_LINES} lines / {CLIP_MAX_DIALOGUE_WORDS} words in general clips (or {CLIP_MAX_DRAMA_DIALOGUE_LINES} short clauses / {CLIP_MAX_DRAMA_DIALOGUE_WORDS} words in a 25-30s timed dialogue drama) risks TTS prosody compression; "
+            "tighten clauses, keep per-shot pace < 1.8 words/s, use Dreamina Long Video, or split across two generations if preferred.",
         )
 
     for index, match in enumerate(matches):
@@ -312,17 +388,17 @@ def check_dialogue_density(issues: list[Issue], text: str) -> None:
             continue
         block_end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
         block = text[match.end() : block_end]
-        words = 0
+        words = 0.0
         for dialogue in DIALOGUE_RE.finditer(block):
             spoken = dialogue.group("quoted") or dialogue.group("braced") or ""
-            words += len(LATIN_WORD_RE.findall(spoken))
+            words += _spoken_word_equivalents(spoken)
         wps_limit = 2.5 if is_timed_slow_dialogue_drama else DIALOGUE_WPS_WARN
         if words and words / duration >= wps_limit:
             add(
                 issues,
                 "warning",
                 "DIALOGUE_DENSITY",
-                f"{start:g}-{end:g}s carries {words} spoken words ({words / duration:.1f} words/s). "
+                f"{start:g}-{end:g}s carries {words:g} spoken word-equivalents ({words / duration:.1f} words/s). "
                 "Aim for 1.0-1.5 words/s (below 2.0 words/s, or <= 2.4 words/s when split into short clauses in a slow dialogue drama) so TTS prosody stays natural and unhurried.",
             )
 
@@ -386,6 +462,11 @@ STYLE_2D_RE = re.compile(
 )
 AIRBRUSH_PAINTERLY_RE = re.compile(
     r"\bairbrush(?:ed)?\b|\bsemi[- ]realistic\b|\blineless\b|厚涂|半写实|柔光厚涂",
+    re.IGNORECASE,
+)
+NEGATED_AIRBRUSH_RE = re.compile(
+    r"(?:\bno\b|\bnot\b|\bwithout\b|\bavoid\b|\bexclude\b|\bnever\b|不要|没有|不是|非|无|禁止|避免)"
+    r"[^\n.。;；]{0,60}?(?:\bairbrush(?:ed)?(?:\s+rendering|\s+shading)?\b|\bsemi[- ]realistic\b|\blineless\b|厚涂|半写实|柔光厚涂)",
     re.IGNORECASE,
 )
 CEL_OUTLINE_RE = re.compile(
@@ -467,17 +548,31 @@ OPENING_SETTLE_IN_ACTION_RE = re.compile(
     re.IGNORECASE,
 )
 EXCLUSION_BLOCK_RE = re.compile(
-    r"(?:^\s*\[(?:Strictly\s+exclude|Exclusions?|Technical\s+Exclusions?|Avoid)\]\s*$"
-    r"|^\s*(?:Strictly\s+exclude|Avoid)\s*:)"
-    r"(?P<body>.*?)(?=^\s*\[[A-Za-z][^\]]*\]\s*$|\Z)",
+    r"(?:^\s*\[(?:Strictly\s+exclude|Exclusions?|Technical\s+Exclusions?|Avoid|严格排除|排除项?|避免|禁忌)\]\s*$"
+    r"|^\s*(?:Strictly\s+exclude|Avoid|严格排除|排除|避免)\s*[:：])"
+    r"(?P<body>.*?)(?=^\s*\[[^\]\n]+\]\s*$|\Z)",
     re.IGNORECASE | re.MULTILINE | re.DOTALL,
 )
 BLOATED_EXCLUSION_WORDS_WARN = 80
 NEGATED_MUSIC_CLAUSE_RE = re.compile(
-    r"(?:\bno\b|\bnot\b|\bwithout\b|\bremove\b|\bexclude\b|\bnever\b|不要|没有|无|禁止)"
-    r"[^.!?;；。]{0,160}?\b(?:BGM|background\s+music|music(?:\s+plays)?|instrumental\s+music|soundtrack|score)\b"
-    r"|\bsoundtrack\s+is\s+only\s+(?:the\s+)?(?:two\s+)?voices\b",
-    re.IGNORECASE | re.DOTALL,
+    r"(?:\bno\b|\bnot\b|\bwithout\b|\bremove\b|\bexclude\b|\bnever\b|\bzero\b|不要|没有|无|禁止|不含|不加)"
+    r"(?:[^.!?;；。\n]|\n(?!\s*(?:\n|[-*•\[]))){0,160}?(?:\b(?:BGM|background\s+music|music(?:\s+plays)?|instrumental(?:\s+music|\s+texture|\s+score)?|soundtrack|score)\b|配乐|背景音乐|伴奏|音乐|弦乐|钢琴曲)"
+    r"|\b(?:soundtrack|audio)\s+(?:is\s+only|consists\s+(?:solely|only|entirely)\s+of|contains\s+only)\b"
+    r"(?!(?:[^.!?;；。\n]|\n(?!\s*(?:\n|[-*•\[]))){0,140}?(?:\b(?:music|BGM|score|melody|piano|strings|cello|violin|synth|orchestral)\b|配乐|背景音乐|伴奏|弦乐|钢琴))"
+    r"(?:[^.!?;；。\n]|\n(?!\s*(?:\n|[-*•\[]))){0,160}",
+    re.IGNORECASE,
+)
+POSITIVE_MUSIC_RE = re.compile(
+    r"\b(?:BGM|background\s+music|music\s+plays|instrumental\s+(?:music|score|texture)|soundtrack)\b"
+    r"|(?:配乐|背景音乐|器乐伴奏|弦乐伴奏|钢琴伴奏|钢琴曲)"
+    r"|\([^()\n]{0,120}?\b(?:music|melody|instrumental|piano|strings|cello|violin|synth|orchestral|bgm|ost|score)\b[^()\n]{0,120}?\)"
+    r"|[（(][^（）()\n]{0,80}?(?:配乐|旋律|弦乐|钢琴|伴奏|器乐)[^（）()\n]{0,80}?[）)]",
+    re.IGNORECASE,
+)
+NO_SUBTITLES_RE = re.compile(
+    r"\b(?:no|without|exclude)\s+(?:visible\s+|burned[- ]in\s+|on[- ]screen\s+)?subtitles?\b"
+    r"|\bsubtitles?\s*:\s*none\b|无字幕|不要字幕|不加字幕|不含字幕|禁止字幕|【[^】\n]+】",
+    re.IGNORECASE,
 )
 
 
@@ -494,14 +589,15 @@ def check_craft_heuristics(issues: list[Issue], text: str, mode: str) -> None:
         )
 
     for excl_match in EXCLUSION_BLOCK_RE.finditer(text):
-        excl_words = len(LATIN_WORD_RE.findall(excl_match.group("body") or ""))
+        body = excl_match.group("body") or ""
+        excl_words = round(len(LATIN_WORD_RE.findall(body)) + 0.5 * len(CJK_CHAR_RE.findall(body)))
         if excl_words > BLOATED_EXCLUSION_WORDS_WARN:
             add(
                 issues,
                 "warning",
                 "BLOATED_EXCLUSION_LIST",
-                f"Exclusion block contains {excl_words} words (recommended <= {BLOATED_EXCLUSION_WORDS_WARN} words / 3-5 hard rules). "
-                "Seedance's decoder-only LLM text encoder processes the full prompt in one token stream, so long lists of banned props/garments/gestures inject those nouns into cross-attention; move wardrobe/prop invariance into affirmative character/scene locks.",
+                f"Exclusion block contains ~{excl_words} word-equivalents (recommended <= {BLOATED_EXCLUSION_WORDS_WARN} words / 3-5 hard rules). "
+                "Seedance's decoder-only LLM text encoder processes the full prompt in one token stream, so long lists of banned props/garments/gestures inject those nouns into spatial MMDiT multi-modality self-attention; move wardrobe/prop invariance into affirmative character/scene locks.",
             )
             break
 
@@ -548,7 +644,7 @@ def check_craft_heuristics(issues: list[Issue], text: str, mode: str) -> None:
         ranges = timeline_ranges(text)
         durations = [end - start for start, end in ranges if end > start]
         is_one_take = re.search(
-            r"\bShot\s+1\s*\(\s*0\s*[-–—]\s*\d+\s*s\s*\)\s*:\s*\[[^\]]*one\s+continuous\s+take",
+            r"(?:\bShot\s+1|镜头\s*1)\s*[([（]\s*0\s*[-–—]\s*\d+\s*s\s*[)\]）]\s*[:：]\s*\[[^\]]*(?:one\s+continuous\s+take|一镜到底)",
             text,
             re.IGNORECASE,
         )
@@ -563,11 +659,12 @@ def check_craft_heuristics(issues: list[Issue], text: str, mode: str) -> None:
                 issues,
                 "warning",
                 "SLUGGISH_UNIFORM_TIMING",
-                "All non-final timed shot windows are 4-6s long, which stretches action/chases into slow motion and causes early static holds. Prefer untimed 'Shot N' (10-20 cuts) with 'Cut as <action>' triggers, or accordion 1-3s windows with a <=3s final payoff.",
+                "All non-final timed shot windows are 4-6s long, which stretches action/chases into slow motion and causes early static holds. Prefer untimed 'Shot N' (8-12 readable cuts) with 'Cut as <action>' triggers, or accordion 1-3s windows with a <=3s final payoff.",
             )
 
     cel_unnegated = NEGATED_CEL_RE.sub(" ", text)
-    if AIRBRUSH_PAINTERLY_RE.search(text) and CEL_OUTLINE_RE.search(cel_unnegated):
+    airbrush_unnegated = NEGATED_AIRBRUSH_RE.sub(" ", text)
+    if AIRBRUSH_PAINTERLY_RE.search(airbrush_unnegated) and CEL_OUTLINE_RE.search(cel_unnegated):
         add(
             issues,
             "warning",
@@ -630,8 +727,14 @@ def check_timeline(issues: list[Issue], text: str) -> None:
     for value in TIME_POINT_RE.findall(text):
         if not float(value).is_integer():
             add(issues, "warning", "DECIMAL_TIME_POINT", f"Use an integer-second key point instead of {value}s.")
-    if re.search(r"\b(?:three|four|five|\d+)\s+(?:times|actions?)\s+per\s+second\b", text, re.IGNORECASE):
-        add(issues, "warning", "HIGH_FREQUENCY_ACTION", "Do not use timestamps to demand high-frequency repeated actions.")
+    if re.search(
+        r"\b(?:three|four|five|six|seven|eight|nine|ten|\d+)\s+(?:times|actions?)\s+per\s+second\b"
+        r"|\bflashing\s+(?:five|six|seven|eight|nine|ten|\d+)\s+times\s+consecutively\b"
+        r"|每秒\s*(?:[三四五六七八九十]|\d+)\s*次|连闪[五六七八九十\d]+次",
+        text,
+        re.IGNORECASE,
+    ):
+        add(issues, "warning", "HIGH_FREQUENCY_ACTION", "Do not demand high-frequency repeated actions per second or 5+ consecutive flashes in one beat.")
 
 
 def check_anchor_syntax(issues: list[Issue], text: str, anchor_mode: str) -> None:
@@ -642,31 +745,39 @@ def check_anchor_syntax(issues: list[Issue], text: str, anchor_mode: str) -> Non
 
     exact_line = re.compile(
         rf"^\s*(?P<handle>{IMAGE_HANDLE_PATTERN})\s+is\s+the\s+"
-        r"(?P<role>first|last)\s+frame\.\s*$",
+        r"(?P<role>first|last)\s+frame\.\s*$"
+        rf"|^\s*(?P<cn_handle>{IMAGE_HANDLE_PATTERN})\s*(?:为|是)(?P<cn_role>首帧|尾帧)[。.]?\s*$",
         re.IGNORECASE,
     )
     required: set[tuple[str, int]] = set()
     satisfied: set[tuple[str, int]] = set()
     for line in text.splitlines():
         paired_pattern = re.compile(
-            rf"(?P<handle>{IMAGE_HANDLE_PATTERN})[^\n]{{0,80}}?\b(?P<role>first|last)\s+frame\b",
+            rf"(?P<handle>{IMAGE_HANDLE_PATTERN})[^\n]{{0,80}}?(?:\b(?P<role>first|last)\s+frame\b|(?P<cn_role>首帧|尾帧))",
             re.IGNORECASE,
         )
         pairs = list(paired_pattern.finditer(line))
         for match in pairs:
             mention = reference_mentions(match.group("handle"))[0]
-            required.add((match.group("role").lower(), mention.effective_number))
+            raw_role = (match.group("role") or match.group("cn_role") or "").lower()
+            norm_role = "first" if raw_role in ("first", "首帧") else "last"
+            required.add((norm_role, mention.effective_number))
         if not pairs:
-            # Also accept the uncommon reverse wording "the first frame uses
-            # [Image 1]" when there is only one unambiguous role and image.
             images = [mention for mention in reference_mentions(line) if mention.kind == "image"]
             roles = [role for role in ("first", "last") if f"{role} frame" in line.lower()]
+            if "首帧" in line and "first" not in roles:
+                roles.append("first")
+            if "尾帧" in line and "last" not in roles:
+                roles.append("last")
             if len(images) == 1 and len(roles) == 1:
                 required.add((roles[0], images[0].effective_number))
         exact = exact_line.match(line)
         if exact:
-            mention = reference_mentions(exact.group("handle"))[0]
-            satisfied.add((exact.group("role").lower(), mention.effective_number))
+            handle_str = exact.group("handle") or exact.group("cn_handle")
+            raw_role = (exact.group("role") or exact.group("cn_role") or "").lower()
+            norm_role = "first" if raw_role in ("first", "首帧") else "last"
+            mention = reference_mentions(handle_str)[0]
+            satisfied.add((norm_role, mention.effective_number))
 
     for role, number in sorted(required - satisfied):
         code = "WEAK_FIRST_FRAME_ROLE" if role == "first" else "WEAK_LAST_FRAME_ROLE"
@@ -710,30 +821,57 @@ def check_target_duration(issues: list[Issue], target_duration: float | None, lo
 def check_mode(issues: list[Issue], text: str, mode: str) -> None:
     low = text.lower()
     if mode == "edit":
-        if "sole editing master" not in low:
-            add(issues, "error", "EDIT_MASTER", "Editing must define one source video as the sole editing master.")
-        if not re.search(r"\b(edit|modify|replace|remove|add|insert|change)\b", low):
+        if "sole editing master" not in low and "唯一编辑主视频" not in text:
+            add(issues, "error", "EDIT_MASTER", "Editing must define one source video as the sole editing master ('唯一编辑主视频').")
+        if not (
+            re.search(r"\b(edit|modify|replace|remove|add|insert|change)\b", low)
+            or re.search(r"编辑|修改|替换|移除|删除|增加|添加|插入|改为|换成", text)
+        ):
             add(issues, "error", "EDIT_TARGET", "Editing must name an edit operation and target.")
-        if not re.search(r"\b(only|within|scope|from \d|entire video)\b", low):
+        if not (
+            re.search(r"\b(only|within|scope|from \d|entire video|throughout)\b", low)
+            or re.search(r"仅|只|范围|全片|整个视频|全程|在第?\s*\d", text)
+        ):
             add(issues, "warning", "EDIT_SCOPE", "Define the edited object/category, interval or region, and quantity.")
-        if not re.search(r"\b(unchanged|remain unchanged|keep all other|except for)\b", low):
+        if not (
+            re.search(r"\b(unchanged|remain unchanged|keep all other|except for)\b", low)
+            or re.search(r"保持不变|不变|除.{1,40}外", text)
+        ):
             add(issues, "error", "EDIT_PRESERVATION", "Close the edit scope by stating what remains unchanged.")
-        if not re.search(r"\b(inherits?|timeline|appearance timing|motion slot|event order)\b", low):
+        if not (
+            re.search(r"\b(inherits?|timeline|appearance timing|motion slot|event order)\b", low)
+            or re.search(r"继承|时间线|出场时间|动作轨迹|事件顺序|运镜", text)
+        ):
             add(issues, "warning", "EDIT_INHERITANCE", "State how the edit inherits the source timeline, motion, occlusion, and event order.")
     elif mode == "extension":
-        if "source video to extend" not in low:
+        has_source = "source video to extend" in low or bool(
+            re.search(r"(?:待延长|要延长|用于延长)的?源视频|源视频[^\n。]{0,18}延长", text)
+        )
+        if not has_source:
             add(issues, "error", "EXTENSION_SOURCE", "Extension must identify one source video to extend.")
-        forward = "extend forward" in low
-        backward = "extend backward" in low
+        forward = "extend forward" in low or bool(re.search(r"向后延长|往后延长|正向延长|向后续写", text))
+        backward = "extend backward" in low or bool(re.search(r"向前延长|往前延长|反向延长|向前续写", text))
         if forward == backward:
-            add(issues, "error", "EXTENSION_DIRECTION", "State exactly one direction: forward or backward.")
-        if forward and not re.search(r"first frame of the extended segment.+last frame", low, re.DOTALL):
+            add(issues, "error", "EXTENSION_DIRECTION", "State exactly one direction: forward ('向后延长') or backward ('向前延长').")
+        if forward and not (
+            re.search(r"first frame of the extended segment.+last frame", low, re.DOTALL)
+            or re.search(r"延长.{0,12}首帧.{0,30}(?:尾帧|最后一帧)", text, re.DOTALL)
+        ):
             add(issues, "error", "FORWARD_BOUNDARY", "Forward extension must continue from the source video's last frame.")
-        if backward and not re.search(r"last frame of the extended segment.+first frame", low, re.DOTALL):
+        if backward and not (
+            re.search(r"last frame of the extended segment.+first frame", low, re.DOTALL)
+            or re.search(r"延长.{0,12}(?:尾帧|最后一帧).{0,30}首帧", text, re.DOTALL)
+        ):
             add(issues, "error", "BACKWARD_BOUNDARY", "Backward extension must end at the source video's first frame.")
-        if not re.search(r"\b(without duplication|without duplicat|same continuous|single continuous|do not duplicate|no duplication)\b", low):
+        if not (
+            re.search(r"\b(without duplication|without duplicat|same continuous|single continuous|do not duplicate|no duplication)\b", low)
+            or re.search(r"不重复|不分裂|同一连续|单一连续", text)
+        ):
             add(issues, "warning", "EXTENSION_INSTANCE", "State that each subject remains one continuous instance without duplication or splitting.")
-        if not re.search(r"\b(audio state|audio environment|ambience|sound|dialogue|silence)\b", low):
+        if not (
+            re.search(r"\b(audio state|audio environment|ambience|sound|dialogue|silence|audio)\b", low)
+            or re.search(r"音频|环境音|声音|音效|对白|静音|无声", text)
+        ):
             add(issues, "warning", "EXTENSION_AUDIO", "Describe audio continuity or an explicit silent state at the boundary.")
     if mode in ("edit", "extension") and EDIT_REF_TRAP_RE.search(text):
         add(
@@ -757,16 +895,18 @@ def check_content(issues: list[Issue], text: str, allow_music: bool, allow_templ
         add(issues, "warning", "OUTPUT_PARAMETER", "Keep ratio, resolution, and frame-rate settings outside the creative prompt unless they describe an essential source constraint.")
     if re.search(r"\b(frame[- ]accurate|pixel[- ]identical|perfect adherence|no artifacts|guaranteed)\b", text, re.IGNORECASE):
         add(issues, "warning", "UNSUPPORTED_GUARANTEE", "Replace guarantees with observable goals and disclose documented limitations.")
+    if DIALOGUE_RE.search(text) and not NO_SUBTITLES_RE.search(text):
+        add(
+            issues,
+            "warning",
+            "MISSING_NO_SUBTITLES",
+            "Spoken dialogue is present without 'No subtitles.' (or explicit 【...】 subtitle binding); append 'No subtitles.' ('无字幕') to prevent burned-in caption artifacts.",
+        )
     if not allow_music:
         music_remainder = text
         for _ in range(3):
             music_remainder = NEGATED_MUSIC_CLAUSE_RE.sub(" ", music_remainder)
-        positive_music = re.search(
-            r"\b(?:BGM|background\s+music|music\s+plays|instrumental\s+music|soundtrack)\b",
-            music_remainder,
-            re.IGNORECASE,
-        )
-        if positive_music:
+        if POSITIVE_MUSIC_RE.search(music_remainder):
             add(issues, "warning", "MUSIC_DEFAULT", "Music is present. Use --allow-music only when the user explicitly requested it.")
     if len(text.strip()) < 40:
         add(issues, "warning", "SPARSE_PROMPT", "Prompt is unusually short; confirm that subject and primary event are explicit.")
@@ -790,7 +930,7 @@ def lint(
     selected_mode = infer_mode(text) if mode == "auto" else mode
     issues: list[Issue] = []
     handles = referenced_handles(text)
-    check_counts(issues, handles, images, videos, audio, video_seconds, audio_seconds)
+    check_counts(issues, handles, images, videos, audio, video_seconds, audio_seconds, mode=selected_mode)
     check_target_duration(issues, target_duration, long_video=long_video)
     check_roles(issues, text, handles)
     check_timeline(issues, text)
@@ -818,6 +958,28 @@ The white lamp inherits every appearance timing, motion, and occlusion of the re
     assert mode == "edit"
     assert not [i for i in issues if i.severity == "error"], issues
 
+    # Bilingual Chinese edit routing & contract check (F07)
+    cn_edit = """[编辑目标]
+编辑 @视频1。在全片范围内，仅将快递员头盔替换为 @图片1 的复古铜制面罩头盔。
+[源视频角色]
+@视频1 为唯一编辑主视频，定义人物动作、机位运镜、遮挡关系、原始声音与事件顺序。
+@图片1 仅定义铜制头盔结构；不要使用其背景。
+[修改范围与保留]
+仅修改这一顶头盔；除该头盔外，其余所有人物、服装、摩托车与霓虹街道背景均保持不变。
+[时间线继承]
+新头盔完整继承原头盔在 @视频1 时间线中的全部转头轨迹、反光与遮挡。"""
+    cn_mode, cn_issues = lint(cn_edit, "auto", images=1, videos=1, audio=0, video_seconds=6.7)
+    assert cn_mode == "edit", cn_mode
+    assert not cn_issues, cn_issues
+
+    # Bilingual Chinese forward extension routing & contract check (F07)
+    cn_ext = """@视频1 为待延长的源视频。@图片1 仅定义隧道外的雪山河谷远景；不要使用其替换起始边界帧。
+向后延长 @视频1。延长段首帧紧接 @视频1 的最后一帧，保持红色蒸汽火车的行驶速度、车侧跟拍机位、煤烟方向与铁轨轰鸣音频状态。
+随后火车冲出隧道进入阳光山谷，全程保持同一连续火车个体不重复、不分裂，无配乐，无字幕。"""
+    ext_mode, ext_issues = lint(cn_ext, "auto", images=1, videos=1, video_seconds=5.0)
+    assert ext_mode == "extension", ext_mode
+    assert not ext_issues, ext_issues
+
     bad_extension = "Extend @Video 1 and add a second copy."
     _, issues = lint(bad_extension, "extension", videos=1)
     codes = {i.code for i in issues}
@@ -835,6 +997,11 @@ The white lamp inherits every appearance timing, motion, and occlusion of the re
     _, issues = lint(bracket_timeline)
     assert "TIMELINE_OVERLAP" in {i.code for i in issues}
 
+    # Stage N & 镜头 N decimal/gap headers (F08)
+    stage_decimal = "Stage 1 (0-3.5s): A walks in.\nStage 2 (4.5-8s): A sits down."
+    _, issues = lint(stage_decimal)
+    assert {"DECIMAL_TIMESTAMP", "TIMELINE_GAP"}.issubset({i.code for i in issues}), issues
+
     not_a_timeline = "Use a 5-10 seconds subject-reference clip. Support ratios in the range 0.4-2.5."
     _, issues = lint(not_a_timeline)
     assert not {"INVALID_TIME_RANGE", "TIMELINE_GAP", "TIMELINE_OVERLAP"} & {i.code for i in issues}, issues
@@ -845,6 +1012,12 @@ The white lamp inherits every appearance timing, motion, and occlusion of the re
 
     _, issues = lint("@Image 31 defines a prop.", images=31)
     assert "IMAGE_LIMIT" in {i.code for i in issues}
+
+    # Unflagged hard asset caps & edit video min duration (F08)
+    _, issues = lint("@Image 40 defines only the hero's cloak; do not use its background.")
+    assert "IMAGE_LIMIT" in {i.code for i in issues}, issues
+    _, issues = lint(good_edit, "edit", images=1, videos=1, video_seconds=2.5)
+    assert "EDIT_VIDEO_MIN_DURATION" in {i.code for i in issues}, issues
 
     surface_styles = """@Image1 defines the hero's appearance.
 [Image 1] defines the same hero's wardrobe.
@@ -870,6 +1043,8 @@ The white lamp inherits every appearance timing, motion, and occlusion of the re
     assert "PLACEHOLDER" not in {i.code for i in issues}, issues
     _, issues = lint("@Image1 defines <Subject A>.", images=1, allow_template_placeholders=True)
     assert "PLACEHOLDER" not in {i.code for i in issues}, issues
+    _, issues = lint("Edit @Video 1. Within <whole video or exact scope>, change only <original object/region> from <A> to <B>.", "edit")
+    assert "PLACEHOLDER" in {i.code for i in issues}, issues
 
     _, issues = lint("A complete but segmented story prompt.", target_duration=31)
     assert {"TARGET_DURATION_LIMIT", "TARGET_DURATION_SEGMENTATION"}.issubset({i.code for i in issues}), issues
@@ -886,6 +1061,17 @@ The white lamp inherits every appearance timing, motion, and occlusion of the re
     _, issues = lint(crowded)
     density = [i for i in issues if i.code == "DIALOGUE_DENSITY"]
     assert len(density) == 1 and "0-3s" in density[0].message, issues
+    assert "MISSING_NO_SUBTITLES" in {i.code for i in issues}, issues
+
+    # CJK & comma-quoted dialogue density (F07)
+    cjk_crowded = "镜头 1 (0-2s): 守卫举起长矛喝道：“站住，深更半夜你们几个到底是什么人，快把通行腰牌拿出来检查！” 无字幕。"
+    _, issues = lint(cjk_crowded)
+    assert "DIALOGUE_DENSITY" in {i.code for i in issues}, issues
+    assert "MISSING_NO_SUBTITLES" not in {i.code for i in issues}, issues
+
+    comma_quote = 'Shot 1 (0-2s): Mara turns and says, "Wait right here until I check the cellar door Lock." No subtitles.'
+    _, issues = lint(comma_quote)
+    assert "DIALOGUE_DENSITY" in {i.code for i in issues}, issues
 
     braced = "0-2s: The guard speaks. {Halt, who goes there, stranger, at this hour?}"
     _, issues = lint(braced)
@@ -925,19 +1111,35 @@ The white lamp inherits every appearance timing, motion, and occlusion of the re
     _, issues = lint("Hand-drawn 2D cel-shaded anime style over a painted gouache background. Avoid: no bokeh, no shallow depth of field.")
     assert "STYLE_2D_LENS_CONFLICT" not in {i.code for i in issues}, issues
 
+    # Negated airbrush symmetry fix (F08)
+    _, issues = lint("Pure 2D cel-shaded anime animation across the whole courtyard. Avoid: no airbrushed rendering, no semi-realistic shading.")
+    assert "AIRBRUSH_CEL_CONFLICT" not in {i.code for i in issues}, issues
+    _, issues = lint("Lineless airbrushed semi-realistic digital painting mixed with crisp 2D cel-shaded anime fills.")
+    assert "AIRBRUSH_CEL_CONFLICT" in {i.code for i in issues}, issues
+
+    # Room-tone foley whitelist & parenthetical/CJK music detection (F08)
+    _, issues = lint("A potter shapes wet clay on a wheel in dawn light. The soundtrack consists solely of wet clay squelches, wheel hum, and quiet room tone.")
+    assert "MUSIC_DEFAULT" not in {i.code for i in issues}, issues
+    _, issues = lint("A lone traveller crosses the snowfield at dusk. (low cello melody swells softly)")
+    assert "MUSIC_DEFAULT" in {i.code for i in issues}, issues
+    _, issues = lint("黄昏雪原上旅人独行，远处响起低沉弦乐伴奏。")
+    assert "MUSIC_DEFAULT" in {i.code for i in issues}, issues
+
     _, issues = lint("Dynamic tracking shot. Character <<<Image1>>> sprints across a roof.")
     assert "UNSUPPORTED_HANDLE_SYNTAX" in {i.code for i in issues}, issues
     _, issues = lint("Character @[ref1] enters the room.")
     assert "UNSUPPORTED_HANDLE_SYNTAX" in {i.code for i in issues}, issues
+    _, issues = lint("参考 <视频1> 的运镜轨迹。")
+    assert "UNSUPPORTED_HANDLE_SYNTAX" in {i.code for i in issues}, issues
 
-    _, issues = lint('She inhales excitedly and speaks in a sing-song lilt: {"Hello there!"}')
+    _, issues = lint('She inhales excitedly and speaks in a sing-song lilt: {"Hello there!"} No subtitles.')
     assert "CARTOON_OVERACTING_RISK" in {i.code for i in issues}, issues
-    _, issues = lint('She speaks in a flat tone: {"Hello there."}')
+    _, issues = lint('She speaks in a flat tone: {"Hello there."} No subtitles.')
     assert "PROSODY_FLATTENER_RISK" in {i.code for i in issues}, issues
-    _, issues = lint('Shot 1: She speaks: {"Double the pumpkins, lock the moon—"} Cut as the drop falls.\n[Cut to]\nShot 2: Her voice continues: {"—Halloween stays till next June!"}')
+    _, issues = lint('Shot 1: She speaks: {"Double the pumpkins, lock the moon—"} Cut as the drop falls.\n[Cut to]\nShot 2: Her voice continues: {"—Halloween stays till next June!"} No subtitles.')
     assert "SPLIT_DIALOGUE_ACROSS_CUT" in {i.code for i in issues}, issues
 
-    overloaded_clip = 'Shot 1: {"Line one here."} Shot 2: {"Line two here."} Shot 3: {"Line three here."} Shot 4: {"Line four here."}'
+    overloaded_clip = 'Shot 1: {"Line one here."} Shot 2: {"Line two here."} Shot 3: {"Line three here."} Shot 4: {"Line four here."} No subtitles.'
     _, issues = lint(overloaded_clip)
     assert "CLIP_DIALOGUE_OVERLOAD" in {i.code for i in issues}, issues
 
@@ -952,7 +1154,7 @@ Shot 1 (0-30s): [Front camera of her phone, one continuous take]
 21-24s: She turns back. {"And the scariest? Me."}
 24-25s: One second of total silence.
 25-28s: Autofocus hunts and softens into blur.
-28-30s: Focus snaps back onto her face."""
+28-30s: Focus snaps back onto her face. No subtitles."""
     _, issues = lint(nested_one_take, images=1)
     assert not {"TIMELINE_OVERLAP", "TIMELINE_GAP", "CLIP_DIALOGUE_OVERLOAD", "DIALOGUE_DENSITY"} & {i.code for i in issues}, issues
 
@@ -999,13 +1201,14 @@ Shot 5 (22-28s): Stephan looks across the table.
 Dialogue (Stephan, very quiet, careful): "Und?"
 Dialogue (the composer, quiet, dry): "Wie immer."
 [Audio]
-No score, no\nsoundtrack, no ambient music. The soundtrack is only the two voices and room tone."""
+No score, no\nsoundtrack, no ambient music. The soundtrack is only the two voices and room tone. No subtitles."""
     _, issues = lint(slow_drama)
     assert not {
         "CLIP_DIALOGUE_OVERLOAD",
         "DIALOGUE_DENSITY",
         "SLUGGISH_UNIFORM_TIMING",
         "MUSIC_DEFAULT",
+        "MISSING_NO_SUBTITLES",
     } & {i.code for i in issues}, issues
 
     bloated_excl = (
@@ -1013,6 +1216,10 @@ No score, no\nsoundtrack, no ambient music. The soundtrack is only the two voice
         + " ".join(["no modern props or extra plates or forks or spoons or knives"] * 9)
     )
     _, issues = lint(bloated_excl)
+    assert "BLOATED_EXCLUSION_LIST" in {i.code for i in issues}, issues
+
+    cn_bloated_excl = "镜头 1 (0-5s): 男子坐在桌前。\n[严格排除]\n" + "不要现代餐具、不要多余盘子叉子勺子、不要外套领结手杖、" * 12 + "\n[分镜]\n镜头 2 (5-8s): 他放下水杯。"
+    _, issues = lint(cn_bloated_excl)
     assert "BLOATED_EXCLUSION_LIST" in {i.code for i in issues}, issues
 
     print("prompt_lint self-test: PASS")
@@ -1031,7 +1238,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument(
         "--long-video",
         action="store_true",
-        help="Allow 30-180s target duration for Dreamina web Long Video mode (default cap Remains 30s)",
+        help="Allow 30-180s target duration for Dreamina web Long Video mode (default cap remains 30s)",
     )
     parser.add_argument("--allow-music", action="store_true")
     parser.add_argument(

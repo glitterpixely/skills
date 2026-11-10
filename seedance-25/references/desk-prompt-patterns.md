@@ -1,619 +1,231 @@
-# Desk Prompt Patterns
+# Desk Prompt Patterns: Action, Combat VFX, & Timing
 
-Clip-desk production heuristics distilled from public and user-supplied action and observational worldbuilding prompts. Written-prompt study provides craft hypotheses, not evidence of generated fidelity. These heuristics do **not** expand model capabilities, limits, prices, UI quotas, or API fields. If a heuristic conflicts with [source-boundaries.md](source-boundaries.md), [prompt-architecture.md](prompt-architecture.md), or [task-contracts.md](task-contracts.md), follow those files.
+Clip-desk production heuristics for kinetic action, bilingual combat VFX, continuous movement, four-mode pacing, and 2.5D letterbox compositing. Companion modules cover [vignettes, multi-shot continuity, conversational prosody, and reference-plate coverage](desk-continuity-and-coverage.md) and [ByteDance Seed training architecture and evidence boundaries](research-mechanics.md).
 
-Honor the user's standing clip-desk defaults unless they override them: beauty-first (ethereal, regal, romantic celestial / anime — not grotesque); no music or BGM unless they ask; paste-ready prompt body only.
+Written-prompt study provides craft hypotheses, not evidence of generated fidelity. These heuristics do **not** expand model capabilities, limits, prices, UI quotas, or API fields. If a heuristic conflicts with [source-boundaries.md](source-boundaries.md), [prompt-architecture.md](prompt-architecture.md), or [task-contracts.md](task-contracts.md), follow those files.
+
+Standing clip-desk defaults unless the user overrides them:
+- **Aesthetic scope:** apply a beauty-first look (ethereal, regal, romantic, non-grotesque) only to celestial, fairy, romantic fantasy, and stylized anime requests whose tone is otherwise unspecified; preserve gritty realism, historical drama, documentary texture, creature design, or gothic horror whenever the brief calls for them.
+- **Audio & wrapper:** no music or BGM unless requested; deliver the paste-ready prompt body only.
+
+## Contents
+
+- [Action mechanics and framing](#action-mechanics-and-framing)
+- [Reference-led kinetic action](#reference-led-kinetic-action)
+- [Bilingual combat VFX & spatiotemporal prompting](#bilingual-combat-vfx--spatiotemporal-prompting)
+- [Continuous-action prompting](#continuous-action-prompting)
+- [Physics, fight repair, speed ramps, & extension beats](#physics-needs-an-origin)
+- [Four-mode timing architecture and pacing control](#four-mode-timing-architecture-and-pacing-control)
+- [2.5D letterbox frame-break ("pop-out") compositing](#25d-letterbox-frame-break-pop-out-compositing)
+- [Do not import from public dumps](#do-not-import-from-public-dumps)
 
 ## Action mechanics and framing
 
-Use these user-supplied directing lessons for a leap, evasion, connected movement, or finishing strike when relevant. They also apply to simple action shots without requiring the dense kinetic-action mode below. Preserve the requested choreography, pace, camera restrictions, and outcome; railings, walls, and swords are examples, not required scene elements.
+Use these directing lessons for a leap, evasion, connected movement, or finishing strike when relevant. They also apply to simple action shots without requiring the dense kinetic-action mode below. Preserve the requested choreography, pace, camera restrictions, and outcome; railings, walls, and swords are examples, not required scene elements.
 
 - **Load before release.** For an explosive grounded leap, show the body lowering deeply, hips and knees flexing over planted feet, then the legs driving against the ground before takeoff. Make the support contact and launch direction visible. Keep anticipation compact at a fast pace; a deep compression does not require a long pause or slow motion.
-- **Make the defense feed the next move.** When the action should continue, connect evasion to an available environmental contact: a hand catches an established railing and pulls the body around it, or a foot plants against a wall and pushes off into the next trajectory. Specify contact -> force/redirection -> release -> next movement. Carry momentum and position forward without an unexplained reset. Check that the surface is reachable and the gripping hand is free without changing weapon ownership.
-- **Frame the near miss.** Let the camera rapidly follow the evading face, arriving at an angle that shows the face, passing sword, and narrow visible gap together at closest approach. Preserve readable separation through focus, silhouettes, and restrained blur; camera speed alone does not communicate how close the miss was. Continue with the movement without inserting unrequested slow motion or a freeze.
-- **Reveal the final strike's reach.** Trigger a strong pullback or motivated cut to a much wider view as the finishing attack travels. Keep its origin, path, and farthest affected point legible against established environmental landmarks. Widen the framing, not the aspect ratio, and reveal the attack's existing reach without inventing extra power or destruction. Preserve a locked camera or continuous-shot requirement when supplied.
+- **Make the defense feed the next move.** Connect evasion to an established environmental contact: a hand catches a railing and pulls the body around it, or a foot plants against a wall and pushes off into the next trajectory (`contact -> force/redirection -> release -> next movement`). Carry momentum and position forward without an unexplained reset. Verify that the surface is reachable and the gripping hand is free without changing weapon ownership.
+- **Frame the near miss.** Let the camera track the evading face and arrive at an angle showing the face, passing blade, and narrow visible gap together at closest approach. Preserve separation through silhouettes and restrained motion blur rather than inserting unrequested slow motion or a freeze.
+- **Reveal the final strike's reach.** Trigger a motivated pullback or cut to a wider view as the finishing attack travels so its origin, path, and farthest affected landmark remain legible. Widen the framing (not the aspect ratio) without inventing extra destruction, while respecting any continuous-shot lock.
 
 ## Reference-led kinetic action
 
-Use this mode only when the user wants a supplied prompt's dense, cinematic control pattern for a fight, chase, transformation, destruction, or effects-led sequence. Reuse the mechanics of the prompt, not its characters, world, unsupported render settings, or story outcome.
+Use this mode when the user wants dense cinematic control for a fight, chase, transformation, destruction, or effects-led sequence. Reuse the control mechanics, not a source prompt's characters, world, unsupported render flags, or story outcome.
 
 Build in this order:
 
 `reference jobs -> global locks -> force/effect system -> causal stages -> camera path -> escalation -> failure guards`
 
-The prompt should read like a small production contract. Give each image one job, state what it does not control, then lock identity, count, prop ownership, axis, palette, lighting direction, and two or three rigid environmental landmarks. If an existing action is translated into a new material or environment, preserve its dramatic function and state the replacement explicitly.
+Give each image one primary job, state what it does not control, and lock identity, count, prop ownership, axis, palette, lighting direction, and two or three rigid environmental landmarks.
 
 ### Causal force and VFX grammar
 
-For every important attack or effect, use:
+For every important attack or effect, write:
 
 `preparation -> acceleration -> contact/trigger -> force transfer -> visible material response -> residue -> recovery`
 
-Examples of valid origins include contact, friction, velocity, impact, wind, or a clearly named energy trigger. A monster does not burn before the blade, wave, beam, or marked effect reaches it. A spark, dust burst, fabric movement, heat distortion, fragment, or glow should have a visible source. Replace vague phrases such as “powerful” with body mechanics, object motion, impact feedback, and environmental response.
+Valid origins include contact, friction, velocity, impact, wind, or a named energy trigger. Targets do not burn or shatter before the strike reaches them. Replace vague intensifiers ("powerful") with body mechanics, impact recoil, and environmental displacement.
 
 ### Dense stage pattern
 
-For a user-requested maximal action pass, use consecutive stages such as:
+For an explicitly timed maximal action pass, use consecutive integer-second windows:
 
 ```text
-T=0-2s — <beat name>
+0-3s — <beat name>
 Initial state: <blocking, prop state, and camera state>.
 Action: <preparation -> contact or trigger -> consequence -> recovery>.
 Camera: <target/start> -> <path and speed change> -> <end framing and visible result>.
-End state: <observable state that carries forward>.
+End state: <observable state carried forward>.
 ```
 
-Up to three short sub-beats can appear inside one stage when they form one connected causal chain. If they are separate techniques, effects, or targets, split the stage or use an extension. Preserve the user's intense pacing as an approximate creative budget; do not claim frame-accurate timing.
+Keep up to three connected sub-beats inside one window; split separate techniques into distinct shots or a follow-on extension.
 
 ### Escalation and scale
 
-Prefer a readable escalation: distant crowd or silhouette mass, mid-ground attack, foreground elite contact, large-scale consequence, then a new threat or aftermath hook. Use crowd density and simplified silhouettes in the distance; reserve detailed anatomy, hit response, and causal VFX for the near subject. Keep environmental anchors visible through the camera path so the sequence remains geographically legible.
-
-When the scene is a fight, change choreography before adding more adjectives if a result is weak. Keep identity, location, axis, prop ownership, and camera contract; reduce the number of contacts until each one reads.
+Escalate from distant silhouettes -> mid-ground threat -> foreground elite contact -> arena-scale consequence -> aftermath hook. Keep distant crowds simple and reserve detailed anatomy and hit response for foreground subjects. When a fight render looks muddled, simplify the choreography until each contact reads rather than stacking style adjectives.
 
 ### Reciprocal combat and action-driven travel
 
-For an evenly matched duel, build exchanges around `attack -> defense -> counterattack -> recovery or regained initiative`. Let defenses change the next attack through a deflection, redirected momentum, escape, or position change. Balance initiative across the sequence; do not require identical exchanges in every shot. Preserve a requested victor or deliberate power imbalance instead of imposing a stalemate on every fight.
+For an evenly matched duel, build exchanges around `attack -> defense -> counterattack -> recovery or regained initiative` so defenses redirect momentum into the next move. Preserve a requested victor; unless the user asks for a cliffhanger tie, never end a fight on a frozen mutual clash (`STALEMATE_CLASH_ENDING`).
 
-When combat travels, make each new location the consequence of a visible action. Track `departure landmark -> force or locomotion -> visible route -> arrival state`. For example: an uppercut breaks through a roof; pursuit crosses its wet ridge toward a visible cliff; a clash launches both fighters beyond the edge. Carry their relative positions and momentum into the next beat. A location list alone does not establish continuity. Preserve a requested single arena.
-
-In aerial action, name the propulsion that changes direction or altitude: a surface rebound, air-step, flight thrust, or directed energy recoil. A downward blow does not explain both fighters accelerating upward without an additional force.
+When combat travels across arenas, make each location change the consequence of a visible physical force (`departure landmark -> force/locomotion -> visible route -> arrival state`), or use an action-triggered white-flash hard cut (`白闪硬切`: end Shot $N$ on `Cut at the instant the stomp lands` and open Shot $N+1$ already mid-exchange in the new arena without animating mushy background melting). In aerial action, name the propulsion source that alters altitude (surface rebound, wing/thruster impulse, or energy recoil).
 
 ### Camera continuity and contact visibility
 
-Tie each camera move to an action trigger and a framing purpose: follow a launch upward, track a fall downward, or travel beside a pursuit. Specify whose viewpoint a first-person or body-mounted camera uses. A pseudo-one-take needs explicit bridges between viewpoints: debris, a passing roof edge, cloud cover, a waterfall curtain, or a motivated whip pan, followed by a defined arrival composition and preserved motion direction. Merely listing camera abbreviations does not create a continuous path.
-
-Make contact readable before the largest effect bloom. Preserve fighter silhouettes, assigned energy colors, and the attack target through the burst. Use environmental displacement to communicate force, escalating from local fragments to larger structural or landscape responses when the story calls for it. Reserve the greatest consequence for the intended climax instead of making every hit equally large.
-
-For nonstop action without slow motion or hit-stop, emphasize impact with a brief light surge, camera impulse, immediate recoil, expanding shockwave, debris, and continuing motion. Do not introduce a speed ramp against that instruction. Express speed through pursuit, parallax, cloth drag, trails, and rapid recovery rather than quotas of actions per second.
-
-### Timing and continuation checks
-
-Give each shot one dominant exchange or state change. Keep connected sub-beats only while preparation, contact, and reaction remain distinguishable. If the climax includes impact, environmental destruction, separation, recovery, and a final close-up, allocate time across those beats or simplify them; do not pack them into the last second.
-
-For an unresolved ending, retain a readable final position and an active threat or renewed approach when requested. A stable, trackable boundary does not require a motionless pose. Specify contact sounds and environmental audio when useful; preserve the no-music default. Keep failure guards specific to identity, geography, contact, effects, and the requested outcome rather than copying an exhaustive negative list.
+Tie each camera move to an action trigger and framing purpose. A pseudo-one-take across viewpoints needs an explicit physical bridge (debris wipe, roof edge, cloud bank, waterfall curtain, or whip pan) plus a defined arrival composition. Make weapon or fist contact readable before the largest effect bloom, keeping silhouettes and assigned energy colors distinct. When slow motion or hit-stop is excluded, convey impact via a two-frame flash, camera jolt, recoil, shockwave, and uninterrupted follow-through.
 
 ## Bilingual combat VFX & spatiotemporal prompting
 
-Seedance 2.5 is natively bilingual, but combat physics, anime impact frames, and martial-arts kinematics are heavily weighted toward Chinese captions in its training distribution.
+Seedance 2.5 is natively bilingual, and high-velocity anime impact frames and martial-arts kinematics carry strong Chinese supervision in its training corpus.
 
 ### Key execution rules
 
-- **Bypass middleware rewriters**: Global API wrappers and UI "Prompt Enhance" layers often rewrite or translate snappy tokens like `闪切` (flash-cut) into generic English (`transform`, `morph`), which triggers mesh melting. Disable "Prompt Enhance" when using this mode.
-- **Hybrid token injection**: Even when structuring schemas or prompts in English, inject native Chinese action and physics tokens directly into the prompt payload to lock onto high-density motion weights.
+- **Disable external prompt-enhance rewriters on flash-cut jobs:** Middleware rewriters often translate `闪切` (flash-cut) into generic English `transform` / `morph`, triggering slow mesh melting.
+- **Targeted bilingual token injection:** In stylized anime/CG combat, pair clean reference bindings with sharp Chinese impact tokens (`闪切`, `两帧黑白冲击帧`, `化作残影`) when helpful, or keep pure English for readable `8–12` shot choreography.
 
 ### Principle 1: Impact frames (`冲击帧`) & transformation logic
 
-Raw AI transformations take ~2 seconds and look mushy. Use hard style-cut tokens in the prompt, then compress in post-production.
+Raw unguided transformations take ~2 seconds and melt geometry. Use hard style-cut tokens in the prompt:
 
-- **Prompt formula**:
-  `闪白 → 发光线稿 → 闪切 2D 漫画 → 同一姿势落定`
-  *(White flash → glowing line art → flash-cut 2D manga → settle into 3D model in the exact same pose)*
-- **Strict lexical constraint**:
-  - **USE**: `闪切` (flash-cut)
-  - **BANNED**: `变形` (morph / transform / shape-shift) — causes melting, sticky transitions.
-- **Pacing contrast (Bullet Time)**:
-  Precede high-speed combat with a slow macro dolly shot:
-  `子弹时间：微距贴着刀刃慢慢移` *(Bullet time: macro camera glides slowly along the blade edge)*.
+- **Formula:** `闪白 → 发光线稿 → 闪切 2D 漫画 → 同一姿势落定` *(White flash -> glowing line art -> flash-cut 2D manga -> settle into target armor/mecha in the exact same pose)*.
+- **Lexical rule:** Use `闪切` (`flash-cut`); avoid `变形` (`morph` / `shape-shift`, flagged by `MORPH_TOKEN_RISK`).
+- **Bullet-time contrast:** Precede a burst combo with a slow macro blade glide (`子弹时间：微距贴着刀刃慢慢移`).
 
 ### Principle 2: Specific anatomical targets (`攻击位置`) & color locking
 
-Generic prompts like `机甲攻击巨龙` ("Mecha attacks giant dragon") produce repetitive, identical swings.
+Generic phrasing (`机甲攻击巨龙` / "Mecha attacks giant dragon") yields repetitive swings. Pair an **exact anatomical target** with an **alternating directional slash vector**:
+1. `额头 · 横切` — Forehead: horizontal slash
+2. `头顶 / 两角之间 · 斜劈` — Crown / between horns: diagonal downward chop
+3. `龙头 / 下颚 · 由下往上挑` — Jaw: upward rising slash kicking up sparks
+4. `前腿 / 龙腹 · 低位撞` — Front leg / belly: low-angle collision strike
 
-- **Multi-vector target rule**: Every strike in a combo must pair an **exact anatomical target** with a **directional slash vector** (alternating up, down, left, right):
-  1. `额头 · 横切` — Forehead: Horizontal slash
-  2. `头顶 / 两角之间 · 斜劈` — Crown / Between horns: Diagonal downward chop
-  3. `龙头 / 下颚 · 由下往上挑` — Dragon head / Jaw: Upward rising slash (with ground sparks)
-  4. `前腿 / 龙腹 · 低位撞` — Front leg / Belly: Low-angle collision strike
-- **Skill color-locking (`一个技能锁一个颜色`)**: Bind one distinct color per VFX element to prevent visual muddiness:
-  - Blade Energy: Violet (`刀光 紫` / `#A855F7`)
-  - Whirlwind: Cyan (`旋风 青` / `#06B6D4`)
-  - Tsunami / Water: Deep Blue (`海啸 深蓝` / `#1E3A8A`)
-  - Dragon Flame: Orange-Red (`龙焰 橙红` / `#EA580C`)
+Bind **one distinct color per VFX skill** (`一个技能锁一个颜色`), e.g. violet blade energy (`#A855F7`), cyan whirlwind (`#06B6D4`), deep-blue tsunami (`#1E3A8A`), orange-red dragon flame (`#EA580C`).
 
 ### Principle 3: Velocity & force modifiers (`速度` / `加速度词`)
 
-Standard movement verbs like `飞向` ("flies toward") generate slow, floaty trajectories (`软绵绵`).
+Replace floaty verbs (`飞向` / "flies toward") with grounded launch mechanics (`瞬间`, `极速`, `蹬地`, `化作残影`) while keeping combo counts physically readable (`绕龙高速连闪三次` / three rapid aerial arc passes — never 7+ high-frequency flashes inside one 4s window).
 
-- **Mandatory pre-action modifiers**: Prepend kinetic force tokens before movement verbs:
-  - `瞬间` (instantly)
-  - `极速` (at extreme speed)
-  - `蹬地` (kicks violently off the ground)
-  - `残影` (afterimage / motion trail)
-  - `连闪` (consecutive rapid flashes)
-- **Canonical syntax**:
-  `机甲蹬地化作紫色残影冲上半空，绕龙连闪七次`
-  *(Mecha kicks off the ground, turning into a violet afterimage shooting into mid-air, flashing seven times consecutively around the dragon).*
+### Post-processing NLE frame schedule
 
-### Post-processing & frame schedule
+Sub-second frame counts are **post-generation NLE finishing targets** (e.g., slicing a generated flash transition into 3f white `#FFFFFF` -> 3f inverted line art -> 5f manga halftone -> 4f purple/black posterize -> 2f white flash at 60 fps, or inserting 3 pure-white frames immediately before a tsunami split), never guaranteed model-native frame accuracy.
 
-Treat sub-second frame counts as NLE finishing targets applied after generation, not guaranteed model-native frame timing.
+### Reference implementation (Valkyrie Mecha vs. Sea Dragon)
 
-#### A. 0.3-second impact transformation (18 frames @ 60fps)
+If an upstream pipeline uses a planning JSON (`seed-110-temporal-v2.5`), strip the JSON wrapper, `fps`, `aspect_ratio`, `duration_sec`, and decimal seconds before submitting to Dreamina or ModelArk. Both compiled prompts below use spaced `@Image N` handles, explicit role bindings, integer-second windows, `<SFX>` angle brackets, and `No subtitles.` so they pass `prompt_lint.py` cleanly:
 
-Slice the 2-second raw transformation into 5 rapid flashes (2–5 frames per style pass):
-
-| Pass | Visual Filter / Shader | Chinese Term | Duration (60fps) | Time (sec) |
-| :--- | :--- | :--- | :--- | :--- |
-| **1** | Pure White Flash (`#FFFFFF`) | `白闪` | 3 frames | 0.05s |
-| **2** | Inverted High-Contrast Line Art | `反色线稿` | 3 frames | 0.05s |
-| **3** | 2D Manga Halftone + RGB Chromatic Aberration | `漫画 + 色散` | 5 frames | 0.08s |
-| **4** | Deep Purple/Black Posterization (Threshold) | `色调分离` | 4 frames | 0.07s |
-| **5** | Pure White Flash (`#FFFFFF`) | `白闪` | 2 frames | 0.03s |
-| **6** | 3D Mecha Settles (Identical Pose Lock) | `3D 机甲落定` | Hold / Continue | — |
-
-#### B. Climax explosion / tsunami impact
-
-- **Rule**: Insert **3 pure white frames (`爆发前插 3 帧纯白`)** immediately before the climax impact or wave split.
-
-### Reference implementation (Female Valkyrie Mecha vs. Dragon)
-
-Preserve the user's surface handle format (`@Image 1` on Dreamina/ModelArk, or `@Image1` when the user's workflow specifies compact handles).
-
-#### A. Keyframe binding prompts
-
-- **`@Image1` (Human Start Frame)**: Medium close-up of a fierce female warrior with windswept black hair, arms crossed in a defensive katana stance, sleek black tactical armor, stormy ocean background, golden rim lighting, 3D CG render, 8k.
-- **`@Image2` (Mecha Target Frame)**: Medium close-up in the exact same crossed-arm pose as `@Image1`. Female obsidian valkyrie mecha armor, angular wing thrusters, glowing violet chest core and visor, stormy ocean background, 3D CG render, 8k.
-- **`@Image3` (Boss Anchor)**: Wide low-angle shot of a colossal white-maned Eastern dragon with golden horns and glowing orange eyes rising from dark ocean waves, 3D CG render, 8k.
-
-#### B. Spatiotemporal planning JSON (`seed-110-temporal-v2.5`)
-
-Use this schema when the user requests a structured spatiotemporal planning contract (strip JSON wrappers when delivering a paste-ready Dreamina prompt body):
-
-```json
-{
-  "schema_version": "seed-110-temporal-v2.5",
-  "project_metadata": {
-    "title": "Valkyrie_Mecha_Dragon_Duel",
-    "duration_sec": 12.0,
-    "fps": 60,
-    "aspect_ratio": "16:9",
-    "color_locks": {
-      "blade_energy": "violet (#A855F7)",
-      "whirlwind": "cyan (#06B6D4)",
-      "tsunami": "deep_blue (#1E3A8A)",
-      "dragon_flame": "orange_red (#EA580C)"
-    }
-  },
-  "reference_bindings": {
-    "@Image1": "Female warrior in black armor, crossed-arm blade stance, ocean backdrop",
-    "@Image2": "Obsidian valkyrie mecha in identical crossed-arm pose, violet core glow",
-    "@Image3": "Colossal horned Eastern sea dragon emerging from ocean waves"
-  },
-  "temporal_schedule": [
-    {
-      "shot_id": "SHOT_01_FLASH_TRANSFORM",
-      "time_range": "00:00.0 - 00:02.0",
-      "references": ["@Image1", "@Image2"],
-      "camera_kinematics": "Static locked medium close-up, micro-shake on impact",
-      "action_prompt": "@Image1 女战士双臂交叉，紫色能量爆发。闪白 → 发光线稿 → 闪切 2D 漫画 → 同一姿势落定为 @Image2 3D女性暗黑机甲，胸口紫光闪烁。",
-      "negative_constraints": "变形, slow morphing, melting mesh",
-      "audio_anchor": "Electric surge, sub-bass drop, metallic armor lock"
-    },
-    {
-      "shot_id": "SHOT_02_BULLET_TIME_BLADE",
-      "time_range": "00:02.0 - 00:04.0",
-      "references": ["@Image2", "@Image3"],
-      "camera_kinematics": "Extreme macro dolly pan tracking slowly from hilt to tip along the katana edge",
-      "action_prompt": "子弹时间，微距镜头贴着刀刃慢慢移动，刀光紫能量流淌，背景 @Image3 巨龙虚化。",
-      "audio_anchor": "Time-dilation whoosh, crystalline blade ring"
-    },
-    {
-      "shot_id": "SHOT_03_FOUR_POINT_COMBO",
-      "time_range": "00:04.0 - 00:08.0",
-      "references": ["@Image2", "@Image3"],
-      "camera_kinematics": "Dynamic whip-pans and snap-zooms tracking 4 strike vectors",
-      "action_prompt": "@Image2 极速攻击 @Image3 四个位置：1. 额头横切（刀光紫）；2. 头顶两角之间斜劈；3. 龙头下颚由下往上挑，擦出火花；4. 巨龙前腿低位撞击。",
-      "audio_anchor": "Four rapid metallic slashes, heavy impacts, dragon roar"
-    },
-    {
-      "shot_id": "SHOT_04_AFTERIMAGE_TSUNAMI_FINALE",
-      "time_range": "00:08.0 - 00:12.0",
-      "references": ["@Image2", "@Image3"],
-      "camera_kinematics": "High-angle orbital tracking shot pulling back into ultra-wide reveal",
-      "action_prompt": "@Image2 瞬间蹬地化作紫色残影冲上半空，在青色旋风与橙红龙焰中绕龙连闪七次，随后一刀紫光垂直劈开深蓝海啸巨浪。",
-      "audio_anchor": "Sonic boom, seven teleport zaps, roaring tsunami split"
-    }
-  ]
-}
-```
-
-#### C. Compiled bracketed prompts
-
-Native Chinese Physics Prompt (Recommended):
+#### Compiled Chinese Prompt
 
 ```text
-[00:00-00:02] @Image1 女战士双臂交叉，紫色能量爆发。闪白 → 发光线稿 → 闪切 2D 漫画 → 同一姿势落定为 @Image2 3D女性暗黑机甲，胸口紫光闪烁。
-[00:02-00:04] 子弹时间，微距镜头贴着刀刃慢慢移动，刀光紫能量流淌，背景 @Image3 巨龙虚化。
-[00:04-00:08] @Image2 极速攻击 @Image3 四个位置：1. 额头横切（刀光紫）；2. 头顶两角之间斜劈；3. 龙头下颚由下往上挑，擦出火花；4. 巨龙前腿低位撞击。
-[00:08-00:12] @Image2 瞬间蹬地化作紫色残影冲上半空，在青色旋风与橙红龙焰中绕龙连闪七次，随后一刀紫光垂直劈开深蓝海啸巨浪。
+[参考绑定]
+@Image 1 仅定义黑甲女战士的面部与交叉持刀起始姿态；不要使用 @Image 1 的静态构图锁定后续运镜。
+@Image 2 仅定义暗黑女武神机甲的棱角翼推进器与紫光胸核；不要使用其他人物。
+@Image 3 仅定义白鬃金角东方海龙的体型与橙红龙瞳；不要将其缩为普通小怪。
+
+[分镜列表]
+镜头 1 (0-2s): 中近景固定机位微震。@Image 1 女战士立于怒海前双臂交叉，紫色刀能瞬间炸开；闪白 → 发光线稿 → 闪切 2D 漫画 → 同一姿势落定为 @Image 2 3D暗黑女武神机甲，胸核紫光亮起。<电流暴涌、低频重击与机甲金属锁扣声>
+镜头 2 (2-4s): 极微距慢推镜头。子弹时间贴着武士刀刃从刀镡滑向刀尖，紫色能量流淌，后景 @Image 3 巨龙盘旋于海雾中。<时间放缓低鸣与清脆刀鸣>
+镜头 3 (4-8s): 高速跟拍与急摇切换。@Image 2 极速突进连续劈击 @Image 3 三个部位：1. 额头紫光横切；2. 两角之间斜劈压顶；3. 下颚由下往上挑起橙色火花直撞前腿。<三次密集金属斩击、重压爆响与龙吼>
+镜头 4 (8-12s): 高空环绕拉远至超广角。@Image 2 猛然蹬踏海面化作紫色残影冲天而起，在青色旋风与橙红龙焰间绕 @Image 3 高速折跃三次，随即垂直劈下一道紫光刀柱将深蓝海啸巨浪一分为二。<音爆、三次折跃破空声与巨浪轰然裂开声>
+
+[音频与排除]
+全片仅含机甲斩击、风浪与海龙环境音效，无背景音乐，无字幕。避免网格融化变形与静止对波僵持。
 ```
 
-English Prompt:
+#### Compiled English Prompt
 
 ```text
-[00:00-00:02 | Shot 1: Medium Close-Up, Locked Camera] @Image1 female warrior stands against ocean waves, violet energy erupting around her crossed arms. White flash -> glowing line art -> flash-cut 2D manga -> settle into @Image2 3D obsidian female mecha in the exact same pose, violet core glowing. (SFX: Electric surge, heavy bass impact, metallic lock).
-[00:02-00:04 | Shot 2: Extreme Macro, Slow Dolly Pan] Bullet-time macro camera glides slowly along the katana blade from hilt to tip as violet energy and sparks ripple across the steel, with @Image3 giant dragon blurred in the background. (SFX: Slow-motion hum, blade ring).
-[00:04-00:08 | Shot 3: Dynamic Action Tracking, Whip-Pans] @Image2 attacks @Image3 at extreme speed across four distinct anatomical targets: 1. Horizontal violet slash across the dragon's forehead; 2. Diagonal chop onto the top of the skull between the horns; 3. Upward slash from beneath the dragon's jaw kicking up orange sparks; 4. Low-angle collision strike against the dragon's front leg. (SFX: Four rapid energy slashes, heavy impacts).
-[00:08-00:12 | Shot 4: Aerial Orbit to Wide Reveal] @Image2 kicks off the ground, instantly turning into a violet afterimage shooting into mid-air, flashing seven times consecutively around @Image3 amidst a cyan whirlwind and orange-red dragon flames, then plunging a vertical violet blade beam to cleave a massive deep-blue tsunami in half. (SFX: Sonic boom, rapid teleport flashes, massive wave split).
+[Reference Roles]
+@Image 1 defines only the black-armored warrior's facial features and crossed-katana opening stance; do not lock later shots to @Image 1's static framing.
+@Image 2 defines only the obsidian valkyrie mecha's wing thrusters and glowing violet chest core; do not add extra pilots.
+@Image 3 defines only the white-maned golden-horned sea dragon rising from dark ocean swells.
+
+[Shot list]
+Shot 1 (0-2s): Locked medium close-up with impact micro-shake. The @Image 1 warrior braces her crossed arms above stormy waves as violet energy erupts; white flash -> glowing line art -> flash-cut 2D manga -> settle in the identical crossed-arm pose as the @Image 2 3D obsidian valkyrie mecha with violet chest core blazing. <Electric surge, sub-bass drop, crisp metallic armor lock.>
+Shot 2 (2-4s): Extreme macro slow dolly along the katana edge from hilt to tip in bullet time as violet sparks ripple down the steel and the @Image 3 sea dragon looms in the misty background. <Low time-dilation hum, crystalline blade ring.>
+Shot 3 (4-8s): High-speed tracking camera with motivated whip-pans. @Image 2 lunges into @Image 3 across three distinct strike vectors: horizontal violet slash across the dragon's forehead, diagonal chop between the golden horns, and rising uppercut beneath the jaw kicking up orange sparks into its front leg. <Three heavy metallic slashes, concussive impacts, deep dragon roar.>
+Shot 4 (8-12s): Aerial orbit pulling back into an ultra-wide reveal. @Image 2 kicks violently off the wave crest as a violet afterimage, arcs three times around @Image 3 through a cyan whirlwind and orange-red dragon flame, then drives a vertical violet blade beam straight down to split a towering deep-blue tsunami wave in two. <Sonic boom, three rapid air-step cracks, roaring ocean cleave.>
+
+[Audio & Exclusions]
+The audio contains only metallic combat impacts, storm waves, and dragon foley; no background music or score. No subtitles. Avoid slow mesh morphing or stalemate freezes.
 ```
 
 ## Continuous-action prompting
 
-Use when the user wants uninterrupted kinetic flow, reactive choreography, or adaptation of a successful action prompt. It also applies to a single-reference chase or playful physical sequence; combat, multiple references, and dense VFX are not prerequisites. Do not impose it on a quiet performance, product demonstration, or an explicitly paced scene with pauses.
+Use when the user wants uninterrupted kinetic flow or reactive choreography, including single-reference noncombat chases and playful physical sequences. Distilled from a user-supplied painterly action prompt (video not inspected; craft hypothesis only).
 
-Evidence boundary: this pattern is distilled from a user-supplied painterly action prompt reported to work well. The resulting video was not inspected. The mechanisms below are craft hypotheses, not proven causes of model performance, provider claims, or evidence that every named maneuver was generated. The example below is newly written, not a reproduction of the supplied prompt.
+1. **Open on a concrete disruption** demanding an immediate physical response.
+2. **Make the response feed the next action:** `incoming obstacle -> contact/evasion -> redirected momentum -> next action -> new spatial problem`, avoiding neutral-pose resets.
+3. **Overlap aftermath and anticipation:** leaves or sparks from Beat A are still settling as the runner banks into Beat B.
+4. **Assign distinct physical vocabularies** (elastic bounds and low banking turns vs. heavy vaults) grounded in each subject's anatomy and costume.
+5. **Follow causes with the camera** and use brief wide reframes to keep landmarks legible without scrambling the 180-degree axis.
+6. **Translate the reference's artistic medium into motion** (broken painterly brush wakes, ink splatters, or cel smears attached to physical contact).
+7. **Escalate spatial difficulty toward a legible payoff.**
 
-### Build connected motion
-
-1. **Open on a concrete disruption.** Name the incoming obstacle, force, or movement that demands an immediate response. For a playful scene, this may be a companion rushing past rather than an attack. Respect any required opening frame; begin the disruption from that state instead of replacing it.
-2. **Make the response feed the next action.** Write `incoming force or obstacle -> response/contact -> redirected momentum -> next action -> new spatial problem`. A pivot becomes a sprint, a landing becomes a bank, or a deflection becomes a counter. Avoid neutral-pose resets unless the user requests a pause.
-3. **Overlap aftermath and anticipation.** Keep one dominant action readable while the previous action's residue persists and the next obstacle becomes visible. Leaves may still be falling as the subject approaches a turn. Do not treat overlap as permission for several unrelated actions per second.
-4. **Give each subject a physical vocabulary.** Choose a few compatible behaviors, such as elastic bounds and low banking turns versus quick footwork and running vaults. Tie behavior to the requested character and observed design; do not import the source prompt's weapons, aggression, abilities, or outcome into another world.
-5. **Make the camera follow a cause.** Follow the bank, landing, or approach with a move that reveals its path or contact. A brief wide reframe can restore geography while the subjects keep moving. An aggressive camera is not an instruction to scramble the action axis or add arbitrary cuts.
-6. **Translate the artwork into motion.** Specify how the reference's medium depicts speed and impact: broken painted strokes following fur, flattened graphic leaves displaced by a landing, or ink-like wakes behind movement. Keep effects attached to physical triggers. Do not introduce magical energy merely because another prompt used it.
-7. **Escalate toward a readable payoff.** Increase consequence or spatial difficulty, not merely the number of moves. Protect silhouettes, spacing, screen direction, contact visibility, and an observable final state. The final state may remain in motion if the requested ending allows it.
-
-### Form and transfer example
-
-Continuous prose is useful when connective language carries the choreography. Timed stages are equally valid when timing matters: carry momentum, positions, and aftermath across their boundaries. A stage boundary is not a compulsory stop. Follow the canonical timing rules in [prompt-architecture.md](prompt-architecture.md#long-scenes-and-timestamps); this pattern is not a blanket preference for longer prompts or for removing timestamps.
-
-Illustrative motion passage, not a complete reference-bound submission:
-
-> A gust drives a curtain of reeds across the runner's path, forcing a low sidestep that flows directly into a turn around the next tree. The camera tracks the turn from the outside, keeping the approaching root visible. Before the reeds spring upright, the runner clears the root and lands into the next stride; loose leaves rise from the footfall while the route ahead opens into view.
-
-### Verification and pitfalls
-
-Before submission, check that each transition has a physical bridge, each effect has an origin, the reference's visual language survives the action, and no neutral reset was accidentally inserted. Preserve subject counts, ownership, geography, requested outcome, and audio preferences. Run the normal generation prompt linter; passing establishes prompt checks, not rendered success.
-
-When a render is supplied, inspect the opening motion, action-to-action continuity, readable contacts, subject/style stability, camera geography, and ending. Record missed instructions separately from inferred causes. If comparing prompt variants, keep references, story, settings, and budget matched; vary the connective choreography rather than adding length and extra techniques at the same time. Long move catalogs, prestige adjectives, and repetition are not demonstrated explanations for success.
-
-## Untimed, rule-led worldbuilding vignettes
-
-Use when the user wants everyday worldbuilding, an observational montage, or a prompt that defines generative rules rather than scripting every shot. This is a separate mode from continuous-action prompting: multiple cuts can accumulate meaning without forming one causal adventure. Do not apply it to a fight or the preceding task merely because a style example arrives in that conversation. When the user supplies an example to learn from, capture its reusable method; adapt the current project only when asked.
-
-Evidence boundary: distilled from a user-supplied written example, not an inspected generated video. Its particular choice of 19 short cuts is an example-specific creative constraint, not a provider limit, a universal default, or proof of exact cut-count adherence. These are craft heuristics, not first-party capabilities. The guidance below summarizes the method rather than reproducing the source prompt.
-
-### Contract and procedure
-
-1. **Choose the organizing principle.** State what the piece explores: routine, a place's working life, a character's social presence, or ordinary encounters. Lock any requested cut count, but do not invent timestamps, a numbered shot list, or one continuous take. Untimed does not mean unstructured. Done when the model has a clear selection rule for every moment.
-2. **Bind continuity, then define creative freedom.** Map the actual uploaded reference to character identity, visual design and style. Preserve established fictional role, temperament, moral alignment and relationships. If the user explicitly invites worldbuilding from a fictional design, allow compatible invention of routine, surroundings and social customs as creative proposals, not facts observed in the image. Do not infer real-person demographics, occupation, status or morality from appearance. Do not assert unknown fictional canon as established; retain ambiguity or author within the user's stated permission. Done when preserved facts and invented world detail are distinguishable.
-3. **Direct selection rather than prescribe a plot.** Ask for varied, small, observable moments that reveal how the world works: maintenance, exchange, travel, etiquette, labor, leisure or use of shared spaces, selected only where compatible with the character and setting. Each cut should add a different environmental or social fact instead of repeating scenic portraits. The reference character can connect the moments without dominating every composition; surrounding inhabitants continue their own activity. Do not add a crisis, quest, exposition, climax or victory unless requested. Done when cumulative world understanding, not dramatic escalation, is the organizing outcome.
-4. **Preserve tone without moral correction.** Ordinary life need not mean wholesome life. Established threatening characters can alter others' spacing, eye contact or behavior; established gentle characters can reveal their nature through small choices. Do not automatically redeem a villain, soften an unsettling world, or add spectacle. These are conditional examples, not instructions to invent an alignment from costume. Done when ordinary behavior retains the supplied characterization.
-5. **Specify one coherent observer.** For this example's observational variant, use detached objective third-person framing, natural 28–40mm lens language, and restrained shoulder-mounted handheld motion. Describe subtle micro-jitter, shoulder drift, soft focus breathing, delayed reframing and brief reactive pans while keeping action legible. Exclude POV, camera acknowledgment, vlog or surveillance framing, gimbal glides, cranes and drones. Lens language is an aesthetic direction, not a guarantee of simulated optics. Do not append incompatible spectacle-camera directions. Done when the camera observes rather than performs.
-6. **Close the sound and text contract.** For the supplied style, use only diegetic location sound: footsteps, tools, fabric, weather and other visible or spatially credible sources. Exclude intelligible background speech as well as dialogue, narration, music, subtitles and title cards. Do not add a musical emotional cue by habit. Done when sound supports the lived environment without explaining it.
-7. **Deliver compact connected prose.** Order the prompt as premise and cut structure -> identity/style locks -> permitted world invention -> moment-selection rules -> tonal boundaries -> camera -> sound/exclusions. Use actual runtime reference handles, not the source example's placeholder. Avoid template headings, timers and exhaustive shot catalogs unless requested. This is an additional option, not a replacement for timed choreography, required anchors or exact event scripts. Done when every paragraph governs a useful choice and no hidden timed sequence has been imposed.
-
-### Verification and failure guards
-
-- Before delivery, check that the requested cut structure survives, no timestamps or major plot were inserted, distinct moments reveal world function, characterization is not automatically sanitized, and camera/audio rules remain mutually consistent.
-- Keep duration outside the creative prompt. A dense cut count does not establish a suitable duration or make every moment readable; check against the requested runtime without silently changing an explicit count. This multi-cut video pattern is not a supplied storyboard grid, so do not apply the storyboard-panel recommendation as a cut-count limit.
-- Run the normal generation prompt linter. A clean result verifies prompt checks only. If a render is supplied, inspect the actual cut count, reference/style continuity, diversity of routine moments, active background life, observational camera, lack of dramatic-plot drift, and diegetic-only sound. Record omissions rather than claiming successful execution from the written prompt.
-- Transfer check: a supplied gentle character and a supplied feared antagonist should yield different social responses under the same observational architecture; neither should automatically become a hero montage or a fight. A quiet single-take request should not acquire 19 cuts merely because this pattern exists.
-- Do not let human-default wording override a non-human design. Words such as "people" can pull a yokai, creature, or alien design toward ordinary human social life. Name the intended kind of inhabitant when the reference is not human, and keep that distinction in the selection rules.
-- The source author later noted that cut count should change with the model and requested duration. Keep an explicit count when the user requires it, but do not treat 19 as portable to every runtime.
-
-## Curiosity-driven character vignettes
-
-Use when the user wants a short character study built from connected discoveries rather than either a scripted plot or an everyday-routine montage. This mode conflicts with everyday worldbuilding: it needs one underlying situation, visual cause and effect, and a payoff, and it should avoid generic daily routines. Do not combine the two unless the user explicitly asks for a hybrid.
-
-Evidence boundary: distilled from a user-supplied written prompt example, not an inspected generated video. Its 10–15 cut range is an example constraint, not a provider limit or a default. Summarize the method; do not reproduce the source prompt.
-
-1. **Open on a question.** The first image should create one simple unanswered situation. Later cuts answer it through discovery, reaction, progression, and small consequences. Done when a viewer can follow one situation without dialogue.
-2. **Reveal character through behavior.** Use movement, instincts, habits, abilities, limitations, and interaction with the world. Do not explain the character, and do not force familiar human behavior onto a design that does not support it. Done when identity is shown rather than narrated.
-3. **Make early details pay off.** Each cut adds a distinct visual idea while advancing the same situation. A detail introduced early should gain meaning later. End on a reveal, reversal, transformation, emotional beat, or satisfying visual payoff. Done when the ending depends on something already seen.
-4. **Vary the view without breaking continuity.** Change scale, framing, environment, movement, tension, or information often enough that the cuts do not repeat. Keep objective third-person observation, readable handheld imperfection, and motivated camera movement. Use diegetic sound only unless the user requests otherwise. Done when variety serves the same story.
-5. **Keep it separate from routine worldbuilding.** If the request is ordinary lived experience without a question or payoff, use the worldbuilding pattern instead. If the user supplies exact events, script those events rather than inviting invention. Done when the selected mode matches the requested outcome.
-
-## Literal multi-shot control
-
-Use when studying or writing a reference-led, multi-shot Seedance sequence where continuity, prop state, and readable action matter more than adjective density. These mechanisms are distilled from reviewed public Seedance 2.5 prompts and prompting notes. The corresponding videos were not inspected, so none of this is evidence of rendered fidelity or a provider guarantee. Do not reproduce those prompts, and do not name their authors in this skill. If a public example conflicts with [source-boundaries.md](source-boundaries.md) or [prompt-architecture.md](prompt-architecture.md), follow the canonical file.
-
-Observed examples repeatedly separate reference jobs in prose: identity and style from one image, environment from another, and explicit exclusions for background, text, layout, and reference poses. They then give one premise and rhythm, followed by shots or beats that carry prop ownership, geography, and momentum across cuts. Useful mechanisms:
-
-1. **Describe the transition, not only the destination.** A later view from behind does not by itself make a character turn. Name the turn, crossing, landing, or handoff that connects the states. The author reports that 2.5 can morph into an undescribed rear view; treat that as a reported failure mode, not a universal rule.
-2. **Let action quantity control pace.** Too many actions in one short beat can read as sped up; too much time for a quick action can read as slow motion. This applies to untimed shot lists as well as timestamps. Do not compress a multi-minute story into one clip by adding more beats. Use integer-second ranges only when timing is required; do not copy decimal timestamps from public examples.
-3. **Override a likely still misread before the action.** If a pictured object is alive, already worn, concealed, or must not transform, say so in the opening state. Equipment used later should already exist when the story requires it.
-4. **Keep a prop and target ledger.** State exact counts, owners, one-time damage, and where each object remains. Give similar opponents one durable visual difference, and do not retarget or restore one after its stated outcome.
-5. **Repeat a route only to change it.** A recurring escape, attack lane, or destination landmark should stay readable, then close, redirect, or pay off through a visible path change.
-6. **Show speed through overlap.** Let the camera lose and reacquire a fast subject while earlier debris is still moving. Do not explain speed with clones, teleportation, or extra instances unless requested.
-7. **Order cause before body response.** For an impact, show the strike, then the fold, slide, or recoil. Keep attached equipment attached through the fall unless the story removes it.
-8. **End in a legible carried state.** Spectacle can resolve into an ordinary action, or the action can still be moving. Name which, and do not default to a victory pose.
-
-Do not import these example habits: duration or aspect ratio written inside the prompt, placeholder handles such as `@[ref image]`, `Image1`, or `Image #1` instead of the active runtime's labels, angle-bracket character names in a prompt that also uses `<>` for sound effects, or a claimed universal prompt-character limit. The author reported rewriting one dense English dialogue scene in Chinese to fit more detail; the supplied provider documents do not establish a universal character cap, so do not state one.
-
-## Split references by job
-
-Give each active asset one primary job. Typical winning split:
-
-- one identity / appearance lock (a multi-view character sheet when available);
-- one world / silhouette / environment lock.
-
-Do not let a single image own face, outfit, set, and camera at once. State what to inherit and what not to inherit on each `@Image` / `@Video` / `@Audio` line.
+Illustrative passage (not a standalone reference-bound prompt):
+> A gust drives a curtain of reeds across the runner's path, forcing a low sidestep that flows directly into a banking turn around the next trunk. The camera tracks from the outside, keeping the exposed root ahead in frame. Before the reeds spring upright, the runner vaults the root into the next stride as loose leaves lift behind the footfall.
 
 ## Physics needs an origin
 
-Any spark, bloom, particle, fabric tear, dust slipstream, or glow must name a physical cause: contact, friction, velocity, impact, wind, or a held prop. If the VFX reads as magic projection, beams, or aura, rewrite the **cause**, not the adjectives.
+Any spark, bloom, particle, fabric tear, dust slipstream, or glow must name a physical cause: contact, friction, velocity, impact, wind, or a held prop. If VFX drifts into generic magic aura, rewrite the **physical trigger**, not the adjectives.
 
 ## Fight repair
 
-If a fight is not working, replace the choreography. Keep identity, location, axis, and camera contract. Cut named techniques until every contact is readable. Do not patch with more style words.
+When a fight render muddles choreography, keep identity, location, axis, and camera contract intact and **reduce named techniques until every contact reads**. Do not patch weak mechanics with extra style adjectives.
 
 ## Speed-ramp cycle
 
-When impact emphasis is needed and slow motion is compatible with the request, name the cycle in observable terms:
-
-`real-time → burst / dash → short impact slow-motion → snap back to real-time`
-
-Do not claim decimal-second or frame-accurate holds. Integer-second stage budgets remain the only timing grammar.
+When slow motion is compatible with the brief, write the observable cycle (`real-time -> burst/dash -> brief impact slow-motion -> snap back to real-time`) using integer-second windows only, and scope any single exception explicitly (`no slow motion except one brief speed ramp at the final impact`) so `NEGATION_CONFLICT` does not trigger.
 
 ## Stage density
 
-One generated clip gets one primary causal chain. Prefer fewer readable contacts over a catalog of named martial-arts styles. If the event cannot fit without crowding, split into generation then forward extension, or into sequential clips — do not stuff.
-
-Chinese `阶段` / `开始时` / `主要事件` / `结束时` is the same as Stage N initial state / primary event / end state. Use that labeling only when the user writes in that form.
+Give one generated clip one primary causal chain. Chinese `阶段` / `开始时` / `主要事件` / `结束时` maps directly to `Stage N` `Initial state` / `Primary event` / `End state`; use Chinese headers when authoring in Chinese.
 
 ## Extension-ready last beat
 
-When a sequel or forward extension is likely, land the last beat on:
-
-- a readable boundary pose and motion direction, or a camera rest when compatible with the requested pace;
-- leftover particles, dust, ash, or fabric that can still exist;
-- a subject or threat that can still act.
-
-The extension prompt restates the **observed** source-boundary state, then adds new action. It does not re-narrate the whole source clip.
-
-## Multi-shot continuity craft
-
-Source: three user-supplied written prompts studied on 2026-10-30 (a boutique comedy, a slow-motion/rewind gunslinger duel, and a cyborg hangar brawl). These are prompt-reading hypotheses. No generated result was reviewed. Use them for any `Shot N` prompt with recurring characters, props, or dialogue, in any genre.
-
-- **Restate prop state in every shot.** Declare the starting state and the single instance once: "hangs alone on a hook from the start"; "her only gun, always in her right hand; her hip holster stays empty". Then restate location and holder in each shot where the prop is visible, also when nothing changed: "still hangs on its hook", "strap not yet on her shoulder", "still on her right shoulder", "holster empty". Give hands a declared entry state: "arrives empty-handed, arms free". This extends item 4 of [Literal multi-shot control](#literal-multi-shot-control) from a ledger to a per-shot restatement.
-- **Tag each character on every mention.** Use the name plus one visible trait, and keep the same tag: "Kira, lilac buns"; "Dana, black bob"; "Kai, black mechanical arm". In a bilingual prompt, write the tag in the shot's language: `Kai，黑色机械臂`.
-- **Isolate the speaker.** In a shot with several visible faces and one line, write "<Name> alone speaks" and give each listener a closed-mouth action: "Dana stays silent, lips pressed shut, one eyebrow twitching". This adds an observable performance to the listener rule in [prompt-architecture.md](prompt-architecture.md).
-- **Keep air between bodies.** When two characters are close, ask for visible separation: "a clear gap between them"; "one body nearer the camera, the other clearly behind it with air between".
-- **Keep the screen map and eyelines.** Anchor each character and set element to a fixed object and its screen side together: "the bag shelf at screen left". Screen side alone is fragile when the camera reverses; see [prompt-architecture.md](prompt-architecture.md#space-and-blocking-diagrams). Keep each character on the same side across shots. Point every offscreen look toward the place where the target was last shown. If the target has moved during a cut (a comic ellipsis), say so in the same sentence. For a reverse angle, say what stays hidden and refer back: "same side as Shot 5, his face hidden".
-- **Cut on an action.** End each shot with "Cut as <observable action>" and open the next shot on its continuation. End the clip on a cut, not a fade: "the clip cuts mid-turn"; "the picture stays bright, no fade-out". This prevents a default fade or a settling pose.
-- **Use one camera move per shot.** Name its direction and speed. Lock the camera for dialogue shots. Break this only under a stated global energy rule.
-- **Scope rules to scenes.** Define a look (slow motion, grade, afterimages, sound treatment) once at scene level. Turn it off explicitly in the scene that drops it: "no afterimages". For a callback, cite the earlier framing: "framed as Shot 1".
-- **Define an effect by contrast.** State what it is and what it is not: "five or six distinct see-through copies of her whole body, not speed lines".
-- **Stylize damage to match the medium.** When the user excludes gore, replace it with a style-native material and keep the exclusion: "the back of his head bursts into pale lavender paint and black ink" with "no realistic gore, no blood". This follows the user's content choice. It does not change platform moderation.
-- **Budget dialogue (per-shot and whole-clip caps).** Keep spoken words to **1.0–1.5 words per second** of shot time (`3–5 words` in a 3–4s shot, `< 2.0 words/sec`) so the character has room to breathe and react physically. At `2.0` or more words per second, `prompt_lint.py` warns with `DIALOGUE_DENSITY`. Across a full 15–30s sequence, keep total speech `<= 24 words`: use **2–3 short lines (`3–5 words` each)** in untimed multi-shot clips, or up to **4–5 ultra-short lines (`1–5 words` each, `<= 24 words total`)** in timed sequences where each line has its own `3–4s` window and prop action.
-- **Pace shots by timing mode rather than forcing flat 3–4s blocks everywhere.** Follow [Four-mode timing architecture and pacing control](#four-mode-timing-architecture-and-pacing-control): use **untimed `Shot N`** for continuous high-speed combat (4-shot fluid brawls or 24-shot single-strike blitzes), **accordion timed `Shot N (start-ends)`** (`1s` snap strikes/stamps/kiai zooms, `2–3s` movement phrases, `4–5s` dialogue or ember-settle holds) for rhythmic edits, **nested one-take sub-beats with `1s` hinges** for unbroken selfie/room-tour takes, and **proportional speed-contrast scaling** (`9s across 3 shots` in slow-mo vs. `2s` rewind vs. `4s in 1 wide shot` at full speed).
-- **Use action-triggered white-flash hard cuts (`白闪硬切`) for instant arena swaps.** When a fighter's ability or a transition rewrites the setting, never ask the model to animate the environment morphing (which causes mushy melting). End Shot $N$ on the physical trigger (`切于跺脚落下的一瞬` / "Cut at the instant the stomp lands") and open Shot $N+1$ with `白闪硬切，两人已在<新场地>中继续厮打...不展示切换过程` ("White-flash hard cut; both fighters are already mid-exchange in <new arena>, without showing the transition process").
-- **Maintain a shot-indexed progressive damage ledger (`Continuity:` footer).** When clothing, masks, jewelry, or props break mid-clip, declare the irreversible state change in a closing `Continuity:` block keyed to the exact shot number (`项链（断后只剩残串）贯穿始终；面罩在第20镜后只剩半边` — "necklace remains a broken strand after snapping in Shot 11; mask remains torn to half-face after Shot 20").
-- **Check the Avoid list against the body.** "No freeze frames" conflicts with "hit-stop" or `定格` (literally a freeze frame). "No slow motion" conflicts with an unscoped speed ramp or `子弹时间` (unless the prompt explicitly scopes a single exception such as `real-time speed except one brief speed ramp at the final impact`). Remove one side or rewrite the effect as an impact flash plus a camera jolt. `prompt_lint.py` warns with `NEGATION_CONFLICT`.
-- **Lock limb and accessory asymmetry in the character header.** Name exact left/right placement for asymmetrical limbs, prosthetics, tattoos, earrings, and holsters: "white mechanical right arm and white mechanical left leg"; "skull tattoo on her upper arm"; "her only gun is in her right hand; her hip holster stays empty". This prevents left/right mirroring and accidental dual-wielding.
-- **Lock footwork against ice-skating.** For grounded combat or brisk movement, state "feet always plant, push, leap, or roll, never slide" and pair it with "no sliding or skidding across the floor" in the exclusions (unless a deliberate hip-slide is part of the choreography).
-- **Make every environmental hazard and hit recoil causal (`A -> B -> C`).** State that no explosion or hazard is background decoration—each one knocks a fighter off-line, opens a floor gap, or redirects a strike within the next beat—and recycle hit recoil directly into the next counter ("head whips back -> uses the backward lean to throw a spinning back-kick"). Let major blasts re-key lighting and audio together (e.g., orange fire underlight -> blue-white reactor arcs; muffled ringing -> vacuum silence).
-- **Punctuate long fluid master shots with one micro-insert (`快速细节切` / `Quick detail cut`).** In a 6–8s continuous action take, drop in one brief insert (such as a goggle reflection plus a fist or boot sole rushing straight at the lens) and immediately return to the wide exchange so the take stays kinetic without losing geography.
-- **Specify sub-object material physics (`独立物理细节`).** When props tear, shatter, or scatter (paper bills, petals, glass, armor plates), state their material texture and independent trajectories: "individual bills have fiber texture and flutter on independent paths after tearing rather than moving as one rigid block; strikes carry weight and recoil" (`单张纸币有纤维质感，断裂后各自独立飘散，而不是一整块刚性色块；打击有重量、有后坐力`).
-- **Separate 3D/live-action optical headers (`受控多段序列`), lineless airbrushed digital painting, and flat 2D cel animation layer grammar.**
-  - For **3D CG or live-action** multi-shot clips, a format header can lock cut count and optical field-of-view angles per segment: `格式：受控五段序列，四次硬切。第1、5段使用47°深焦镜头；第2、3段使用29°人像镜头，浅景深` ("Controlled 5-segment sequence, 4 hard cuts. Shots 1 & 5 use a 47° deep-focus lens; Shots 2 & 3 use a 29° portrait lens, shallow DOF").
-  - For **2D hand-drawn, cel-shaded, or gouache/watercolor animation**, never use camera-sensor, focal-length, or bokeh/DOF vocabulary (`bokeh`, `shallow depth of field`, `85mm f/1.4`, `景深虚化`), which pulls 2D renders toward 3D-CG or fake tilt-shift. Direct in animation layer terms instead: `cel-shaded characters over a painted gouache background`, `multiplane background scroll`, `animated on twos with a burst on ones`, `hard two-tone cel shadow`. `prompt_lint.py` warns with `STYLE_2D_LENS_CONFLICT`.
-  - For **lineless or soft-line airbrushed semi-realistic digital illustrations** (smooth gradient skin shading, glossy specular lip/nail highlights, painted soft-focus foreground glass, four-point star glints), **never** label the style `2D anime`, `cel-shaded`, or `cel-painted`. In an inspected 30s multi-angle render (2026-11-01, 480×854, 24 fps), labeling a lineless airbrushed illustration `2D stylized anime, crisp cel-painted` caused the render to switch to hard black comic outlines and flat cartoon fills as soon as Shot 3 cut away from `@Image 1`'s opening angle, and a full-frame white snow wipe at `00:13` severed visual reference tokens so the second half (`00:14–00:29`) drifted into a generic 3D-ish holiday cartoon. Instead: (1) bind `@Image 1` explicitly as the **rendering medium and brushwork lock across all cuts** (`lineless airbrushed semi-realistic digital painting matching @Image 1, smooth gradient skin shading, glossy specular highlights, soft-focus painted foreground glass, four-point star glints; no hard black comic outlines or flat cel shading`), and (2) keep magic/weather bursts **translucent or localized** so `@Image 1`'s face and brushwork remain visible across every cut (`never a full-screen whiteout or opaque smoke wipe`).
-- **Keep dialogue and facial acting in the conversational human middle ground—neither `deadpan`/`flat` nor cartoon-exaggerated (`Untitled_(2).mp4` and `Untitled_(3).mp4`, 2026-11-01, 480×854, 24 fps, 30.08s):**
-  - *The Deadpan Trap (`Untitled_(2).mp4`):* Replacing an exaggerated reaction with `keep her expressions subtle, cool, and deadpan`, `quiet, baffled tone`, `calm, warning tone`, and `flat resignation` froze the character into a blank mannequin stare (`00:07–00:08`, `00:15–00:17`, `00:27–00:29`) and flattened TTS prosody into a robotic monotone, while 3-second disembodied tabletop inserts (`00:09–00:11`, `00:18–00:23`) turned the clip into a stiff slideshow.
-  - *The Cartoon Over-Acting & Face-Occlusion Trap (`Untitled_(3).mp4`):* Swinging to theatrical cues (`inhales excitedly`, `offended gasp`, `theatrical sing-song lilt`, `high-pitched voice that cracks`, `sharp startled yelp`, `eyes snapping wide into startled circles`, `brows shooting into her bangs`, `puffs her rosy cheeks`, and `a dangling white pom-pom that drops right over her nose`) kept `@Image 1`'s lineless airbrushed brushwork intact across all 8 shots (`0s–30s`), but caused: (1) loud synthesized `"HAAAH!"` cartoon gasps at `0.3s` and `6.8s` plus children's-show dub prosody; (2) bug-eyed facial mesh distortion (`t=00s`, `t=07s–10s`) and a giant balloon cheek (`t=24s`); (3) the white hat pom-pom gluing itself directly onto the bridge of her nose like a clown nose (`t=13s–14s`, `t=26s–29s`); and (4) detached voiceover when a single sentence was split across `Shot 1` → `Shot 2` (`t=04s–06s`).
-  - *The Fix (Conversational Goldilocks Rules):*
-    1. Direct voice with **grounded conversational phrasing** (`smooth, teasing, conversational voice`, `natural, puzzled, conversational tone`, `startled, disbelieving little laugh`, `dry, incredulous, playfully offended voice`, `relaxed, dryly amused conversational voice`). Never write `inhales`, `gasps`, `yelps`, `sing-song lilt`, or `high-pitched voice cracks` adjacent to dialogue unless cartoon sound effects are desired.
-    2. Keep facial cues within **natural anatomical proportions** (`slow arch of one eyebrow`, `blinking twice in genuine confusion`, `brows knitting together`, `amused eye roll`, `crooked half-smile`). Never prompt `eyes wide into circles`, `mouth dropping open`, or `puffs her cheeks` on semi-realistic faces.
-    3. Keep dangling hat tips, pom-poms, or hair ornaments **anchored off to the side of the brim (`hanging off the bent hat tip to the right side, leaving her face completely clear`)**, never dangling in front of the nose or forehead.
-    4. Keep every spoken sentence **self-contained inside one on-camera shot**; never split a sentence mid-clause across a cut into a prop insert.
-    5. **Break multi-clause turns into `2–6 word` period-separated sentences and insert mundane physiological actions *between* them (inspected 57.4s 2-part German period-drama dinner clip, 2026-11-02, 1920×1080, plus 3-segment *Beethoven at Stephan's table* prompt corpus):** While *theatrical* pre-line gasps (`inhales excitedly`, `offended gasp`, `sharp yelp`) trigger cartoon dubbing, placing **mundane physiological micro-actions between short period-terminated sentences**—a quick nasal sniffle (`00:03`, `00:04`), wiping the nose with the back of a wrist (`00:02`), clearing the throat into a closed fist (`00:40`), swallowing a bite (`00:01`), or setting down a spoon (`00:38`)—breaks up the continuous "actor read-through" TTS waveform so each short clause (`"Breitkopf will die neuen Sachen."` -> sniffle -> `"Karl verhandelt."` -> sniffle, drops gaze -> `"Der holt mehr raus als ich."`) starts with fresh, grounded room prosody and a natural downward pitch drop at the period.
-    6. **Use subtext "anchor gestures" (`as if to say "..."` / `the way someone does when...`):** Direct hand, posture, and prop gestures by pairing the physical action with the human subtext it conveys (`turns one hand palm up on the table in a small, lazy gesture, as if to say "obviously, who else?"`; `lifts one open hand an inch off the cloth and lets it drop, the way someone does when he can't believe what he's hearing`; `gets up slowly and heavily, with no force and no anger, the way a tired man still weak from fever gets up`). In Seedance's LLM text encoder and joint audio-visual MMDiT, the physical verb drives the spatial/temporal motion tokens while the subtext analogy sets the **velocity, muscular tension, and vocal prosody envelope**.
-    7. **Isolate facial expression to the brow and eyes during lip-sync (`All facial expression lives in the brow and the eyes; the mouth is left natural, at most slightly parted`):** In realistic close-up dialogue, emotional adjectives (`hurt`, `disbelieving`, `amused`, `perplexed`) can pull the lower face into grimaces, pursed lips, or smiles that fight phoneme-to-viseme mouth closure (`p/b/m`). Explicitly route emotion to the upper face (`brow knits a little more`, `eyes narrow slightly`, `lifts only his eyes from under his brows`, `one eyebrow rises slightly at the end of the line`) and keep the mouth natural for speech.
-    8. **Use chewing/swallowing as explicit speech gates and script two-sided active listening:** When characters eat or drink during a conversation, lock the mouth state before and after every line (`Neither person ever speaks with food in the mouth: each finishes chewing and swallows before speaking, so the lips and jaw move clearly with every word, and takes a bite only after the question finishes`). Never leave a listener as a passive head: script sequential listening micro-beats (`eyes stay on the table through lines 1–3; only after line 4 do his eyes lift from under his brow, shifting quietly between his friend's eyes before a slow blink as he begins line 5`, or straining to catch a quiet murmur by furrowing the brow and turning one ear slightly toward the speaker).
-    9. **Chain 6–10 subtle micro-actions inside a 4–6s reaction beat using explicit order gates (`in this exact order, each step its own beat`):** While a *single simultaneous emotional shift* uses `2–4 cues`, a `4–6s` dramatic reaction shot can execute `6–10` subtle physiological steps cleanly when written in strict causal, chronological order with sequencing gates (`in this exact order: stays still a moment, spoon in hand -> eyes drop to the table and head dips -> lays spoon down in bowl -> right hand crosses to left shoulder and draws the shawl closer -> settles shoulders down -> without raising his head, lifts only his eyes from under knitted brows`).
-    10. **Calibrate the dialogue budget (`<= 24 words` for general/action/comedy clips vs. `<= 38 words` across `8–10 short clauses` for a dedicated 25–30s slow dialogue drama) and split `45–60s` scenes:** Keep standard, action, or comedy multi-shot clips `<= 24 words` (`2–3 lines`, or `4–5 ultra-short timed lines`). A **dedicated 25–30s timed two-person conversation** where almost every shot is an OTS speaking beat punctuated by swallows/sniffles can sustain **`8–10 ultra-short 1–6 word clauses` (`~25–38 words total`, `~1.0–1.3 words/sec`, never `>= 2.0 words/sec` in any shot)**, as verified in the 57.4s 2-part German period-drama render (Segments 1 & 2 carried 35 and 34 words cleanly). Pushing a single 30s clip to `50–60 words` or `>= 2.0 words/sec` in a shot (such as Segment 3's 59 words / 23 words in 6.5s) crowds pauses and risks rushed TTS prosody (`CLIP_DIALOGUE_OVERLOAD` / `DIALOGUE_DENSITY`)—split across two `~28–30s` generations around a 2–3s silent physiological reaction beat instead.
-- **Re-anchor after multi-character occlusion in long wide shots.** When 3+ characters cross and occlude each other in a 30s wide shot, sparse temporal attention can drift background faces after the crossing. Either maintain visible depth separation (`air between bodies`) or follow heavy occlusion with a medium/close-up cut that re-tags the character (`Name, 2-word visual trait`).
-- **Weight clause order and prefer affirmative state locks over bloated exclusion lists (`BLOATED_EXCLUSION_LIST`).** Put camera movement in the opening clause of a shot when camera adherence is critical; keep the primary action after `0–1s` in dialogue scenes so reference geometry settles in the opening second; and convert negative ban lists into **affirmative state locks** in the main prompt (`both men are in white linen shirtsleeves with no coat; his hands stay on the table and then on the shawl edges at his chest throughout`). Because Seedance's decoder-only LLM text encoder processes the entire prompt in one token stream, a 200-to-500-word `[Strictly exclude]` / `Avoid:` paragraph cataloging every unwanted garment or failed-take gesture (`no cravat, no hitching trousers, no freeing one shoulder...`) injects those exact nouns and actions into spatial cross-attention. Keep `[Strictly exclude]` / `Avoid:` under `~80 words` (`3–5 hard global rules`: `no music, no subtitles, no talking with food in the mouth, no extra people, no locked-off tripod shots`).
-- **Mark must-hit beats.** In dense action, mark three or four exchanges per shot as required. Apply [Stage density](#stage-density) and item 2 of [Literal multi-shot control](#literal-multi-shot-control) before adding more.
-- **Isolate cross-cut rooms with `<Name> alone`, bound partial orbits by degrees, and close split-screens explicitly.**
-  - When cross-cutting two characters in separate rooms (e.g., an online match or phone call), start every single-subject shot with `<Name> alone` (`Red alone`, `White alone`) so the two reference characters never bleed into the same room.
-  - When using a partial camera orbit around a seated subject, specify the exact arc in degrees and lock the chair (`UNBROKEN 60-DEGREE PARTIAL ORBIT... from front three-quarter to side profile... without turning her chair`) so `"orbit"` does not trigger a 360-degree spin or a rotating chair.
-  - If a climax uses a split-screen, declare `Hard cut to the ONLY split-screen shot. One straight central divider creates two equal vertical panels. LEFT: <A>... RIGHT: <B>...` and **explicitly remove the divider on the next cut** (`At 24s, remove the divider and both panels with one hard cut to a single undivided macro...`) so the split-screen layout does not persist for the rest of the clip.
-- **Use spatial-match sweeps and eyeline-leaving arcs for non-cut reveals.**
-  - *Simulation/environment reveal without a cut:* Freeze the foreground hazard in bullet time (`18-21s`), then pass `one thin cyan sweep` across the frozen frame (`21-23s`) that turns the simulated city and projected clothing into a fine grid and switches them off to reveal the real room and uniforms—while explicitly locking `camera height, angle, distance, focal length, head centers, sizes, hair, shoulder contact, torso angles, eyelines, and hands` and registering the old support (`rooftop ledge`) to the new support (`backless sofa`).
-  - *Delayed destination reveal without a cut:* Track tight on the character's face (`Keep the destination outside the tight frame`), then `Without cutting, the camera makes a slow sideways arc and pulls back... As it leaves her eyeline, <the destination> enters the widening frame opposite her.`
-
-## Diegetic phone-camera comedy
-
-Source: one user-supplied written prompt studied on 2026-10-30 (two friends goofing around an apartment with a phone front camera, 8 shots, about 30 seconds, hand-drawn sketch style). This is a prompt-reading hypothesis. No generated result was reviewed. Use it for selfie, vlog, found-footage, or any prompt where a character holds the camera.
-
-- **Treat the phone as the camera and as a prop.** Name the holder and the hand in every shot, also when nothing changed: "the camera, now in Yuki's right hand"; "still in Yuki's hand"; "Sumi, phone in her right hand". The holder tells the model whose body drives the shake, and the hand fixes screen side.
-- **Let the camera object cause each transition.** Make every change of place come from the phone: a snatch ends the shot in a whip pan; a drop cuts "the instant the phone hits the floor"; the next shot opens with "the phone already lies face up, locked-off camera looking at the ceiling"; a grab ends it with "Cut as the phone lifts off the floor". State the rule once in the global line: "Every change of place comes through a whip pan or a cut from the phone itself."
-- **Declare one global energy rule.** Write the camera behavior once in the style block: "handheld, restless, constantly bobbing and tilting with whoever holds it, quick crash zooms and whip pans" and "nobody stands still". This rule permits two moves in one shot ("pulls back, then spins with them") as an exception to one camera move per shot. Change the motion source per shot: "the camera heaves with Sumi's breathing"; "the camera jolts once".
-- **Mark time in the scene header.** Use "Continuous" for an unbroken handoff and "Later" for a comic ellipsis. "Later" lets a shot open in a new state (phone already on the floor) without showing how it got there.
-- **Put temperament in the reference header and repeat it.** Give each character one performance trait next to the looks: "flat deadpan face" against "loud and easily flustered". Repeat the contrast in each shot: "face completely deadpan"; "still deadpan"; "Sumi shrieks". A deadpan character's one line gets the same tag: "Yuki's line (flat, deadpan): 'Boo.'"
-- **Track a temporary look as state.** When a gag changes a character's look, restate it while it lasts and close it: "hair over her whole face" (Shots 4–5), "her hair still over her face", then "Yuki's hair now neat" (Shot 8).
-- **End on contact with the lens.** Finish on a diegetic blackout instead of a settling pose or fade: "the clip cuts to black as the fingertip covers it". Other lens-contact beats from the same prompt: a face pressed almost against the lens, a sheet lowered in front of the lens.
-
-## Result-backed notes: two-character door-to-door comedy
-
-Source: one render supplied by the user on 2026-10-30 (480×854, 24 fps, 30.08 s). The prompt was skill-built: one group image bound per side ("the figure on the left of @Image 1"), eight untimed `Shot N` blocks, a per-shot prop ledger, cut-on-action endings, no spoken words, and a lens-contact ending. The user judged it the better of two prompts. Evidence: frames sampled at 2 fps, scene-cut detection, and luma on the final frames. Audio was not assessed. Small gags that last less than 0.5 s can fall between samples.
-
-What held:
-
-- **Per-side binding from one group image.** Both identities and costumes held through all eight shots: hat and bow, crescent-moon patch, stripes, pumpkin bucket. The faces never merged.
-- **Untimed `Shot N` still paced evenly.** Cuts were detected near 3.3, 7.0, 8.1, 13.3, 16.8, 19.8, 23.8 and 27.0 s. All eight shots appeared in the written order without timestamps.
-- **Cut-on-action transitions.** A broom swipe across the lens, a run up a garden path seen from behind, and a door close-up each carried the move to a new place.
-- **Hands-only adults.** "Adults appear only as hands and sleeves reaching out of doorways, never faces" held in every sampled frame. "Three different adult hands" produced three hands with different skin tones.
-- **A temporary look as state.** The hat popped off in the air and landed back on.
-- **Lens-contact ending.** The chocolate bar filled the frame, and the last frames darkened to an average luma of about 20/255.
-
-What failed, and the next repair to try (hypotheses until a re-render is reviewed):
-
-- **The wrapper-text negative was ignored.** "Candy wrappers carry no writing" still produced a giant bar with pseudo-brand lettering, plus letters on the small candies. Try an affirmative design lock: "plain solid-color wrappers; the giant bar has a plain brown wrapper with only a small orange pumpkin drawing and no letters".
-- **An insert lost prop ownership.** A close insert of "the bucket on the white-haired friend's left arm" showed a different bucket (glossy, black handle) standing on the ground. Try keeping an owner anchor in the insert frame: "the striped sleeve and hand holding the handle stay visible at the frame edge".
-- **Micro-gags inside busy shots did not show.** The candy scooped from the air (the candy hit the ground instead), the doorbell jab with the broom, and the skeleton jerking upright were not visible in the samples. Give each must-hit gag its own beat or its own short shot. Otherwise expect it to drop.
-- **A dive into cover hides identity.** In the leaf-pile shot both bodies disappeared for about 2 s and reappeared lying down. The candy burst was not visible. Ask for a body part that stays visible (hat tip, striped legs) when characters plunge into cover.
-
-## Reference-plate preparation and single-clip coverage
-
-Evidence boundary: distilled from an inspected 3-clip multi-shot production workflow and its 17 reference plates/sheets. Upstream still-image preparation happens before Seedance submission; keep image-prep tool names out of the Seedance prompt body.
-
-- **Mask low-res or conflicting faces with solid white ovals on staging and full-body panels.** When a wide staging frame (`@Image 1`) or the full-body turnaround panel of a character sheet shows a small, low-resolution, or expression-locked face—or triggers false-positive identity blocks on full-body plates—cover the face on the wide and full-body views with a flat solid white oval (`#FFFFFF`), leaving only the high-resolution macro portrait panel unmasked. Pair with explicit prompt instructions:
-  - In reference binding: `Ignore the blank white face circles on the staging/full-body views; use the face close-up panel for facial features and expression.`
-  - In failure guards: `No white, blue, or green placeholder shapes or markers rendered.`
-- **Pack 3 views onto one 16:9 character sheet.** Combine a full-body rear/three-quarter view, a full-body front view, and an extreme close-up face portrait (or 4-angle facial expression grid) into a single composite `@Image` slot per character. This preserves reference slots while locking rear hair, cape, and armor geometry during turns and OTS cuts.
-- **Prep clean entry plates and locked-foreground background edits with 5–10% solid-white paint-out masks (upstream image prep).** Before generating a shot where a character or creature must enter an empty frame—or when inserting background crowds behind a locked foreground subject—paint over the unwanted subject or target background zone in flat `#FFFFFF` white, extending 5–10% beyond the silhouette edge so no boundary pixels leak into the regenerated plate.
-- **Lock multi-angle interior geography with untextured 3D graybox screenshots (upstream image prep).** When cutting to a new camera angle inside complex architecture, feed an untextured 3D blockout screenshot from the new camera angle alongside the hero style frame into the keyframe generator so spatial layout holds before passing the plate to Seedance.
-- **Generate master-to-insert and OTS reverse coverage inside one multi-cut clip.** To keep weather, mud, firelight, and vocal strain identical across rapid cuts, choreograph a 2-to-5 cut coverage cluster inside a single 6–10s generation using `Shot N:` and `[Cut to] Shot N:` blocks:
-  - *Escalating single-subject montage (5 cuts):* Medium low-angle chant -> tighter close-up -> extreme macro on mouth/jaw -> extreme macro on eye or goggle lens reflecting fire -> medium-wide low-angle payoff.
-  - *Duel 2-shot to OTS reverse coverage (4 cuts):* Wide 2-shot charge and weapon lock -> close-up OTS over Fighter A's shoulder onto Fighter B straining -> reverse close-up OTS over Fighter B's shoulder onto Fighter A -> reverse OTS back to Fighter B igniting a close-range counter.
-  - *Foreground-anchored interaction to detail insert (2 cuts):* Low-angle medium shot framed past foreground elements (`@Image 1`) as Character A (`@Image 3`) acts and Subject B (`@Image 2`) snatches a prop across the frame -> `[Cut to]` tight low-angle medium close-up on Subject B interacting with the snatched prop.
-- **Reusable 5-part `[Cut to]` coverage template:**
-
-```text
-Visual Style & Continuity:
-<Shared lens, film stock/medium, lighting, and atmosphere lock across all cuts.>
-
-Scene Setup & Reference Binding:
-Use @Image 1 as <exact start frame / staging and lighting reference, preserving foreground elements>.
-<Character A> corresponds to @Image 2 (<key costume/hair traits>; ignore the blank white face circles and use the face close-up panel).
-<Character B> corresponds to @Image 3 (<key costume/prop traits>).
-
-Shot 1:
-<Framing + angle + camera movement>. <Character A> <physical preparation + action + exact spoken delivery>. <Environmental response: sparks, mud, rain, firelight>.
-
-[Cut to]
-
-Shot 2:
-<New framing / OTS reverse / extreme macro insert>. <Connected continuation of the action or reaction from Shot 1>.
-
-[Cut to]
-
-Shot N:
-<Payoff framing and observable end state>.
-
-Technical Exclusions:
-- No floating or weightless movement.
-- No morphing weapons or disappearing armor details.
-- No white, blue, or green placeholder shapes or markers rendered.
-- No subtitles, text overlays, or watermarks.
-```
-
-## Research-grounded model mechanics
-
-These directing principles map published ByteDance Seed / Intelligent Creation research papers (authored by the Seedance team) onto practical prompt construction. They explain why the craft heuristics above work; they do not alter first-party parameter or capability limits in [source-boundaries.md](source-boundaries.md).
-
-1. **Cross-modal pose & background decoupling (*Phantom*, `arXiv:2502.11079`):**
-   - Multi-subject `@Image` conditioning is trained on cross-modal text-image-video triplets (`Phantom-Data`) so the DiT strips out a reference image's background and static pose when instructed.
-   - **Rule:** Whenever an `@Image` asset is a portrait or standing turnaround used for a dynamic scene, explicitly exclude both background and pose: `@Image 1 defines only <Name>'s facial features, hairstyle, and outfit; do not copy its background or static standing pose.`
-2. **Time-adaptive CFG denoising order & 0–1s geometry settle (*HuMo*, `arXiv:2509.08519`; *OmniHuman-1*, `arXiv:2502.01061`):**
-   - When text, `@Image`, and `@Audio` condition the backbone together (*Seedance 1.5 Pro*, `arXiv:2512.13507`; *Seedance 2.0*, `arXiv:2604.14148`), early diffusion steps solve **spatial stage layout and camera trajectory**, while later steps ramp up **identity (`@Image`) and phoneme lip-sync (`@Audio`)**.
-   - **Rules:**
-     - Front-load the **180-degree stage map** (`screen left / screen right / depth separation`) and **camera trajectory** in the opening clause so they condition the earliest denoising steps.
-     - **Dialogue-only `0–1s` settle beat (never in fast action/chases):** Give the opening `0–1s` a brief settling beat **only in dialogue/lip-sync scenes** so facial geometry stabilizes before speech. In fast-paced fights, chases, and action clips, **never** write `"settling briefly before the action erupts"` in Shot 1 (in `dreamina-2026-11-03-3417...mp4`, that phrase caused a 3.0-second static pause from `0.0–3.0s`); open Shot 1 *in medias res* on the immediate physical trigger (`开场无停顿直接进入高速追逐/交锋`).
-     - During dialogue, prevent heavy `@Image` + `@Audio` guidance from freezing the speaker's torso ("statue body") by adding explicit **rhythm carriers** (`shoulders rise with breath, weight shifts, hand adjusts grip, hair sways`).
-3. **VLM Chain-of-Thought state-transition verification (*RewardDance*, `arXiv:2509.08826`; *VideoReward*, `arXiv:2501.13918`):**
-   - Post-training RLHF uses a 26B VLM reward judge (`RewardDance`) with Chain-of-Thought reasoning and Flow-DPO to score whether a generated clip satisfies observable visual, motion, and causal checks.
-   - **Rule:** Express every key beat as a **3-part verifiable checklist (`observable entry state -> physical operation/contact -> observable exit state`)** rather than mood/vibe prose so the prompt matches the RLHF reward rubric.
-4. **Chronological frame-grounded atomic action alignment (*Tarsier2*, `arXiv:2501.07888`, Sec. 3.2 & Appendix C):**
-   - Pre-training video captions are generated by ByteDance's `Tarsier2` model, whose SFT data was built in two stages: (1) human annotators manually logged dynamic character actions, micro-expressions, object state changes, and camera moves mapped to exact frame numbers, and (2) sequential synthesis turned those frame logs into chronological event chains (`[framing/camera] + [actor + sequential physical state changes] + [environmental response]`).
-   - **Rules:**
-     - Write every shot in strict forward chronological order (`A happens -> B reacts -> C settles`). Avoid literary metaphors (`意识流`) and non-chronological phrasing (`"after having opened the door earlier..."`).
-     - While a *single simultaneous emotional shift* uses `2–4` observable cues, a `4–6s` dramatic shot can execute **`6–10` sequential micro-actions** (blinks, swallows, breath intake, spoon placement, shawl pull, under-brow eye lift) when chained in strict causal order with explicit beat gates (`in this exact order, each step its own beat: first..., then..., only after...`).
-5. **Hierarchical static/dynamic captioning, `PE` subtext rewriting, & interleaved `Multishot MM-RoPE` (*Seedance 1.0*, `arXiv:2506.09113`, Sec. 2.2, 2.4, 3.2; *Seaweed-7B*, `arXiv:2504.08685`, Sec. 2; *Koala-36M*, `arXiv:2410.08260`):**
-   - ByteDance's data pipeline trains the DiT on **hierarchical captions** combining a system/style header (`PGC/UGC, lens, camera movement, visual style`), a short action-centric intent summary, a static attribute inventory (`core characters, attire, seating, props, lighting`), and a per-shot dynamic event log. In `Multishot MM-RoPE`, global text tokens condition spatial layers while each shot's local caption interleaves with its temporal window across hard cuts, and an LLM Prompt Engineer (`PE`, Qwen2.5-14B SFT+DPO) maps user intent into dense caption format.
-   - **Rules:**
-     - For complex multi-shot dialogue dramas, a **3-tier hierarchical layout** (`[Brief]` short intent/subtext summary -> `[Audio / Camera / Seating / Subject settings / Performance]` static & behavioral locks -> `[Shot list]` per-shot timed dynamic captions) directly matches the training caption hierarchy and keeps identity/seating locked across cuts without needing 500-word negative ban lists.
-     - Whenever a character or prop re-enters after leaving the frame, crossing a hard cut, or being occluded for several seconds, re-tag them immediately (`<Name>, <2-word costume/visual trait>, <current prop state>`) so sparse / sliding-window KV-cache attention re-binds cleanly inside the active shot window.
-6. **Unified dual-branch audio-visual MMDiT & upper-face expression isolation (*Seedance 1.5 Pro*, `arXiv:2512.13507`, Sec. 2.1.2–2.2; *Seedance 2.0*, `arXiv:2604.14148`, Sec. 2.1, Tables 3–8, 14):**
-   - `Seedance 1.5 Pro` and `Seedance 2.0` generate speech, room foley, and facial micro-expressions simultaneously in a unified dual-branch MMDiT, scoring `4.00/5.00` on `Emotion & Expression` (VPF) and `4.00/5.00` on `Voice + Action Interaction` (AQ), while multi-speaker lip-sync remains a documented boundary area (`arXiv:2604.14148`, Sec. 2.1).
-   - **Rules:**
-     - Pair physical gestures with subtext analogies (`turns one hand palm up, as if to say "obviously, who else?"`) so cross-modal attention simultaneously aligns vocal prosody, word stress, and head/hand inflection.
-     - In close-up realistic dialogue, isolate emotion to the upper face (`All facial expression lives in the brow and the eyes; the mouth is left natural`) and enforce chew/swallow speech gates (`finishes chewing and swallows before speaking`) plus speaker isolation (`<Name> alone speaks`) so emotional adjectives never distort phoneme-to-viseme mouth closure.
+When forward extension is planned, land the closing beat on a readable boundary pose and travel vector, residual particles/dust/fabric motion, and an active subject or horizon landmark. The follow-on extension prompt restates that **observed** boundary state and adds new action without re-narrating the source clip.
 
 ## Four-mode timing architecture and pacing control
 
-Source: nine public Seedance 2.5 prompts studied on 2026-11-02 (three 2.5D letterbox frame-break sword performances, a 30s one-take gothic streamer room tour, a 16-shot karate kata anime OP, a hand-painted vampire duel, a 4-shot rooftop brawl, a 10-cut before/after narrative, a 10-shot slow-mo/rewind/real-time gunslinger duel, an 8-shot handheld apartment comedy, and a 24-shot 3-arena sakuga brawl). These are prompt-architecture heuristics, not provider guarantees.
-
-Seedance 2.5 does not use one universal shot length. Choose one of four timing modes based on the scene's physical rhythm:
+Source: nine public Seedance 2.5 prompts studied on 2026-11-02 plus inspected 30-second renders (2026-11-02 & 2026-11-03). Choose one timing mode matched to the scene's physical rhythm:
 
 ### Mode 1: Untimed action-quantity pacing (`Shot N` without timestamps)
-- **When to use:** Default for pure high-speed continuous combat, martial-arts exchanges, fast chases, and hyper-cut sakuga blitzes.
-- **Why omit `(0-3s)` timestamps:** In fast continuous combat or pursuit, hard second brackets force the model either to pad a single strike/lunge to fill the window (creating floaty slow motion) or to truncate a multi-hit combo mid-swing when the timestamp expires.
-- **How to control duration:** State the total shot count and approximate runtime once in the global premise (`10–14 shots, about 30 seconds` for a brisk chase; `Shot list: 4 shots, about 30 seconds` for long master brawls; or `共20–24个镜头，约30秒` for high-cut combat blitzes), leave individual `Shot N:` headers untimed, and let **exchange count + an immediate mid-motion cut trigger (`Cut as <action>` / `切于<动作>`)** set the pace:
-  - **Long fluid brawl (`4 shots / ~30s`, ~7–8s per shot):** Pack each shot edge-to-edge with connected exchanges (`strike -> two-frame impact frame -> smear recoil -> immediate counter`) and punctuate the middle of each long shot with one brief **`快速细节切` (`Quick detail cut`)** (e.g., *squinting eyes, tightening glove, dog tag whipping, boot sole filling the lens*) before immediately re-entering the wide clash.
-  - **Hyper-cut sakuga blitz (`20–24 shots / ~30s`, ~1.2–1.5s per shot in compact Chinese):** Always write `>= 12-shot` fight scenes in compact Chinese (with English `@Image N defines only ...; do not use ...` role verbs) even if the user requested the prompt in English; give each `Shot N:` **strictly one strike + one material reaction + immediate cut trigger** (`切于尾巴回甩`, `切于最后一拳`, `切于木屑`, `切于血泼`), and dedicate the final 4–5 shots to a **decisive one-way finishing chain** (`破招 -> 破防重击 -> 击飞砸落 -> 法阵/武器崩碎 -> 胜者前景落定、败者后景倒地`) rather than a stalemate clash freeze (`STALEMATE_CLASH_ENDING`).
+- **Why omit `(0-3s)` brackets in continuous action:** Fixed second brackets can cause the model to pad single strikes into floaty slow motion or clip multi-hit exchanges mid-swing. State shot count and approximate duration once in `[Brief]`, leave `Shot N:` untimed, and end each shot with `Cut as <mid-motion trigger>` (`切于<动作>`).
+- **Mode 1a — Readable Choreography (`8–12 shots / ~30s`, `~2.5–3.75s` per shot in the user's language — DEFAULT for fights & chases):** Give each shot one complete martial or pursuit phrase (`load/wind-up -> strike or active catch lunge -> contact or narrow miss -> recoil/redirection`) so choreography reads cleanly without generator-transition flash clutter. For long fluid master brawls (`4 shots / ~30s`), punctuate the middle of a 7s exchange with one brief `Quick detail cut` (`快速细节切`: squinting eyes, boot sole filling lens) before returning to the wide clash.
+- **Mode 1b — Hyper-Cut Sakuga Blitz (`16–24 shots / ~30s`, `~1.2–1.8s` per shot in compact Chinese — OPT-IN):** Use only when the user explicitly asks for rapid-fire `>= 12`-shot anime montage cuts or Chinese combat prompting. Pure Chinese role bindings (`@Image 1 仅定义…；不要使用…`) lint natively in `prompt_lint.py`. Give each `Shot N:` one strike + one material reaction + immediate cut trigger, and dedicate the final 4–5 shots to a one-way finishing chain (`破招 -> 破防重击 -> 击飞砸落 -> 法阵崩碎 -> 胜者前景落定、败者后景倒地`).
 
 ### Mode 2: Accordion timed pacing (`Shot N (start-ends)`)
-- **When to use:** Rhythmic martial-arts kata, anime opening sequences, and structured multi-angle comedy or story beats where musical/editorial cadence matters.
-- **How to budget seconds:** Never use uniform `4–6s` blocks across an action, chase, or comedy clip (`prompt_lint.py` warns with `SLUGGISH_UNIFORM_TIMING`), which stretches single movements into slow motion and causes early story exhaustion. Alternate brisk window sizes like an accordion:
-  - **`1s` micro-windows (`6-7s`, `9-10s`, `15-16s`, `18-19s`, `24-25s`):** Single fast punches, hand grabs, foot stamps kicking up dust, snap-zoom kiai shouts, or peak ground-impact bursts.
-  - **`2–3s` phrase windows (`0-2s`, `10-13s`, `20-22s`):** Complete movement phrases, near-miss lunges, 180° turns wrapping ribbon arcs, or breath-settle pauses (`13-15s: The flames shrink into tight glowing cores; only her breath is heard`).
-  - **`4–5s` dialogue windows:** Reserve `4–5s` windows strictly for spoken dialogue beats. Cap any non-dialogue final capture, bubble hold, or victory pose to **at most the final `2–3 seconds` (`27-30s` or `28-30s`)** so the clip never parks on a static 10-second hold.
-- **Three timing refinements inside Mode 2:**
-  1. **Group sub-second micro-cuts inside one `3–4s` window:** Instead of writing `0-1s`, `1-2s`, `2-3s` for rapid montage angles, allocate one `3–4s` window and list a 3-to-4 angle micro-cluster inside it (`0-3s: Rapid sequence of three connected angles: 1. Wide side-tracking... 2. Very low front three-quarter... 3. Over the shoulder...`).
-  2. **Bridge continuous shots across timestamp boundaries:** When one unbroken camera move has timed sub-phases (`16-20s` approach $\rightarrow$ `20-22s` braking and charge $\rightarrow$ `22-30s` slow-mo coil and release), start the next timestamp block with `Continue that same tracking shot across the time boundary without a cut; no new run-up or position reset` so the timestamp boundary does not trigger a jump cut.
-  3. **Set an internal speech-completion ceiling inside long dialogue shots:** When a long window (`5-15s` or `23-30s`) holds both a spoken exchange and a silent reaction tail, state the speech ceiling inside the block (`Finish this exchange by 13s; in the quiet that follows...` or `Finish speaking by about 28s; hold them in silence until 30s`) so dialogue does not stretch to the end of the shot. Pair with abrupt audio drops (`Drop all sound at 23-24s`) and J/L-cut audio bridges (`White's cheer carries over into Red's shot as audio only, ending on Red's desk thump`).
+- **When to use:** Rhythmic kata, anime OPs, and structured multi-angle comedy/narrative beats.
+- **Budget seconds like an accordion (never flat `4–6s` blocks across action, `SLUGGISH_UNIFORM_TIMING`):**
+  - **`1s` micro-windows (`6-7s`, `15-16s`, `24-25s`):** Single snap strikes, grabs, foot stamps, kiai snap-zooms, or impact bursts.
+  - **`2–3s` phrase windows (`0-3s`, `10-13s`, `20-22s`):** Complete movement phrases, near-miss lunges, 180° turns, or macro prop inserts.
+  - **`4–5s` dialogue windows:** Reserved for spoken lines. Cap any non-dialogue final capture or victory reaction to **at most the final `2–3 seconds` (`27-30s`)** so the story never finishes early and stalls on a 10s hold.
+- **Refinements:** (1) Group 3–4 sub-second micro-angles inside one `3–4s` window (`0-3s: Rapid sequence of three connected angles: 1... 2... 3...`); (2) bridge unbroken tracking moves across timestamp boundaries (`Continue that same tracking shot across the time boundary without a cut; no new run-up or position reset`); (3) set internal speech ceilings on long dialogue shots (`Finish speaking by 28s; hold in silence until 30s`).
 
 ### Result-backed notes: 20-shot magic duel vs. 30-second forest-spirit chase (2026-11-02 & 2026-11-03)
 
-Source: two user-supplied 30.05-second renders (854×480, 24 fps, `mov` with 32 kHz stereo PCM audio) inspected via `ffprobe`, `ffmpeg` scene-cut detection (`scdet=threshold=12`), `volumedetect`, and 2 fps / 4 fps contact sheets.
+Inspected via `ffprobe`, `ffmpeg` `scdet=threshold=12`, `volumedetect`, and 2–4 fps contact sheets on two 30.05s renders (`854x480`, 24 fps, `.mov`):
 
-1. **20-shot compact Chinese duel (`Seedance 2_5 - __2D________________________ _Image 1 _ _Image 2 .mov`):**
-   - **What held (`00:00–00:29.0`):** Writing the 20-shot heavy-magic fight in **compact Chinese (`Mode 1: Untimed Shot 1–Shot 20`, `共20个镜头，约30秒`)** with one strike + one material reaction + `切于<动作>` per shot produced **19 scene cuts across 30 seconds (`~1.5s per cut`)**. Hand-drawn 2D ink-and-watercolor style, both characters' exact costume/anatomical details (`@Image 1`'s horns, red scarf, pointed gold necklace, and red-beaded bracelet; `@Image 2`'s six golden vertical-slit eyes and yellow concentric-ring cloak), the black cloak rings detaching into gravity orbs (`04.5–07.5s`), crushing a gravity orb in both hands (`08.0–10.0s`), the canopy mandala & spear rain (`13.5–15.0s`), the fire-whip tree run (`15.0–17.0s`), the mid-air 3-hit combo (`18.5–20.0s`), and a two-frame black-and-white/orange impact flash (`26.6–26.7s`) all rendered cleanly at full speed.
-   - **What failed (`00:29.0–00:30.05`):** Placing the beam clash at Shot 18 (`26.0s`) and writing Shot 20 as a mutual fist-vs-spear collision and glare lock (`拳矛在两人面门之间硬生生对撞…死死对视`) caused the model to flash a white star at `29.12s` and hold a static split-screen stalemate for the final `0.8s` (`29.25–30.05s`).
-   - **Evidence-grounded repair (`STALEMATE_CLASH_ENDING`):** Move the charge-up earlier (Shots 14–15) and dedicate the final **4–5 shots (Shots 16–20, ~6 seconds)** to a one-way finishing runway: `Shot 16` punch through the opponent's projectile -> `Shot 17` tear through the last shield and land a point-blank chest strike (`两帧黑白冲击帧`) -> `Shot 18` wide whip-pan as the opponent is blasted into the central stone altar -> `Shot 19` opponent's magic circles shatter and fade out on the ground as eyes close -> `Shot 20` low-angle foreground winner landing and flicking off residual flames while the defeated opponent lies visibly downed on the background altar.
-2. **30-second painterly forest-spirit chase (`Seedance 2_5 - _Reference Contract__Image 1 defines the fire spirit_s appearance...mov`):**
-   - **What failed:**
-     - *Collapse into a 10.5-second static bubble hold (`19.5–30.05s`):* `scdet` detected **zero cuts after `09.0s`**. Because the chase lacked brisk multi-cut segmentation and didn't cap the final capture window, the model completed the bubble catch at `19.5s` and parked on a static front shot of the nymph holding the bubble for the last `10.5 seconds`.
-     - *Passive stiff running (`02.5–05.0s`):* Describing pursuit without upper-body catch mechanics caused the nymph (`@Image 2`) to glide upright behind the fire spirit with stiff, passive arms.
-     - *Running vertically up a tree trunk & blobbing (`08.0–13.5s`):* When the tiny fire spirit (`@Image 1`) climbed a tree trunk onto a high branch without a vertical-plane lock on the pursuer, the model ran the nymph in her floor-length moss gown vertically up the trunk (`08.0–11.0s`) and morphed her into a white blob jumping down (`13.5s`).
-     - *Blank mannequin face (`03.0–30.05s`):* Because `@Image 2` had closed eyes and a tilted-back serene face in the reference still—and held the bubble directly in front of her chest/face from `19.5–30.05s`—she kept a frozen, expressionless face throughout.
-   - **Evidence-grounded repair (`SLUGGISH_UNIFORM_TIMING` & `PASSIVE_PURSUIT_RISK`) — verified in follow-up render `dreamina-2026-11-03-3417...mp4` (`30.08s`, 6-shot English `0-5s, 5-10s, 10-15s, 15-21s, 21-27s, 27-30s`):**
-     - *What the 6-shot repair fixed in `dreamina-2026-11-03-3417...mp4`:* `scdet` cut cleanly at all 5 boundaries (`4.92s, 9.83s, 14.88s, 20.97s, 26.67s`); the affirmative ground-plane lock kept the nymph on the forest floor looking up at the branch (`10.0–14.9s`); she actively lunged across the puddle (`03.0–04.9s`), swept the log (`07.5–09.8s`), and doused the fire ring (`23.0–25.0s`); and Shot 6 (`26.7–30.08s`) rendered the bubble held to the right of her unobstructed face as she exhaled in relief, smiled warmly, and tapped the bubble with her index finger.
-     - *Why the 6-shot English version still felt slow-paced and underwhelming:*
-       1. Writing `"settling briefly on the sunlit clearing before the chase erupts"` in Shot 1 wasted `0.0–3.0s` standing still (`OPENING_SETTLE_IN_ACTION`).
-       2. Six `5–6s` English shots (`4.9s`–`6.1s` each) produced mostly static cameras, gentle storybook trotting (`05.0–07.0s`), and `1.5–2.5s` dead-air pauses before and after the water wave (`21.0–23.5s`, `25.0–26.5s`).
-       3. Small micro-actions (`touches a dry fern`, `three tiny smoke marks`, `tugs a vine`) lacked visual spectacle.
-     - *Full high-tempo repair (`18–20` untimed shots in compact Chinese):*
-       1. **Switch fast chases to `16–20` untimed `Shot N` cuts in compact Chinese (`共18个镜头，约30秒`) with `极速跟拍 / 急摇 / 急推 / 瞬间化作残影 / 切于...的一瞬`:** Open Shot 1 *in medias res* with zero settle pause, and scale up elemental spectacle (chain of firework-mushrooms, twin water-dragon vortexes `清泉水龙卷`, emerald vine-whips `翠绿藤蔓鞭`, and a 3-ring airborne water trap `三道碧蓝水环品字形合围`) before sealing the bubble in the final 5–6 rapid close-up cuts (`Shots 13–18`).
-       2. **Require active upper-body near-miss grabs matching costume anatomy:** For a character in a trailing floor-length moss gown, avoid `"jumping on tiptoe"` or `"diving onto her knees"`; direct low upper-body torso lunges across the puddle, rapid two-handed sweeps over the mossy log where her fingers brush the fire spirit's tail, and whipping glowing vines from the ground to shake the branch.
-       3. **State vertical-plane separation affirmatively:** Write `只有橙冠小火灵能蹿上树干与高处树枝；白鹿角森女全程双脚与苔裙扎根在森林草地地面` (avoiding negative `"never climbs trees"` phrasing).
-       4. **Override closed reference eyes and keep the bubble off-center:** Explicitly bind `睁开的灵动深琥珀色大眼；do not use @Image 2 的闭眼表情、后仰头部、背景或静止摊手站姿`, script natural facial transitions per beat, and hold the bubble **to the right of her chest/shoulder** so her face stays unobstructed.
+1. **20-shot compact Chinese magic duel (opt-in Mode 1b benchmark):**
+   - **What held (`00:00–29.0s`):** 19 clean cuts (`~1.5s`/cut), 2D ink-and-watercolor medium, exact character details (`@Image 1` horns/red scarf/gold necklace; `@Image 2` six golden vertical eyes/ring cloak), detaching gravity orbs (`04.5–07.5s`), canopy spear rain (`13.5–15.0s`), 3-hit mid-air combo (`18.5–20.0s`), and two-frame B&W impact flash (`26.6–26.7s`).
+   - **What failed (`29.0–30.05s`):** Writing Shot 20 as a mutual fist-vs-spear clash and glare lock (`硬生生对撞…死死对视`) froze the final `0.8s` in a split-screen stalemate (`STALEMATE_CLASH_ENDING`). Fix: dedicate the last 4–5 shots to a decisive one-way knockdown chain.
+2. **30-second painterly forest-spirit chase (`SLUGGISH_UNIFORM_TIMING`, `PASSIVE_PURSUIT_RISK`, `OPENING_SETTLE_IN_ACTION`):**
+   - **Initial failure:** Zero cuts after `09.0s` left a `10.5s` static bubble hold (`19.5–30.05s`); passive chase verbs produced stiff upright jogging (`02.5–05.0s`); lacking an affirmative ground lock ran the floor-gown nymph vertically up a tree trunk (`08.0–11.0s`); and `@Image 2`'s closed-eye portrait plus chest-centered bubble froze her face.
+   - **6-shot timed repair (`dreamina-2026-11-03-3417...mp4`):** Fixed all 5 cut boundaries, ground-plane lock, active puddle/log lunges, and unobstructed right-side bubble smile (`26.7–30.08s`), yet `"settling briefly... before the chase erupts"` still wasted `0.0–3.0s` standing still (`OPENING_SETTLE_IN_ACTION`) and uniform `5–6s` blocks kept cameras gentle.
+   - **Takeaway:** Open fast chases *in medias res* with zero settle beat, pair every pursuit beat with upper-body near-miss catch mechanics, state vertical ground-vs-canopy separation affirmatively, override closed reference eyes (`wide-open amber eyes actively tracking`), and keep `~2.5–3.5s` shots (`8–12` cuts) or accordion `1–3s` windows with the final capture capped to `27–30s`.
 
 ### Mode 3: Nested one-take sub-beats & `1s` hinge windows (`Shot 1 (0-30s):` + internal ranges)
-- **When to use:** Unbroken single-camera takes (such as a phone front-camera room tour that starts on a desk stand and becomes an arm's-length handheld selfie).
-- **How to structure:**
-  1. Declare the outer container on the shot header (`Shot 1 (0-30s): [Front camera of her phone, one continuous take]`) and break the body into consecutive integer-second sub-windows (`0-4s:`, `4-8s:`, `8-9s:`, ...).
-  2. **Carve out explicit `1-second hinge windows` for locomotion and silence:** Transitions buried inside a 4-second dialogue block get skipped. Give a physical step (`8-9s: One step with a gentle footstep bob brings her to the shelf`) or a sudden acoustic drop (`24-25s: The fan hum and every room sound cut out at once. One second of total silence as she holds the smile a beat too long`) its own dedicated `1s` window.
-  3. **Veil in-shot facial transformations with a timed autofocus hunt (`25-28s` -> `28-30s`):** Instead of morphing a face in continuous sharp focus, start the initial eye change in focus (`25-28s`), then command `the autofocus hunts and her face softens into blur` while the jaw/mouth transforms and background lights die, and finally `focus snaps back` (`28-30s`) onto the completed transformation.
+- Declare `Shot 1 (0-30s): [Front camera of her phone, one continuous take]`, subdivide into consecutive integer-second sub-windows (`0-4s:`, `4-8s:`, ...), carve dedicated **`1s` hinge windows** for physical locomotion (`8-9s: One step brings her to the shelf`) or sudden room-sound cutoffs (`24-25s: One second of total silence`), and veil in-shot facial transformations with a timed **autofocus hunt** (`25-28s` blur while jaw transforms -> `28-30s` sharp snap-back).
 
-### Mode 4: Proportional speed-contrast & inertia scaling (`Slow-Mo vs. Rewind vs. Real-Time` & `Gravity/Pendulum Lag`)
-- **When to use:** Sequences that replay the same physical action at different speeds (e.g., extreme slow motion -> fast rewind -> real-time full speed) or contrast superhuman speed / heavy suspended mass against normal gravity.
-- **How to scale time and shot count:** Do not rely on the words `"slow motion"` or `"full speed"` alone—scale the time allocation and shot count proportionally:
-  - **Extreme slow motion (`9 seconds across 3 shots`, `9-12s`, `12-15s`, `15-18s`):** Split the slide, rise, and trigger pull across three separate 3-second camera angles with floating dust and spaced afterimage copies.
-  - **Fast rewind (`2 seconds in 1 locked wide shot`, `18-20s`, `framed as Shot 1`):** Compress the entire reversal into a single 2-second locked wide shot with a whirring sound until all elements return to the Shot 1 start state.
-  - **Full-speed replay (`4 seconds in 1 panning wide shot`, `20-24s`):** Run the entire dash, slide, spring, shot, and body crash inside one continuous 4-second wide pan with `no afterimages`.
-  - **Gravity / inertia asynchrony:** Anchor extreme speed to a falling background object's gravity clock (*"a plant starts falling in one room and before it lands the cat has already blasted through the kitchen and returned to the same hallway"*), and anchor heavy suspended mass by separating the vehicle/rig brake from the swinging payload (*"the carriages slow and stop, but the suspended neck is still swinging"*).
+### Mode 4: Proportional speed-contrast & inertia scaling
+- Scale duration and shot count proportionally rather than relying on speed words alone (`9s across 3 shots` slow-mo with dust/afterimages -> `2s in 1 locked wide shot framed as Shot 1` fast rewind -> `4s in 1 panning wide shot` real-time replay with `no afterimages`), and anchor extreme speed or heavy mass via **gravity/pendulum lag** (a knocked-over plant is still falling when the fast subject returns; a braking carriage stops while its suspended payload keeps swinging).
 
 ## 2.5D letterbox frame-break ("pop-out") compositing
 
-Source: three user-supplied written prompts studied on 2026-11-02 (high-speed sword and martial-arts performances projecting across fixed horizontal letterbox bars). Use when the user asks for an out-of-frame, pop-out, or letterbox frame-break effect.
-
-1. **Declare an explicit 3-layer back-to-front compositing order:**
-   - `1. Background and scene (confined strictly to the central picture window).`
-   - `2. Two broad solid-black horizontal letterbox bars at the top and bottom (occupying e.g. the top and bottom 15% of the screen).`
-   - `3. Selected foreground parts of the character (weapon, hands, hair, crown, sneakers, flaring skirt/sleeves), which render IN FRONT OF the black bars.`
-2. **Lock static bars against a moving subject (`STATIC BARS, MOVING CHARACTER`):**
-   - State that both black bars are static screen-locked graphics: equal thickness, full width, straight horizontal inner borders, never moving, bending, shaking, stretching, or reacting to impacts—even when the camera inside the central window pans, recoils, or banks.
-   - Keep visible segments of black bar on **both sides** of every overlapping limb, blade, or skirt sweep so the frame boundary remains legible, and state that withdrawing a limb reveals the unchanged black bar beneath it.
-3. **Establish the overlap in the first second and alternate upper/lower breaches:**
-   - Open immediately with a near-lens frame-breaking gesture in the very first beat: either an open palm wiping diagonally across the lens over both black bars before snapping into combat, or a fast forward sword lunge whose foreshortened blade and skirt folds spill across the lower black bar.
-   - Alternate upper-bar breaches (upward sword flourishes, flying hair, crown) with lower-bar breaches (broad flaring skirt sweeps, front-kick sneaker soles, lunging hands) driven by deep retreats into the central window followed by explosive approaches toward the wide-angle lens.
+Use when the user asks for an out-of-frame or letterbox pop-out effect:
+1. **3-layer back-to-front compositing order:** (1) background/scene confined strictly inside the central window, (2) two static full-width solid-black horizontal letterbox bars (e.g. top and bottom 15%), and (3) selected foreground subject parts (blade, hands, hair, boots, flaring skirt) rendered **in front of** the black bars.
+2. **Static bars, moving subject:** Keep both black bars screen-locked with straight horizontal inner borders that never shake, bend, or stretch when the inner camera pans or recoils, leaving black bar visible on both sides of overlapping limbs.
+3. **First-second overlap + alternating breaches:** Establish the pop-out in `0–1s` (near-lens palm wipe or foreshortened blade lunge spilling across the lower bar) and alternate upper-bar flourishes with lower-bar sweeps.
 
 ## Do not import from public dumps
 
-Leave these out of the creative prompt unless the user explicitly requires them:
-
-- JSON / schema wrappers around the story;
-- duration, aspect ratio, resolution, fps, or “4K masterpiece” boosters;
-- quality-word piles (`cinematic, photorealistic, highly detailed`);
-- music or BGM;
-- Dreamina `@Image N` syntax mixed into a MiniMax H3 prompt, or third-party wrapper handles (`<<<Image1>>>`, `@[ref]`, `<视频1>`) left un-normalized on a Dreamina/ModelArk surface (`prompt_lint.py` warns with `UNSUPPORTED_HANDLE_SYNTAX`);
-- decimal frame promises.
-
-Stills pipelines (Recraft / Seedream / Midjourney → Seedance) belong in upload notes, not in the Seedance prompt body.
+Strip JSON/schema wrappers, embedded `16:9` / `1080p` / `60fps` / duration parameters, generic quality-word piles (`masterpiece, 8k, photorealistic`), unrequested BGM, un-normalized wrapper handles (`<<<Image1>>>`, `@[ref]`, `<视频1>`), decimal timestamps, and upstream still-generator tool names (`Seedream`, `Midjourney`, `Recraft`) from the creative prompt body.

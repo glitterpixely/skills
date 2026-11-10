@@ -4,17 +4,18 @@
 
 - [Purpose](#purpose)
 - [Lark A88 prompt guide](#lark-a88-prompt-guide)
-- [BytePlus ModelArk 2607689](#byteplus-modelark-2607689)
+- [BytePlus ModelArk 2607689 & Nov 2026 spec bundle](#byteplus-modelark-2607689--nov-2026-spec-bundle)
 - [Provider optimizer 0.3.3](#provider-optimizer-033)
+- [Craft & research companion modules](#craft--research-companion-modules)
 - [BytePlus visual assets](#byteplus-visual-assets)
 - [Raw-to-local media mapping](#raw-to-local-media-mapping)
 - [Validation](#validation)
 
 ## Purpose
 
-Use this ledger when revising the skill. It records where each supplied-document section and media asset is represented. A check mark means the information is encoded operationally; it does not mean source wording was copied verbatim.
+Use this ledger when revising the skill. It records where each supplied-document section, API specification, media asset, and companion module is represented operationally.
 
-`references/desk-prompt-patterns.md` is Clip-desk craft, not a first-party source. Do not treat it as coverage of Lark, BytePlus, or the provider optimizer, and do not let it invent capabilities, limits, or API fields.
+`references/desk-prompt-patterns.md`, `references/desk-continuity-and-coverage.md`, and `references/research-mechanics.md` provide Clip-desk craft heuristics and published ByteDance research context; they never invent undocumented capabilities, limits, or API fields over `references/source-boundaries.md`.
 
 ## Lark A88 prompt guide
 
@@ -43,60 +44,47 @@ Source: `https://bytedance.larkoffice.com/docx/A88jd0B47oAd8zxWp5ycZFMfnxh`
 | 6 examples disclaimer | `source-boundaries.md` |
 | Every concrete Lark example pattern | `examples.md` |
 
-The authenticated plain-text capture contained no image/video markers or media URLs. Its word-level guidance is covered; no unsupported visual claim is attributed to that source.
+## BytePlus ModelArk 2607689 & Nov 2026 spec bundle
 
-## BytePlus ModelArk 2607689
-
-Source: `https://docs.byteplus.com/en/docs/ModelArk/2607689`
+Primary prompt guide: `https://docs.byteplus.com/en/docs/ModelArk/2607689` (`seedance-2-5-prompt-guide`, including the `2026-11-07` 10-item FAQ update), plus `seedance-2-5`, `create-video-generation-task-api`, `model-pricing`, `seedance-portrait-asset-guide`, and `badcase-report-api` (`checked 2026-11-10`).
 
 | Source section | Covered in |
 |---|---|
 | Get the skill and `/sd25-pe` usage | `source-boundaries.md` |
-| Overall introduction and production positioning | `source-boundaries.md` |
-| Typical capability table | `source-boundaries.md` |
-| Locked versus unlocked task distinction | `source-boundaries.md` |
+| Overall introduction, capability table, and locked vs. unlocked tasks | `source-boundaries.md` |
+| Public model ID `dreamina-seedance-2-5-260628`, endpoint, `1080p` 10-bit HEVC cap (`4K` unsupported), mono audio | `source-boundaries.md`, `SKILL.md` |
+| Online token pricing (`$6.40–$11.70` / M tokens) & two-step `480p -> 1080p` `draft_task` parameter lock | `source-boundaries.md`, `optimizer-runtime.md` |
+| `omni_reference_task_type` (`auto` / `reference` / `edit` / `extend`) & `4–30s` edit source video floor | `source-boundaries.md`, `task-contracts.md`, `prompt_lint.py` |
+| Real-human face restriction, 30-day same-account ModelArk portrait trust, & 24h URL expiry | `source-boundaries.md` |
+| Nov 7, 2026 10-item troubleshooting FAQ (`8n+1` edit frames, `yuvj420p`, chronological upload order, `normal human eyes`, `2.0->2.5` `.mov` bridge, outpaint routing) | `source-boundaries.md`, `task-contracts.md`, `prompt-architecture.md` |
+| 72h `CasePlatformV1BadcaseReport` diagnostic endpoint (including `:85` vs `:177` doc note) | `source-boundaries.md` |
 | Editing/anchor/extension role and trigger rules | `source-boundaries.md`, `task-contracts.md` |
-| Storyboard versus keyframe alignment | `source-boundaries.md`, `task-contracts.md` |
-| Reference input recommendations | `source-boundaries.md` |
-| Basic prompt, mapping, edits, anchors, timestamps, negatives | `prompt-architecture.md` |
-| Camera, action/expression, blockout, storyboard, keyframe guidance | `prompt-architecture.md`, `task-contracts.md` |
-| Differences from Seedance 2.0 | `source-boundaries.md` |
-| Coarse and fine blockout examples | `examples.md`, `media-evidence.md` |
-| Storyboard and keyframe examples | `examples.md`, `media-evidence.md` |
-| Instruction, reference-image, and audio editing examples | `examples.md`, `media-evidence.md` |
-| Extension, one-click, and transition examples | `examples.md`, `media-evidence.md` |
-| Summary and disclaimer boundary | `source-boundaries.md` |
+| Storyboard, keyframe, blockout, one-click, and transition examples | `examples.md`, `media-evidence.md` |
+| Differences from Seedance 2.0 & unsupported-claim boundaries | `source-boundaries.md` |
 
 ## Provider optimizer 0.3.3
 
 | Optimizer section | Covered in |
 |---|---|
-| Purpose, when to use, output-only boundary | `SKILL.md`, `optimizer-runtime.md` |
-| Eleven non-negotiable principles | `optimizer-runtime.md` |
+| Purpose, when to use, output-only boundary, and 12 non-negotiable principles | `SKILL.md`, `optimizer-runtime.md` |
 | Text, missing, readable, inaccessible, and over-limit input states | `optimizer-runtime.md` |
-| Story contract, dialogue ledger, required entities, causal reveal | `optimizer-runtime.md` |
-| Novel and long-form compilation | `optimizer-runtime.md` |
-| Two-pass material review and observation/story split | `optimizer-runtime.md` |
-| Mapping priority, roles, cardinality, unused materials | `optimizer-runtime.md` |
-| Mapping confidence and minimal clarification | `optimizer-runtime.md` |
-| Legal selection/mapping notes and mandatory stop on low-confidence core ambiguity | `optimizer-runtime.md` |
-| Primary-task router and sequential operations | `SKILL.md`, `task-contracts.md` |
-| Parameter rules and notes | `SKILL.md`, `source-boundaries.md` |
-| Generation and multi-reference templates | `prompt-architecture.md`, `task-contracts.md` |
-| Space/blocking and long-video override | `prompt-architecture.md`, `optimizer-runtime.md` |
-| Editing inventory, closed scope, motion-slot replacement | `task-contracts.md` |
-| Audio editing | `task-contracts.md` |
-| Extension topology and boundary rules | `task-contracts.md` |
-| Exact anchors, keyframes, storyboards, blockouts | `task-contracts.md` |
-| Emotion, camera, dialogue, products | `prompt-architecture.md` |
-| Neutral subject terms, no demographic inference, and speaking from audio without invented words | `SKILL.md`, `optimizer-runtime.md`, `prompt-architecture.md` |
-| Evidence-grounded generated-result repair | `SKILL.md`, `optimizer-runtime.md` |
-| Output contract, note types, final checklist, runtime notes | `optimizer-runtime.md` |
-| Every distinct official optimizer example pattern | `examples.md` |
+| Story contract, dialogue ledger, required entities, novel compilation | `optimizer-runtime.md` |
+| Two-pass material review, observation/story split, mapping priority & confidence | `optimizer-runtime.md` |
+| Primary-task router, sequential operations, parameter notes, result-repair ladder | `SKILL.md`, `task-contracts.md`, `optimizer-runtime.md` |
+| Neutral subject terms, no demographic inference, audio vocalization without invented words | `SKILL.md`, `optimizer-runtime.md`, `prompt-architecture.md` |
+| Distinct official optimizer example patterns & lint-verified canonical templates | `examples.md` |
+
+## Craft & research companion modules
+
+All markdown files in `seedance-25/` stay strictly `<= 40,000` bytes (`validate_coverage.py`) so single-call `read_file` invocations never truncate:
+
+| Module | Scope |
+|---|---|
+| `references/desk-prompt-patterns.md` | Action mechanics, bilingual combat VFX (`闪切`), continuous action, four-mode timing (`8–12` shot readable default + opt-in `16–24` compact Chinese blitz), 2.5D letterbox pop-out, public-dump exclusions |
+| `references/desk-continuity-and-coverage.md` | Observational & curiosity vignettes, literal multi-shot control, multi-shot continuity & Conversational Goldilocks prosody, diegetic phone-camera comedy, door-to-door result notes, oval-masked reference plates & `[Cut to]` coverage |
+| `references/research-mechanics.md` | Primary ByteDance Seed papers (`Seaweed-7B`, `Seedance 1.0`/`1.5 Pro`/`2.0`, `FlowAct-R2`, `Tarsier2`, `Phantom`, `HuMo`, `RewardDance`), 6 training pillars, architecture-backed directing rules, and the `Seedance 2.5` Evidence Boundary table |
 
 ## BytePlus visual assets
-
-Each identifier below must have a dedicated entry in `media-evidence.md` and a role in `examples.md` or the media index.
 
 Images:
 
@@ -108,12 +96,10 @@ Videos:
 
 ## Raw-to-local media mapping
 
-The BytePlus HTML/Markdown source uses raw provider basenames `img_001` through `img_051` and `vid_000` through `vid_021`. This skill's evidence ledger uses one continuous local identifier namespace:
-
 - raw `img_NNN` maps directly to local `image_NNN` (`img_001` -> `image_001`; `img_051` -> `image_051`);
 - raw `vid_NNN` maps to local `video_MMM`, where `MMM = NNN + 52` (`vid_000` -> `video_052`; `vid_021` -> `video_073`).
 
-The local identifier is an audit alias, not a provider upload handle. Runtime prompts must use the user's actual `@Image N`, `@Video N`, and `@Audio N` labels. Exact downloaded filenames and source URLs remain in the extraction manifest used for the audit; do not infer semantic roles from either filename or numeric order.
+Local identifiers are audit aliases; runtime prompts always use the uploader's `@Image N`, `@Video N`, and `@Audio N` labels.
 
 ## Validation
 
@@ -124,4 +110,4 @@ python3 scripts/validate_coverage.py
 python3 scripts/prompt_lint.py --self-test
 ```
 
-`validate_coverage.py` verifies required files, source concepts, every image ID, every video ID, and the absence of TODO placeholders. It is a coverage guard, not a substitute for human source review.
+`validate_coverage.py` verifies required files, frontmatter description length (`<= 380` chars) and YAML validity, per-file byte caps (`<= 40,000` bytes), routing cues, local file and `#anchor` slug integrity, sourced concepts, all 51 image and 22 video IDs, lint cleanliness of canonical examples, and absence of TODO markers.
