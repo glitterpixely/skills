@@ -85,7 +85,7 @@ export function WebGPUSceneCanvas() {
 }
 ```
 
-> **Note on `state.clock` warning:** `@react-three/fiber@9.8` constructs a `THREE.Clock` internally on `state.clock`, so three r183+ logs one `THREE.Clock: This module has been deprecated` warning at Canvas startup. Inside `useFrame((state, delta) => ...)`, always use the `delta` parameter and `state.clock.elapsedTime` (never call `state.clock.getElapsedTime()`, which calls `getDelta()` and zeroes the next frame's delta).
+> **Note on `state.clock` & `state.renderer`:** `@react-three/fiber@9.8` exposes `state.renderer` as an alias for `state.gl` (and `@react-three/fiber/legacy` if a legacy app must opt out of automatic `ColorManagement`). Internally R3F 9.8 still constructs a `THREE.Clock` on `state.clock`, so three r183+ logs one `THREE.Clock: This module has been deprecated` warning at Canvas startup. Inside `useFrame((state, delta) => ...)`, always use the `delta` parameter and `state.clock.elapsedTime` (never call `state.clock.getElapsedTime()`, which calls `getDelta()` and zeroes the next frame's delta).
 
 ---
 
@@ -110,7 +110,48 @@ export function WebGPUSceneCanvas() {
 
 1. **Never call `setState` inside `useFrame`:** Mutate refs (`meshRef.current.position.x = ...`) or uniform `.value` properties directly. Calling React `setState` triggers 60 Hz component re-renders.
 2. **Positive `renderPriority` disables automatic Canvas rendering:** Passing `useFrame(fn, 1)` tells R3F that your callback owns the render call (`state.gl.render(state.scene, state.camera)` or `pipeline.render()`). Leave priority at `0` (default) for normal animation hooks.
-3. **`frameloop="demand"`:** Ideal for product configurators, architectural viewers, and static scenes. React prop/state updates and `<OrbitControls makeDefault />` automatically call `invalidate()`. After imperative mutations (e.g., GSAP/tween ticks or manual uniform edits), call `const invalidate = useThree((s) => s.invalidate); invalidate();`.
+3. **`frameloop="demand"` + transient Zustand subscriptions:** Ideal for product configurators, architectural viewers, and static scenes. React prop/state updates and `<OrbitControls makeDefault />` automatically call `invalidate()`. For high-frequency sliders or external state without React re-renders, subscribe transiently inside `useEffect` and call `invalidate()`:
+   ```jsx
+   const invalidate = useThree( ( s ) => s.invalidate );
+   useEffect( () => useConfigStore.subscribe(
+     ( s ) => s.roughness,
+     ( v ) => { matRef.current.roughness = v; invalidate(); }
+   ), [ invalidate ] );
+   ```
+
+---
+
+### 15.3b Post-processing in R3F (WebGL2 `@react-three/postprocessing` vs WebGPU `RenderPipeline`)
+
+- **WebGL2 `<Canvas>` (`@react-three/postprocessing@3.2` + `postprocessing@6.39.6`):** Set `gl={{ toneMapping: THREE.NoToneMapping, reversedDepthBuffer: false }}` on `<Canvas>`, mount `<EffectComposer multisampling={0}>`, keep `<N8AO halfRes={false} />` on r187 (`§5.4`), place `<Bloom luminanceThreshold={1} mipmapBlur />` before `<ToneMapping mode={ToneMappingMode.AGX} />`, and keep `<SMAA />` separate from `<ChromaticAberration />`.
+- **WebGPU `<Canvas>` (native TSL `RenderPipeline`):** `@react-three/postprocessing` wraps WebGL `postprocessing` and **cannot** run on `WebGPURenderer`. Instead, construct `THREE.RenderPipeline` (`§5.3`, `§5.5`) and take over R3F's render pass with positive priority `1`:
+  ```jsx
+  import * as THREE from 'three/webgpu';
+  import { pass, renderOutput } from 'three/tsl';
+  import { bloom } from 'three/addons/tsl/display/BloomNode.js';
+  import { useFrame, useThree } from '@react-three/fiber';
+  import { useEffect, useMemo } from 'react';
+
+  export function WebGPUPost() {
+
+    const { gl, scene, camera } = useThree();
+    const pipeline = useMemo( () => {
+
+      const p = new THREE.RenderPipeline( gl );
+      p.outputColorTransform = false;
+      const scenePass = pass( scene, camera );
+      const hdr = scenePass.add( bloom( scenePass, 0.18, 0.5, 1.0 ) );
+      p.outputNode = renderOutput( hdr );
+      return p;
+
+    }, [ gl, scene, camera ] );
+
+    useEffect( () => () => pipeline.dispose(), [ pipeline ] );
+    useFrame( () => { pipeline.render(); }, 1 ); // priority 1 disables R3F's default gl.render()
+    return null;
+
+  }
+  ```
 
 ---
 
@@ -125,6 +166,7 @@ Checked against `@react-three/fiber@9.8.2` and `@react-three/drei@10.7.9` on `We
 | `<Environment files="studio.hdr" />` / `preset="..."` | Yes | Yes | `.hdr` files and presets work on both backends. |
 | `<Environment>` with `<Lightformer>` children or `ground` | Yes | **Broken** | `ground` uses a `ShaderMaterial`; `<Environment>` children bake via cube camera that renders black on WebGPU's WebGL2 fallback. Use `.hdr`/`.exr` files on WebGPU. |
 | `<Instances>` / `<Instance>`, `<Detailed>` (LOD) | Yes | Yes | Declarative `InstancedMesh` and `THREE.LOD`. |
+| `<Bvh firstHitOnly>` | Yes | Yes | Wraps child meshes in `three-mesh-bvh` (`O(log N)` CPU raycasts; crucial for complex glTFs). |
 | `<Center>`, `<Bounds fit clip observe>` | Yes | Yes | Do not wrap `drei` `<Text>` inside `<Center>` (`Text` geometry is a unit quad; use `anchorX`/`anchorY`). |
 | `<Html portal={overlayRef}>` | Yes | Yes (except `occlude="blending"`) | On React 19.2 + R3F 9.8, always pass `portal={overlayRef}` pointing to a fixed sibling `<div ref={overlayRef} />` outside `<Canvas>` so initial mount is never blank. |
 | `<ContactShadows>` | Yes | **No** | Uses `ShaderMaterial` + `onBeforeCompile` blur passes (`not compatible` on `WebGPURenderer`). |
@@ -139,6 +181,13 @@ npx gltfjsx@latest model.glb --types --keepnames
 ```
 
 - **Warning on `gltfjsx --transform`:** Like `gltf-transform optimize` with default flags (`§6.2`), `gltfjsx --transform` runs aggressive simplification, palette merging, WebP color re-encoding, and JPEG normal-map re-encoding. For hero photoreal assets, run the controlled 3-stage `gltf-transform` pipeline from `§6.2` first, then run `npx gltfjsx out.glb --types` **without** `--transform`.
+
+---
+
+### 15.5b Physics (`@react-three/rapier@2.2`) and WebXR (`@react-three/xr@6.6`)
+
+- **Physics (`@react-three/rapier`):** Wrap interactive rigid bodies in `<Suspense>` + `<Physics>` (runs deterministic WASM Rapier on an interpolated fixed timestep). Prefer primitive colliders (`cuboid`, `ball`, `capsule`) or `colliders="hull"` on dynamic bodies; reserve `colliders="trimesh"` for static level geometry. Drive kinematic platforms in `useFrame` via `bodyRef.current?.setNextKinematicTranslation(...)`, never by mutating React `position` props.
+- **WebXR (`@react-three/xr` v6):** Create a store outside React with `const xrStore = createXRStore()`, trigger sessions from DOM buttons via `xrStore.enterVR()` / `xrStore.enterAR()`, and wrap scene content in `<XR store={xrStore}><XROrigin position={[0, 0, 2]} />...</XR>` (move `<XROrigin>` for locomotion rather than the headset camera).
 
 ---
 

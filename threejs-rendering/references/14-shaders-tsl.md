@@ -14,8 +14,11 @@ All TSL symbols import from `'three/tsl'`; node materials import from `'three/we
 
 | Concept | GLSL (`ShaderMaterial`) | TSL (`*NodeMaterial`) | r187 Notes / Renames |
 |---|---|---|---|
-| **Function definition** | `vec3 f( vec2 p ) { ... }` | `const f = Fn( ( [ p ] ) => { ... } );` | Do not use `glslFn` or `wgslFn` (backend-locked). |
-| **Updatable uniform** | `uniform float uAmp;` | `const uAmp = uniform( 0.5 );` | Mutate in JS via `uAmp.value = 1.0`. Debug name: `.setName( 'amp' )` (`.label()` deprecated r179). |
+| **Function definition** | `float f( vec3 a, float b ) { ... }` | `const f = Fn( ( [ a, b ] ) => { ... }, { a: 'vec3', b: 'float', return: 'float' } );` | Pass the explicit layout object whenever using early `Return( val )`. Never use backend-locked `glslFn`/`wgslFn`. |
+| **Mutable vs const local** | `vec3 acc = vec3(0.0); acc += x;` | `const acc = vec3( 0.0 ).toVar(); acc.addAssign( x );` | `.toVar()` emits a mutable WGSL `var` / GLSL local; `.toConst()` emits an immutable intermediate. |
+| **Branching & ternary** | `cond ? a : b` / `if (c) { ... }` | `select( cond, a, b )` (or `cond.select( a, b )`); statement `If( cond, () => { ... } ).ElseIf( ... ).Else( ... )` | Use `select()` for branchless expressions; use capital `If` (never JS `if`) for runtime GPU branches. |
+| **Loops** | `for ( int i = 0; i < N; i++ )` | `Loop( count, ( { i } ) => { ... Break(); Continue(); } );` | 2D loops: `Loop( w, h, ( { i, j } ) => { ... } )` (`i`, `j` are `int`; convert with `.toFloat()`). |
+| **Updatable uniform** | `uniform float uAmp;` | `const uAmp = uniform( 0.5 );` | Mutate in JS via `uAmp.value = 1.0`. Debug name: `.setName( 'amp' )` (`.label()` deprecated r179). Group shared uniforms with `.setGroup( uniformGroup( 'weather' ) )`. |
 | **Uniform array** | `uniform vec3 uPts[8];` | `const uPts = uniformArray( arrayOfVec3 );` | Renamed from `uniforms()` in r168. |
 | **Elapsed time / dt** | Manual uniform `uTime` | `time`, `deltaTime` | Auto-updated every frame by the renderer. |
 | **2π constant** | `6.2831853` | `TWO_PI` | Renamed from `PI2` in r181. |
@@ -27,6 +30,7 @@ All TSL symbols import from `'three/tsl'`; node materials import from `'three/we
 | **UV & screen coords** | `vUv` / `gl_FragCoord.xy / res` | `uv()`, `uv( 1 )`, `viewportUV` | `viewportTopLeft` renamed to `viewportUV` in r168. |
 | **Texture sample** | `texture( map, vUv )` | `texture( map, uvNode )` or `texture( map ).sample( uvNode )` | `.uv()` method renamed to `.sample()` in r172. |
 | **Alpha discard** | `if ( n < cut ) discard;` | `n.lessThan( cut ).discard();` | Works inside `Fn( () => { ... } )()`. |
+| **Soft particles** | Manual scene-depth read + fade | `mat.opacityNode = softParticles( { opacity, distance: 1.0, contrast: 2.0 } );` | Import `{ softParticles }` from `'three/addons/tsl/utils/SoftParticles.js'`; fades sprites smoothly against `viewportDepthTexture()`. |
 | **Procedural noise** | Custom ashima/simplex GLSL | `mx_noise_float( p )`, `mx_fractal_noise_float( p )`, `mx_worley_noise_float( p )` | Built-in MaterialX noise nodes in `three/tsl`. |
 
 ---
@@ -75,6 +79,22 @@ const fresnel = pow( float( 1.0 ).sub( nDotV ), 3.0 );
 ```js
 const { vertexShader, fragmentShader } = await renderer.debug.getShaderAsync( scene, camera, mesh );
 console.log( fragmentShader );
+```
+
+#### 4. Automated GLSL → TSL helper conversion (`Transpiler`)
+
+When porting existing GLSL utility functions (noise, SDFs, colour math, procedural patterns) to TSL, run Three's AST `Transpiler` in Node or the browser, then wire the generated `Fn(...)` into `colorNode` / `roughnessNode` / `normalNode`:
+
+```js
+import Transpiler from 'three/addons/transpiler/Transpiler.js';
+import GLSLDecoder from 'three/addons/transpiler/GLSLDecoder.js';
+import TSLEncoder from 'three/addons/transpiler/TSLEncoder.js';
+
+const tslCode = new Transpiler( new GLSLDecoder(), new TSLEncoder() ).parse( `
+	float fresnelRim( vec3 n, vec3 v ) {
+		return pow( 1.0 - max( dot( n, v ), 0.0 ), 3.0 );
+	}
+` );
 ```
 
 ---

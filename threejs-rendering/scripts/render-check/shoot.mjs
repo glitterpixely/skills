@@ -1,7 +1,8 @@
 // Headless-Chrome screenshotter for three.js render checks.
-// Usage: node shoot.mjs "<url>" out.png [--timeout 90000]
+// Usage: node shoot.mjs "<url>" out.png [--timeout 90000] [--strict]
 // Run from the project root. Needs: `npm i -D playwright-core` there (no browser download), and Google Chrome or a Playwright Chromium.
 // The page must set window.__done = true when finished; console output and page errors are printed.
+// Exits 1 on uncaught pageerror or timeout (and on console.error when --strict is passed).
 import { existsSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
@@ -10,10 +11,13 @@ import { join } from 'node:path';
 // resolve playwright-core from the PROJECT (cwd), not from this skill folder
 const { chromium } = createRequire( join( process.cwd(), 'noop.js' ) )( 'playwright-core' );
 
-const [ url, out ] = process.argv.slice( 2 );
-const tIdx = process.argv.indexOf( '--timeout' );
-const timeout = tIdx > 0 ? Number( process.argv[ tIdx + 1 ] ) : 90000;
-if ( ! url || ! out ) { console.error( 'usage: node shoot.mjs <url> <out.png>' ); process.exit( 2 ); }
+const rawArgs = process.argv.slice( 2 );
+const strict = rawArgs.includes( '--strict' );
+const tIdx = rawArgs.indexOf( '--timeout' );
+const timeout = tIdx >= 0 ? Number( rawArgs[ tIdx + 1 ] ) : 90000;
+const positionals = rawArgs.filter( ( a, i ) => a !== '--strict' && a !== '--timeout' && ( tIdx < 0 || i !== tIdx + 1 ) );
+const [ url, out ] = positionals;
+if ( ! url || ! out ) { console.error( 'usage: node shoot.mjs <url> <out.png> [--timeout 90000] [--strict]' ); process.exit( 2 ); }
 
 function findChrome() {
 
@@ -43,10 +47,17 @@ const browser = await chromium.launch( {
 } );
 const page = await browser.newPage( { viewport: { width: 1280, height: 720 } } );
 const msgs = [];
-page.on( 'console', ( m ) => msgs.push( `[${ m.type() }] ${ m.text() }` ) );
-page.on( 'pageerror', ( e ) => msgs.push( `[pageerror] ${ e.message }` ) );
+let failed = false;
+page.on( 'console', ( m ) => {
+
+	msgs.push( `[${ m.type() }] ${ m.text() }` );
+	if ( strict && m.type() === 'error' ) failed = true;
+
+} );
+page.on( 'pageerror', ( e ) => { msgs.push( `[pageerror] ${ e.message }` ); failed = true; } );
 await page.goto( url );
-await page.waitForFunction( () => window.__done === true, null, { timeout } ).catch( () => msgs.push( '[timeout] window.__done never set' ) );
+await page.waitForFunction( () => window.__done === true, null, { timeout } ).catch( () => { msgs.push( '[timeout] window.__done never set' ); failed = true; } );
 await page.screenshot( { path: out } );
-console.log( msgs.join( '\n' ) );
+if ( msgs.length ) console.log( msgs.join( '\n' ) );
 await browser.close();
+process.exitCode = failed ? 1 : 0;

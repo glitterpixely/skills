@@ -132,7 +132,7 @@ export function auditRendering( { THREE, renderer, scene, allowNoToneMapping = f
 	if ( renderer.outputColorSpace !== THREE.SRGBColorSpace ) failures.push( `outputColorSpace is ${ renderer.outputColorSpace }` );
 	if ( ! allowNoToneMapping && renderer.toneMapping === THREE.NoToneMapping ) failures.push( 'toneMapping is NoToneMapping' );
 	const colorSlots = [ 'map', 'emissiveMap', 'sheenColorMap', 'specularColorMap' ];
-	const dataSlots = [ 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'clearcoatNormalMap', 'clearcoatRoughnessMap', 'clearcoatMap', 'transmissionMap', 'thicknessMap', 'displacementMap', 'anisotropyMap', 'iridescenceMap', 'iridescenceThicknessMap', 'specularIntensityMap', 'diffuseRoughnessMap', 'gradientMap' ];
+	const dataSlots = [ 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'bumpMap', 'alphaMap', 'sheenRoughnessMap', 'clearcoatNormalMap', 'clearcoatRoughnessMap', 'clearcoatMap', 'transmissionMap', 'thicknessMap', 'displacementMap', 'anisotropyMap', 'iridescenceMap', 'iridescenceThicknessMap', 'specularIntensityMap', 'diffuseRoughnessMap', 'gradientMap' ];
 	scene.traverse( ( o ) => {
 
 		if ( o.material ) for ( const m of [].concat( o.material ) ) {

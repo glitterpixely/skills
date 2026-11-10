@@ -56,15 +56,70 @@ const gltfLoader = new GLTFLoader()
 - **MikkTSpace tangents:** glTF normal maps follow MikkTSpace. For procedural or merged geometry, compute matching tangents with `await MikkTSpace.ready; BufferGeometryUtils.computeMikkTSpaceTangents( geom, MikkTSpace );` (from `three/addons/libs/mikktspace.module.js`).
 - **Other formats:** Use `USDLoader` (`USDZLoader` deprecated in r179). For `PLYLoader`, convert any `Float64Array` attributes to `Float32BufferAttribute` before upload (WebGL/WebGPU reject 64-bit float vertex buffers).
 
-**Memory disposal:** GPU resources are not garbage-collected.
+### 6.2b Programmatic Node.js asset pipeline (`@gltf-transform/functions@4.5.1`)
+
+When building assets inside a Node.js build script (or when the `ktx` / `toktx` CLI is unavailable on CI), run `@gltf-transform/core` + `@gltf-transform/functions` directly:
+
+```js
+import { NodeIO } from '@gltf-transform/core';
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
+import { dedup, weld, resample, quantize, prune, meshopt, textureCompress } from '@gltf-transform/functions';
+import { MeshoptEncoder } from 'meshoptimizer';
+import sharp from 'sharp';
+
+await MeshoptEncoder.ready;
+const io = new NodeIO().registerExtensions( ALL_EXTENSIONS ).registerDependencies( {
+	'meshopt.encoder': MeshoptEncoder,
+} );
+
+const doc = await io.read( 'in.glb' );
+await doc.transform(
+	dedup(),
+	weld(),                                  // indexes un-indexed triangle soup and merges seam duplicates
+	resample(),                              // strips redundant collinear animation keyframes
+	quantize(),                              // KHR_mesh_quantization (16-bit/8-bit vertex attributes)
+	meshopt( { encoder: MeshoptEncoder, level: 'high' } ), // EXT_meshopt_compression (run AFTER weld/quantize)
+	textureCompress( { encoder: sharp, targetFormat: 'webp', slots: /^(baseColor|emissive)Texture$/ } ), // fallback when toktx/KTX2 is absent
+	prune(),                                 // removes orphaned materials, accessors, and nodes
+);
+await io.write( 'out.glb', doc );
+```
+
+> **Note:** WebP shrinks download size only—unlike KTX2 (`uastc` / `etc1s`), WebP still decodes to full uncompressed RGBA8 in VRAM (`width × height × 4 × 1.33` bytes with mipmaps). Prefer KTX2 whenever `ktx` is available.
+
+### 6.3 First-party 3D Gaussian Splatting (`GaussianSplat`, r187)
+
+Three r187 ships native 3D Gaussian Splatting for `WebGPURenderer` (running on both the Metal/Vulkan/D3D12 WebGPU backend via GPU `CountingSort` up to ~16.7M splats, and the WebGL2 `forceWebGL` fallback via PBO + CPU radix sort). Classic `WebGLRenderer` is **not** supported (`GaussianSplat` extends `InstancedMesh` with `NodeMaterial`).
+
+| Asset / Task | Three.js r187 Module | Notes |
+|---|---|---|
+| **Renderable splat object** | `import { GaussianSplat } from 'three/addons/objects/GaussianSplat.js'` | Wraps splat geometry (`center`, `covA`, `covB`, `color`), updates view-depth sort automatically (`sortThreshold`, `focalScale`). |
+| **Compressed `.spz` (Niantic)** | `import { SPZLoader } from 'three/addons/loaders/SPZLoader.js'` | Smallest standalone splat format (~10× smaller than `.ply`); returns a `GaussianSplat` instance. |
+| **`.ply` / `.splat` / `.ksplat`** | `GaussianSplatPLYLoader.js`, `SPLATLoader.js`, `KSPLATLoader.js` under `'three/addons/loaders/'` | Direct loaders for standard 3DGS exports. |
+| **glTF `KHR_gaussian_splatting`** | `import { GLTFGaussianSplatLoaderExtension } from 'three/addons/loaders/GLTFGaussianSplatLoaderExtension.js'` | Register via `gltfLoader.register( ( parser ) => new GLTFGaussianSplatLoaderExtension( parser ) )` to mix PBR meshes and splats in one `.glb`. |
+| **Procedural splat buffers** | `createGaussianSplatGeometry`, `writeCovariance`, `writeColorBytes` from `'three/addons/utils/GaussianSplatUtils.js'` | Pack custom `centers` (`Float32Array` ×3), `covariances` (`Float32Array` ×6), and `colors` (`Uint8ClampedArray` ×4). |
+
+```js
+import { SPZLoader } from 'three/addons/loaders/SPZLoader.js';
+
+const splats = await new SPZLoader().loadAsync( '/captures/courtyard.spz' );
+scene.add( splats ); // renders alongside PBR meshes + shadows inside WebGPURenderer
+```
+
+For massive out-of-core multi-chunk splat worlds (50M+ splats requiring octree/chunk streaming LOD or spherical harmonics degree > 0 beyond r187's degree-0 base colour), pair Three.js with a streaming LOD splat runtime rather than loading a single monolithic buffer.
+
+### 6.4 Memory disposal
+
+GPU resources are not garbage-collected (even with r187's internal `WeakRef` / `FinalizationRegistry` safety nets, lifecycle soaks only return to baseline on explicit disposal):
 
 ```js
 function disposeObject( root ) {
 
 	root.traverse( ( o ) => {
 
-		o.dispose?.(); // frees per-object renderer state (InstancedMesh buffers, WebGPU bindings)
+		o.dispose?.(); // frees per-object renderer state (InstancedMesh/BatchedMesh/GaussianSplat buffers, WebGPU bindings)
 		if ( ! o.geometry ) return;
+		o.geometry.disposeBoundsTree?.(); // three-mesh-bvh BVH acceleration structure, if present
 		o.geometry.dispose();
 		for ( const m of [].concat( o.material ?? [] ) ) {
 
@@ -76,6 +131,7 @@ function disposeObject( root ) {
 	} );
 
 }
-// also: envRT.dispose(), pmrem.dispose(), renderTarget.dispose(), composer/pipeline.dispose(), ktx2.dispose()
+// also: envRT.dispose(), pmrem.dispose(), storageTex.dispose(), renderTarget.dispose(),
+//       composer/pipeline.dispose(), ktx2.dispose(), dracoLoader.dispose(), renderer.dispose()
 // verify: renderer.info.memory.{geometries,textures} must return to baseline after unload
 ```

@@ -11,9 +11,10 @@
 | AO | N8AO (`N8AOPostPass`), `SSAOEffect` | `ao()` GTAO, `ssao()`, `ssgi()`; **AO can be injected into indirect lighting only** via `builtinAOContext` |
 | Reflections | No maintained SSR in v6 core | `ssr()`: mirror + stochastic GGX, env fallback, denoiser |
 | Temporal AA | No core TAA in v6 | `traa()`, `taau()` (temporal upscaling), `fsr1` |
-| Status on r187 | Peer range `<0.187.0` (§0) | First-party, versioned with three |
+| OIT transparency | None | `oitPass( scene, camera )` (Weighted Blended OIT) |
+| Status on r187 | `postprocessing@6.39.6` (`>=0.168.0 <0.188.0`, §0) | First-party, versioned with three |
 
-**Decision rule:** new photoreal projects on r183+ use `WebGPURenderer` + `RenderPipeline`. It runs on WebGL2 too, via its fallback backend or `forceWebGL`. Existing WebGLRenderer apps keep pmndrs, pinned to a supported three version.
+**Decision rule:** new photoreal projects on r183+ use `WebGPURenderer` + `RenderPipeline`. It runs on WebGL2 too, via its fallback backend or `forceWebGL`. Existing `WebGLRenderer` apps can use `postprocessing@6.39.6` + `n8ao@2.0.1` on r187 provided they follow the three §5.4 compatibility rules.
 
 ### 5.2 Execution order and why
 
@@ -34,7 +35,7 @@ flowchart LR
 
 1. **Ambient occlusion.** AO must darken only *indirect* light. A post-multiply also darkens sun-lit surfaces, which gives dirty halos. TSL does this correctly with `scenePass.contextNode = builtinAOContext( aoTexture.sample( screenUV ).r )`, as in the r187 `webgpu_postprocessing_ao` example.
    - **GTAO** (`ao()`): `radius` in world units (default 0.25; use 0.2–0.5 m for interiors), `samples` 16, `resolutionScale = 0.5`, `useTemporalFiltering = true` **requires TRAA**. Set the scene pass to `options.samples = 0` when using TRAA.
-   - **N8AO** (pmndrs): `aoRadius` in world units, about 1–2 orders of magnitude below scene size; `distanceFalloff = 1`; `intensity` 2 (subtle) to 5 (strong); `halfRes = true` keeps depth-aware upsampling; `setQualityMode('Medium')`; `accumulate = true` while the camera is still. Washed-out or too-dark output means `gammaCorrection` is set wrong for its position in the chain.
+   - **N8AO** (pmndrs): `aoRadius` in world units, about 1–2 orders of magnitude below scene size; `distanceFalloff = 1`; `intensity` 2 (subtle) to 5 (strong); **`halfRes = false` on three r187 + `n8ao@2.0.1`** (`halfRes = true` crashes `WebGLTextures.setupRenderTarget` with `Cannot read properties of undefined (reading 'length')` because `N8AO.js` overrides `get texture()` to return an array); `setQualityMode('Medium')`; `accumulate = true` while the camera is still. Washed-out or too-dark output means `gammaCorrection` is set wrong for its position in the chain.
 2. **Screen-space reflections** (`ssr( color, depth, normal, { metalnessNode, roughnessNode, ... } )` in `three/addons/tsl/display/SSRNode.js`): `quality` 0.5, `maxDistance` in world units, `thickness` 0.05–0.1, `resolutionScale` 0.5.
    - **Signature & alpha channel (`SSRNode.js`, r187):** the 4th parameter is an `options` object (`{ stochastic, metalnessNode, specularNode, specularF90Node, roughnessNode, reflectNonMetals, environmentNode, envImportanceSampling, diffuseNode, binaryRefine, camera }`). Critically, **`ssrPass.a` is NOT a `[0, 1]` opacity mask** — line 1324 of `SSRNode.js` writes `output.assign( vec4( weightedColor, worldDistance ) )` (or `ENV_RAY_LENGTH = 1e4` on a stochastic env miss, or `0` on a deterministic miss) so downstream spatial/temporal denoisers (`RecurrentDenoiseNode`) can weight taps by ray hit distance. Never write `mix( color, ssrPass.rgb, ssrPass.a )` (which extrapolates past `1.0` when `worldDistance > 1 m`).
    - **Two compositing modes in r187:**
@@ -146,23 +147,25 @@ This graph is assembled from the r187 examples' own patterns (prepass + `builtin
 Frame time was capped at the 60 Hz display (16.7 ms per rAF), so this test does not measure GPU cost. *Budget (belief, desktop GPU at 1080p):* prepass + beauty about 2 scene draws; GTAO and SSR at half resolution about 1–2 ms each; TRAA, DOF and bloom each under 1 ms. Profile on target hardware.
 
 
-### 5.4 Reference pipeline: WebGL + pmndrs
+### 5.4 Reference pipeline: WebGL + pmndrs (`postprocessing@6.39.6` + `n8ao@2.0.1`, GPU-verified on r187)
 
 ```js
 import * as THREE from 'three';
 import { EffectComposer, RenderPass, EffectPass, BloomEffect, ToneMappingEffect, ToneMappingMode, SMAAEffect, SMAAPreset, EdgeDetectionMode, DepthOfFieldEffect, ChromaticAberrationEffect, NoiseEffect, VignetteEffect, BlendFunction } from 'postprocessing';
 import { N8AOPostPass } from 'n8ao';
 
+// Browser importmaps: include BOTH "three/addons/" AND "three/examples/jsm/" (n8ao imports "three/examples/jsm/postprocessing/Pass.js").
+// Renderer rule: keep reversedDepthBuffer: false on WebGLRenderer + EffectComposer (reversedDepthBuffer: true renders pitch black #000000).
 renderer.toneMapping = THREE.NoToneMapping;      // pmndrs README: tone map at the END via ToneMappingEffect
 const composer = new EffectComposer( renderer, { frameBufferType: THREE.HalfFloatType, multisampling: 0 } );
 composer.addPass( new RenderPass( scene, camera ) );
 
 const n8ao = new N8AOPostPass( scene, camera, innerWidth, innerHeight );
+n8ao.setQualityMode( 'Medium' );
 n8ao.configuration.aoRadius = 0.5;               // metres
 n8ao.configuration.distanceFalloff = 1.0;
 n8ao.configuration.intensity = 2.5;
-n8ao.configuration.halfRes = true;
-n8ao.setQualityMode( 'Medium' );
+n8ao.configuration.halfRes = false;              // r187 + n8ao@2.0.1: halfRes = true throws in WebGLTextures.setupRenderTarget
 composer.addPass( n8ao );
 
 const dofEffect = new DepthOfFieldEffect( camera, { focusDistance: 2.0, focusRange: 3.0, bokehScale: 2.0, resolutionScale: 0.5 } );
@@ -171,13 +174,67 @@ composer.addPass( new EffectPass( camera, dofEffect, bloomEffect ) );           
 
 composer.addPass( new EffectPass( camera, new ToneMappingEffect( { mode: ToneMappingMode.AGX } ) ) );
 
+const noiseEffect = new NoiseEffect( { premultiply: true, blendFunction: BlendFunction.SOFT_LIGHT } );
+noiseEffect.blendMode.opacity.value = 0.04;
 composer.addPass( new EffectPass( camera,                                                     // display-referred
 	new ChromaticAberrationEffect( { offset: new THREE.Vector2( 0.0006, 0.0006 ), radialModulation: true, modulationOffset: 0.15 } ),
 	new VignetteEffect( { offset: 0.3, darkness: 0.5 } ),
-	new NoiseEffect( { premultiply: true, blendFunction: BlendFunction.SOFT_LIGHT } ),
+	noiseEffect,
+) );
+
+// SMAAEffect MUST run in its own final EffectPass — merging ChromaticAberrationEffect + SMAAEffect throws
+// "Error: Convolution effects cannot be merged (ChromaticAberrationEffect)".
+composer.addPass( new EffectPass( camera,
 	new SMAAEffect( { preset: SMAAPreset.HIGH, edgeDetectionMode: EdgeDetectionMode.COLOR } ),
 ) );
 // loop: composer.render( delta );
 ```
 
-`ToneMappingMode.AGX` and `NEUTRAL` exist in 6.39.5 (requiring three r160 and r162 respectively). The N8AO pass must precede tone mapping. The noise opacity is set through `effect.blendMode.opacity.value` (0.03–0.08).
+`ToneMappingMode.AGX` and `NEUTRAL` ship in `postprocessing@6.39.6` (`peerDependencies.three: ">= 0.168.0 < 0.188.0"`). The N8AO pass must precede tone mapping.
+
+---
+
+### 5.5 Temporal upscaling (`taau` + `fsr1`), Weighted Blended OIT (`oitPass`), and extra TSL display nodes (r187)
+
+When heavy PBR shading, transmission, or screen-space GI exceeds budget at native 4K/retina resolution, render the beauty pass at `0.67×` (`Quality`) or `0.5×` (`Performance`) scale, resolve temporally in linear HDR with `taau()`, tone-map once, and optionally sharpen in display space with `fsr1()`.
+
+```js
+import * as THREE from 'three/webgpu';
+import { mrt, output, velocity, renderOutput, vec4 } from 'three/tsl';
+import { oitPass } from 'three/addons/tsl/display/OITPassNode.js';
+import { taau } from 'three/addons/tsl/display/TAAUNode.js';
+import { fsr1 } from 'three/addons/tsl/display/FSR1Node.js'; // NOT display/fsr1/FSR1Node.js (typo in r187 JSDoc)
+
+const pipeline = new THREE.RenderPipeline( renderer );
+pipeline.outputColorTransform = false;
+
+// 1) Order-independent transparency beauty pass at 0.67× internal resolution
+const scenePass = oitPass( scene, camera );
+scenePass.setResolutionScale( 0.67 );
+scenePass.setMRT( mrt( { output, velocity } ) );
+
+const depth = scenePass.getTextureNode( 'depth' );
+const vel = scenePass.getTextureNode( 'velocity' );
+
+// 2) CRITICAL: wrap oitPass in vec4( scenePass ) before feeding any post node!
+// Passing scenePass directly invokes RTTNode.convertToTexture(), which checks `if (node.isPassNode) return node.getTextureNode()`
+// and bypasses OITPassNode.setup(), silently dropping every transparent mesh.
+const composited = vec4( scenePass );
+
+// 3) Temporal anti-aliasing + upscaling to 1.0× output resolution in linear HDR
+const resolved = taau( composited, depth, vel, camera );
+
+// 4) Tone map + sRGB once, then optional AMD FSR 1.0 EASU/RCAS edge-adaptive sharpening (attenuation 0.0 = sharpest .. 2.0 = softest)
+const display = renderOutput( resolved );
+pipeline.outputNode = fsr1( display, 0.2 );
+```
+
+**Additional GPU-verified r187 TSL display nodes (`three/addons/tsl/display/*`):**
+
+| Node | Import & signature | Placement & notes |
+|---|---|---|
+| **Motion blur** | `import { motionBlur } from 'three/addons/tsl/display/MotionBlur.js'` → `motionBlur( hdrNode, velocity, numSamples = 16 )` | Linear HDR (requires `velocity` MRT), before `renderOutput()`. |
+| **Volumetric godrays** | `import { godrays } from 'three/addons/tsl/display/GodraysNode.js'` → `godrays( depthNode, camera, shadowCastingLight )` | Raymarches light’s shadow map in linear HDR; add onto HDR scene before `renderOutput()`. |
+| **3D colour LUT** | `import { lut3D } from 'three/addons/tsl/display/Lut3DNode.js'` → `lut3D( displayNode, lutTex, size, intensity )` | Display-referred **after** `renderOutput()` (load `.cube` via `LUTCubeLoader`). |
+| **Selection outline** | `import { outline } from 'three/addons/tsl/display/OutlineNode.js'` → `outline( scene, camera, { selectedObjects, edgeThickness, edgeGlow } )` | Composite `visibleEdge` / `hiddenEdge` in display space for editor/UI highlights. |
+| **Screen-space lensflare** | `import { lensflare } from 'three/addons/tsl/display/LensflareNode.js'` → `lensflare( bloomPass, params )` | Driven by thresholded HDR bloom mip chain before `renderOutput()`. |

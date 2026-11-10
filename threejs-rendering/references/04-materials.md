@@ -1,6 +1,6 @@
-> Part of the `threejs-rendering` skill. Verified against three r187 (2026-10-31); re-check version gates in `00-version-gates.md` for newer releases. `§n` refers to reference file `0n-…`.
+> Part of the `threejs-rendering` skill. Verified against three r187 (`0.187.0`); re-check version gates in `00-version-gates.md` for newer releases. `§n` refers to reference file `0n-…`.
 
-# 4. PBR and micro-surface materials
+# 4. PBR, transparency modes, micro-surface materials and `NodeMaterialInstance`
 
 ### 4.1 Rules for physically plausible inputs
 
@@ -9,24 +9,34 @@
 - **Roughness floor:** r187 clamps `material.roughness = max( roughnessFactor, 0.045 )`, then adds `geometryRoughness`, a normal-derivative term that suppresses specular aliasing on curved low-poly surfaces (`lights_physical_fragment`). Real surfaces rarely go below 0.05–0.1. Pure 0.0 reads as CG.
 - **Specular F0 of dielectrics:** F0 = ((n − 1) / (n + 1))². `ior` drives it, as does `specularIntensity` (scales F0) with `specularColor` (tints it).
 
-### 4.2 Dielectrics and glass
+### 4.2 Transparency decision matrix, dielectrics and glass
+
+Standard `transparent: true` (`NormalBlending`, `depthWrite: false`) sorts per-object by bounding-sphere centre, failing on intersecting planes, multi-layer hair/foliage, and thick glass. Pick the exact mechanism that matches the surface:
+
+| Surface type | Mechanism | Depth / Shadows / Sorting | Caveats (GPU-verified on r187) |
+|---|---|---|---|
+| **Hard cutouts** (foliage, fences, decals) | `alphaTest: 0.5` (+ `alphaToCoverage: true` when MSAA is active) | Writes depth, casts crisp cutouts in shadows, **zero** sort issues | Binary silhouette without MSAA; keep mipmap alpha coverage consistent. |
+| **Fading props / LOD crossfades / distant hair** | `material.alphaHash = true` + `opacity < 1` | Writes depth & casts stochastic shadows with **zero** sorting | Uses a fixed spatial hash threshold (`positionLocal`); shows visible stipple grain up close unless paired with high-DPI, distance, or temporal AA. |
+| **Frosted UI panels, heat haze, water distortion** | `material.backdropNode = viewportSharedTexture( screenUV.add( offset ) )` (`three/tsl`) | Samples opaque beauty buffer in one shared copy | Much cheaper than `transmission` when physical thickness/dispersion isn't needed. |
+| **Intersecting coloured glass, smoke, VFX ribbons** | `oitPass( scene, camera )` (`'three/addons/tsl/display/OITPassNode.js'`, `§5.5`) | **Order-independent** Weighted Blended OIT across intersecting transparent triangles | No refractive bending; wrap `vec4( scenePass )` before feeding into post nodes (`§5.5`). |
+| **Solid refractive glass, liquids, gems** | `MeshPhysicalMaterial` / `MeshPhysicalNodeMaterial` with `transmission: 1` + `ior` + `thickness` + `dispersion` | Renders opaque scene into a mipmapped transmission buffer for rough refraction + Beer–Lambert absorption | Transmissive meshes do not refract *other* transmissive meshes by default; set `renderer.transmissionResolutionScale = 0.5` to halve pre-pass cost. |
 
 ```js
 const glass = new THREE.MeshPhysicalMaterial( {
 	color: 0xffffff, metalness: 0, roughness: 0.02,
 	transmission: 1,                 // physically based see-through (not opacity)
-	ior: 1.52,                       // valid range 1.0–2.333 in three
+	ior: 1.52,                       // reflectivity getter saturates at [0, 1] above ior = 2.333
 	thickness: 0.006,                // metres in the mesh's local space; 0 = thin-walled
 	attenuationColor: new THREE.Color( 0.82, 0.95, 0.9 ),  // Beer–Lambert tint
 	attenuationDistance: 0.4,        // distance at which light is tinted to attenuationColor
 	dispersion: 0.31,                // 20 / Abbe number (KHR_materials_dispersion)
 	specularIntensity: 1,
 } );
-renderer.transmissionResolutionScale = 0.5; // WebGL: halves the transmission pre-pass cost
+renderer.transmissionResolutionScale = 0.5; // halves the transmission pre-pass resolution
 ```
 
 - **Beer–Lambert:** transmittance T(d) = attenuationColor^(d / attenuationDistance). Thick glass goes greener or darker realistically, which flat `opacity` cannot do.
-- **Cost model (WebGL):** transmissive objects trigger an extra opaque-scene render into a mipmapped target, used for rough refraction blur. Transmissive objects **do not see each other** in it. Keep transmissive draw calls few and use `transmissionResolutionScale`.
+- **Animated water & 3D volumes (`WebGPURenderer`):** Use `WaterMesh` (`'three/addons/objects/WaterMesh.js'`, requires `{ waterNormals }` texture) for planar reflective/normal-rippled water, and `VolumeNodeMaterial` (`three/webgpu`) for raymarched local-space 3D smoke/cloud/medical `Data3DTexture` volumes.
 
 | Material | IOR | F0 | Abbe → `dispersion` |
 |---|---|---|---|
@@ -42,9 +52,9 @@ renderer.transmissionResolutionScale = 0.5; // WebGL: halves the transmission pr
 | Polycarbonate | 1.585 | 0.051 | ~30 → 0.67 |
 | Sapphire | 1.77 | 0.077 | 72 → 0.28 |
 | Dense flint glass | 1.6–1.9 | 0.053–0.096 | ~30 → 0.67 |
-| Diamond | 2.417 → **clamp to 2.333** | 0.172 (0.160 at 2.333) | 55 → 0.36 |
+| Diamond | 2.417 (`reflectivity` saturates at 2.333) | 0.172 (0.160 at 2.333) | 55 → 0.36 |
 
-IOR, F0 and the dispersion conversion were computed from these IORs and Abbe numbers; the IOR and Abbe values themselves are *settled reference data*. Diamond cannot reach its true IOR in three. Compensate with `dispersion` and a high-frequency HDRI.
+`MeshPhysicalMaterial.reflectivity` clamps to `[0, 1]` (`ior = 2.333`), though `.ior` itself still drives refraction angle; pair diamond with `dispersion: 0.36` and a high-contrast HDRI.
 
 ### 4.3 Layered surfaces: clearcoat
 
@@ -153,4 +163,34 @@ mat.onBeforeCompile = ( shader ) => {
 mat.customProgramCacheKey = () => 'dust-v1'; // distinct program from un-patched physical materials
 ```
 
-*Checked:* in r187's `ShaderLib.physical`, all six anchors exist, and `color_fragment` precedes `roughnessmap_fragment`, which precedes `metalnessmap_fragment`. The TSL material constructs without errors in Node (`check-materials.mjs`). Neither snippet has been compiled on a GPU in this session.
+*GPU-verified:* compiled and rendered cleanly in headless Chrome on `WebGLRenderer` (`three@0.187.0` + `postprocessing@6.39.6` + `n8ao@2.0.1`), producing smooth top-hemisphere dielectric dust transitions with zero shader warnings.
+
+### 4.7 Sharing one compiled shader across many meshes (`NodeMaterialInstance`)
+
+Cloning a `NodeMaterial` with custom `uniform()` nodes builds a separate node graph per material unless instances share a `NodeMaterialInstance` (`three/webgpu`, r187):
+
+```js
+import * as THREE from 'three/webgpu';
+import { reference, materialReference } from 'three/tsl';
+
+const baseMat = new THREE.MeshStandardNodeMaterial( { metalness: 0.25 } );
+// IMPORTANT (GPU-verified r187 shadow-pass rule):
+// Renderer._getShadowNodes copies `colorNode` onto `ShadowMaterial` (scene.overrideMaterial) when mesh.castShadow === true.
+// `materialReference` reads `state.material` (which is ShadowMaterial during shadow passes, where custom props are undefined!).
+// Read `colorNode` / `opacityNode` / `positionNode` per-mesh values via `reference(..., 'color')` on `mesh.userData`,
+// and use `materialReference(...)` on shading-only slots (`roughnessNode`, `metalnessNode`, `clearcoatNode`)!
+baseMat.colorNode = reference( 'userData.tint', 'color' );
+baseMat.roughnessNode = materialReference( 'userData.rough', 'float' );
+baseMat.userData = { rough: 0.4 };
+
+for ( let i = 0; i < 100; i ++ ) {
+
+	const instMat = new THREE.NodeMaterialInstance( baseMat ); // shares baseMat's single compiled pipeline!
+	instMat.userData.rough = 0.1 + 0.8 * ( i / 100 );
+	const mesh = new THREE.Mesh( sharedGeometry, instMat );
+	mesh.userData.tint = new THREE.Color().setHSL( i / 100, 0.7, 0.55 );
+	mesh.castShadow = true;
+	scene.add( mesh );
+
+}
+```

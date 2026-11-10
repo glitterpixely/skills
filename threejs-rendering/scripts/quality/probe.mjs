@@ -9,12 +9,14 @@ const root = resolve( arg( 'root', '.' ) );
 const pkg = JSON.parse( readFileSync( join( root, 'package.json' ), 'utf8' ) );
 const deps = { ...pkg.dependencies, ...pkg.devDependencies, ...pkg.peerDependencies };
 
-const installed = ( name ) => { try { return JSON.parse( readFileSync( join( root, 'node_modules', name, 'package.json' ), 'utf8' ) ).version; } catch { return null; } };
+const installedPkg = ( name ) => { try { return JSON.parse( readFileSync( join( root, 'node_modules', name, 'package.json' ), 'utf8' ) ); } catch { return null; } };
+const installed = ( name ) => installedPkg( name )?.version ?? null;
+const ppPkg = installedPkg( 'postprocessing' );
 const probe = {
 	three: { range: deps.three ?? null, installed: installed( 'three' ), pinnedExact: /^\d+\.\d+\.\d+$/.test( deps.three ?? '' ) },
 	typesThree: { range: deps[ '@types/three' ] ?? null, installed: installed( '@types/three' ) },
 	r3f: !! deps[ '@react-three/fiber' ],
-	pmndrsPostprocessing: deps.postprocessing ? { range: deps.postprocessing, installed: installed( 'postprocessing' ) } : null,
+	pmndrsPostprocessing: deps.postprocessing ? { range: deps.postprocessing, installed: ppPkg?.version ?? null, peerThree: ppPkg?.peerDependencies?.three ?? null } : null,
 	bundler: [ 'vite', 'webpack', 'esbuild', 'rollup', 'parcel', 'next', '@sveltejs/kit', 'astro' ].filter( ( b ) => deps[ b ] ),
 	typescript: !! deps.typescript || existsSync( join( root, 'tsconfig.json' ) ),
 	signals: {},
@@ -59,6 +61,7 @@ sig.effectComposer = hits( /\bEffectComposer\b/ ).length > 0;
 sig.renderPipeline = hits( /\bRenderPipeline\b/ ).length > 0;
 sig.tslPostProcessingLegacy = hits( /new\s+(THREE\.)?PostProcessing\s*\(/ ).length > 0;
 sig.forceWebGL = hits( /forceWebGL\s*:\s*true/ ).length > 0;
+sig.reversedDepthBuffer = hits( /reversedDepthBuffer\s*:\s*true/ ).length > 0;
 sig.timer = hits( /new\s+(THREE\.)?Timer\s*\(/ ).length > 0;
 sig.clock = hits( /new\s+(THREE\.)?Clock\s*\(/ ).length > 0;
 sig.rAF = hits( /requestAnimationFrame|setAnimationLoop|useFrame\s*\(/ ).length > 0;
@@ -68,7 +71,7 @@ probe.loopStyle = sig.timer ? 'THREE.Timer' : sig.clock ? 'THREE.Clock (switch t
 // ---- r186 -> r187 migration surface (official Migration Guide + release notes), plus general hygiene
 const checks = [
 	[ 'r187 #34585: CubeUV PMREM removed (PMREM is now a cube render target)', /CubeUVReflectionMapping|ENVMAP_TYPE_CUBE_UV|cubeUV|CUBEUV_/ ],
-	[ 'r187 #34585: custom code assuming PMREM is a 2D WebGLRenderTarget / equirect readback of scene.environment', /fromEquirectangular[^\n]*\.texture\.image|readRenderTargetPixels[^\n]*(pmrem|envMap|environment)|ViewportTextureNode/i ],
+	[ 'r187 #34585: custom code assuming PMREM is a 2D WebGLRenderTarget / equirect readback of scene.environment', /fromEquirectangular[^\n]*\.texture\.image|readRenderTargetPixels[^\n]*(pmrem|envMap|environment)/i ],
 	[ 'r187 #34517: removed r177 deprecations (ColorManagement.from/toWorkingColorSpace, TSL transformedNormalView/World, transformedClearcoatNormalView)', /\.(fromWorkingColorSpace|toWorkingColorSpace)\s*\(|transformedNormalView|transformedNormalWorld|transformedClearcoatNormalView/ ],
 	[ 'r187 #33695: TSL implicit math coercion — review mixed int/float/vec math in Fn() bodies', /\b(int|uint|ivec[234]|uvec[234])\s*\(/ ],
 	[ 'r187 #34807: struct storage buffers are always arrays (use .element(0).get(...))', /storage\s*\([^)]*\)\s*\.get\s*\(/ ],
@@ -76,7 +79,10 @@ const checks = [
 	[ 'r187 #34543: pixelationPass pixelSize must be a Number', /pixelationPass\s*\([^,]+,[^,]+,\s*(uniform|float)\s*\(/ ],
 	[ 'r187 #34460: setViewport/setScissor no longer scale by pixel ratio when a render target is bound', /set(Viewport|Scissor)\s*\([^)]*(getPixelRatio|pixelRatio|devicePixelRatio)/ ],
 	[ 'r187 #35039: iridescenceThicknessRange deprecated (use iridescenceThicknessMinimum/Maximum)', /iridescenceThicknessRange/ ],
-	[ 'r187 reversed-depth fixes (#35264, #34606, #34892, #34801): delete manual reversed-depth workarounds', /reversedDepth|reverseDepth|GreaterDepth\b|1\.0\s*-\s*depth|1\s*-\s*depth\b|clearDepth\s*\(\s*0\s*\)/i ],
+	[ 'r187 reversed-depth fixes (#35264, #34606, #34892, #34801): delete manual reversed-depth shader workarounds (use renderer reversedDepthBuffer: true)', /\bGreaterDepth\b|1\.0\s*-\s*depth|1\s*-\s*depth\b|clearDepth\s*\(\s*0\s*\)/ ],
+	[ 'r187 FSR1Node JSDoc typo: import from three/addons/tsl/display/FSR1Node.js (not display/fsr1/FSR1Node.js)', /tsl\/display\/fsr1\/FSR1Node\.js/ ],
+	[ 'r187 SceneOptimizer: .toInstancingMesh() throws not-implemented -> use .toBatchedMesh()', /\.toInstancingMesh\s*\(/ ],
+	[ 'r187 + n8ao@2.0.1: configuration.halfRes = true crashes WebGLTextures.setupRenderTarget -> keep halfRes = false', /configuration\.halfRes\s*=\s*true/ ],
 	[ 'hygiene: pass.fsQuad (most r187 passes keep the quad private as _fsQuad; SAOPass/SSRPass still expose fsQuad)', /\.fsQuad\b/ ],
 	[ 'hygiene: r183 PostProcessing -> RenderPipeline', /new\s+(THREE\.)?PostProcessing\s*\(/ ],
 	[ 'hygiene: r186 PCFSoftShadowMap removed', /PCFSoftShadowMap/ ],
@@ -88,18 +94,41 @@ const checks = [
 	[ 'hygiene: non-existent #include <output_fragment> -> use #include <opaque_fragment>', /#include\s*<output_fragment>/ ],
 	[ 'hygiene: positionGeometry in positionNode drops skinning/morphs/instancing -> use positionLocal', /positionNode\s*=\s*[^;\n]*\bpositionGeometry\b/ ],
 	[ 'hygiene: r169 TransformControls is not an Object3D -> use scene.add(tc.getHelper())', /\.add\s*\(\s*transformControls\s*\)/i ],
-	[ 'hygiene: r168 removed PointerLockControls.getObject() / DragControls.getObjects() -> use .object / .objects', /\.\s*(getObject|getObjects|getRaycaster)\s*\(\s*\)/ ],
+	[ 'hygiene: r168 removed PointerLockControls.getObject() / DragControls.getObjects() -> use .object / .objects', /\b(controls?|pointerLock\w*|drag\w*)\s*\.\s*(getObject|getObjects|getRaycaster)\s*\(\s*\)/i ],
 	[ 'hygiene: R3F <Canvas shadows> boolean selects removed PCFSoftShadowMap -> use shadows="percentage"', /<Canvas\b[^>]*\bshadows(?:\s*=\s*\{?\s*(?:true|['"]soft['"])\s*\}?|(?=[\s/>]))/ ],
 	[ 'hygiene: R3F state.clock.getElapsedTime() zeroes delta -> use state.clock.elapsedTime', /clock\.getElapsedTime\s*\(\s*\)/ ],
 ];
 for ( const [ title, re ] of checks ) { const h = hits( re ); if ( h.length ) probe.migration.push( { title, hits: h.slice( 0, 25 ), total: h.length } ); }
+if ( sig.reversedDepthBuffer && sig.effectComposer && ! sig.webgpu ) {
+
+	const h = hits( /reversedDepthBuffer\s*:\s*true/ );
+	probe.migration.push( { title: 'r187 + pmndrs EffectComposer: reversedDepthBuffer: true renders pitch black (#000000) with EffectComposer', hits: h.slice( 0, 25 ), total: h.length } );
+
+}
 
 // ---- report
 const warn = [];
+const threeVer = probe.three.installed ?? ( /^\d+\.\d+\.\d+$/.test( probe.three.range ?? '' ) ? probe.three.range : null );
+const threeMinor = threeVer ? Number( threeVer.split( '.' )[ 1 ] ) : null;
 if ( ! probe.three.pinnedExact ) warn.push( `three range "${ probe.three.range }" is not an exact pin (use "0.187.0")` );
 if ( probe.three.installed && probe.three.installed !== '0.187.0' ) warn.push( `installed three is ${ probe.three.installed }, not 0.187.0` );
 if ( probe.typesThree.range && ! /0\.18[6-9]|0\.19/.test( probe.typesThree.range ) ) warn.push( `@types/three ${ probe.typesThree.range } is older than 0.186` );
-if ( probe.pmndrsPostprocessing ) warn.push( `pmndrs postprocessing ${ probe.pmndrsPostprocessing.installed ?? probe.pmndrsPostprocessing.range } present: 6.39.5 declares three <0.187.0` );
+if ( probe.pmndrsPostprocessing ) {
+
+	const peer = probe.pmndrsPostprocessing.peerThree ?? '';
+	const upperMatch = peer.match( /<\s*0\.(\d+)\./ );
+	const upperMinor = upperMatch ? Number( upperMatch[ 1 ] ) : null;
+	if ( upperMinor !== null && threeMinor !== null && threeMinor >= upperMinor ) {
+
+		warn.push( `pmndrs postprocessing ${ probe.pmndrsPostprocessing.installed } declares peer three "${ peer }" (installed three is 0.${ threeMinor }.x; upgrade postprocessing >=6.39.6)` );
+
+	} else if ( ! probe.pmndrsPostprocessing.installed && /6\.39\.[0-5]\b/.test( probe.pmndrsPostprocessing.range ) ) {
+
+		warn.push( `pmndrs postprocessing range "${ probe.pmndrsPostprocessing.range }" pins <=6.39.5 (<0.187.0); use >=6.39.6 for three 0.187.0` );
+
+	}
+
+}
 
 console.log( `three: range ${ probe.three.range } installed ${ probe.three.installed } | @types/three ${ probe.typesThree.range ?? '-' }` );
 console.log( `pipeline: ${ probe.pipeline }${ sig.webgpu ? ` | forceWebGL in code: ${ sig.forceWebGL }` : '' } | loop: ${ probe.loopStyle } | R3F: ${ probe.r3f } | bundler: ${ probe.bundler.join( ',' ) || 'none found' } | TS: ${ probe.typescript }` );

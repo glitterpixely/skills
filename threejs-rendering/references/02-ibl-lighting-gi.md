@@ -1,8 +1,8 @@
-> Part of the `threejs-rendering` skill. Verified against three r187 (2026-10-31); re-check version gates in `00-version-gates.md` for newer releases. `§n` refers to reference file `0n-…`.
+> Part of the `threejs-rendering` skill. Verified against three r187 (`0.187.0`); re-check version gates in `00-version-gates.md` for newer releases. `§n` refers to reference file `0n-…`.
 
-# 2. Image-based lighting and hybrid direct lighting
+# 2. Image-based lighting, procedural sky, many-light scaling and GI
 
-### 2.1 Loading and pre-filtering
+### 2.1 Loading HDRIs, `PMREMGenerator`, `SkyMesh` and `GroundedSkybox`
 
 ```js
 import * as THREE from 'three';                       // or 'three/webgpu'
@@ -18,7 +18,7 @@ export async function loadEnvironment( renderer, scene, url, { rotationY = 0, in
 	equirect.mapping = THREE.EquirectangularReflectionMapping;
 
 	const pmrem = new THREE.PMREMGenerator( renderer );  // WebGPU: call after await renderer.init()
-	const envRT = pmrem.fromEquirectangular( equirect ); // GGX-prefiltered cube-UV mip chain
+	const envRT = pmrem.fromEquirectangular( equirect ); // GGX-prefiltered cube render target mip chain (r187 #34585)
 	pmrem.dispose();
 
 	scene.environment = envRT.texture;
@@ -44,8 +44,28 @@ export async function loadEnvironment( renderer, scene, url, { rotationY = 0, in
 ```
 
 - Assigning an equirect texture straight to `scene.environment` also works: both renderers PMREM-convert it automatically. Explicit PMREM lets you dispose the source, reuse the result, and control timing to avoid a first-frame hitch.
-- Studio lighting without a download: `pmrem.fromScene( new RoomEnvironment(), 0.04 ).texture` (the r187 SSR and AO examples use it).
-- Choose HDRIs captured unclipped, ideally 16+ stops, and **2K is enough for lighting**. PMREM's top level is small. Use a separate higher-resolution LDR or Ultra HDR backplate only if the background is visible and sharp.
+- Studio lighting without a download: `pmrem.fromScene( new RoomEnvironment(), 0.04 ).texture` (`'three/addons/environments/RoomEnvironment.js'`).
+- Choose HDRIs captured unclipped, ideally 16+ stops, and **2K is enough for lighting**. Use a higher-resolution Ultra HDR JPEG or LDR backplate only if the background is visible and sharp.
+- **Grounded HDRI backplate (`GroundedSkybox`):** For automotive or outdoor product turntables where infinite skybox parallax makes the car look like it floats in space, project the lower hemisphere onto a finite ground dome with `new GroundedSkybox( equirect, height, radius )` (`'three/addons/objects/GroundedSkybox.js'`).
+- **Procedural Preetham sky + clouds (`SkyMesh`, `WebGPURenderer`):**
+  ```js
+  import { SkyMesh } from 'three/addons/objects/SkyMesh.js';
+
+  const sky = new SkyMesh();
+  sky.scale.setScalar( 10000 );
+  sky.sunPosition.value.copy( sunDirection );
+  sky.showSunDisc.value = 0; // hide solar disc during PMREM bake to avoid specular fireflies!
+  const skyBakeScene = new THREE.Scene();
+  skyBakeScene.add( sky );
+  const pmrem = new THREE.PMREMGenerator( renderer );
+  scene.environment = pmrem.fromScene( skyBakeScene ).texture;
+  pmrem.dispose();
+
+  sky.showSunDisc.value = 1;
+  sky.renderOrder = - 1e6;          // REQUIRED when reversedDepthBuffer: true (SkyMesh.js:222 sets z = w,
+  sky.material.depthTest = false;   // which is camera.near under reversed depth and overwrites closer meshes!)
+  scene.add( sky );
+  ```
 
 ### 2.2 Splitting the sun out of the HDRI
 
@@ -88,14 +108,16 @@ function sunDirectionFromEquirect( image, envRotationY = 0, flipY = true ) {
 
 *(Verified on GPU in headless Chrome on both WebGPU and WebGL2 against both `scene.background` with `backgroundRotation.y` and a `PMREMGenerator` mirror sphere under `scene.environment` with `environmentRotation.y`; also unit-tested in `scripts/physical.mjs`.)*
 
-### 2.3 Pairing IBL with direct lights
+### 2.3 Pairing IBL with direct lights and many-light scaling
 
-| Light | Role | Constraints |
+| Light / Lighting system | Import & role | Constraints |
 |---|---|---|
-| `DirectionalLight` | Sun / key; the only cheap large-area shadow caster | Fit the shadow frustum (§3.2). Exterior intensity is about 5–10× the sky's contribution. |
-| `SpotLight` | Practicals, stage lights; `.map` projects a gobo; `penumbra` 0.3–1 for real fixtures | Perspective shadow: keep `shadow.camera.near` as large as possible. `IESSpotLight` (WebGPU only, `src/lights/webgpu/`) takes real photometric profiles. |
-| `RectAreaLight` | Windows, softboxes, LED panels, TV glow | **No shadows.** Affects only `MeshStandardMaterial`/`MeshPhysicalMaterial`. Needs LTC tables: WebGL `RectAreaLightUniformsLib.init()`; WebGPU `THREE.RectAreaLightNode.setLTC( RectAreaLightTexturesLib.init() )`. |
-| `HemisphereLight`/`AmbientLight` | Avoid in photoreal scenes | Constant, unoccluded fill; flattens form. Use IBL or probes instead. |
+| `DirectionalLight` | `'three'` — Sun / key; the only cheap large-area shadow caster | Fit the shadow frustum (§3.2). Exterior intensity is about 5–10× the sky's contribution. |
+| `SpotLight` / `IESSpotLight` / `ProjectorLight` | `'three'`, `'three/addons/lights/IESSpotLight.js'` (+ `IESLoader`), `'three/addons/lights/ProjectorLight.js'` | Perspective shadow: keep `shadow.camera.near` as large as possible. `IESSpotLight` and `ProjectorLight` require `WebGPURenderer`. |
+| `RectAreaLight` | `'three'` — Windows, softboxes, LED panels, TV glow | **No shadows.** Affects only Standard/Physical materials. Needs LTC tables: WebGL `RectAreaLightUniformsLib.init()`; WebGPU `THREE.RectAreaLightNode.setLTC( RectAreaLightTexturesLib.init() )`. |
+| `ClusteredLighting` (r187) | `'three/addons/lighting/ClusteredLighting.js'` — `renderer.lighting = new ClusteredLighting( maxLights, sliceX, sliceY, sliceZ )` | **WebGPU compute clustered shading** (`renderer.backend.isWebGPUBackend`) for dozens to hundreds of `PointLight` / `SpotLight` fixtures with finite `distance > 0`. |
+| `DynamicLighting` (r187) | `'three/addons/lighting/DynamicLighting.js'` — `renderer.lighting = new DynamicLighting()` | Evaluates lights via a uniform array loop so adding/removing punctual lights at runtime does **not** recompile material shaders. |
+| `HemisphereLight` / `AmbientLight` | Avoid in photoreal scenes | Constant, unoccluded fill; flattens form. Use IBL or probes instead. |
 
 **Avoid double-counting.** When the HDRI already contains a window or the sun, the matching direct light replaces it: paint it out of the HDRI or lower `environmentIntensity`. Interiors lit mainly by practicals typically need `environmentIntensity` 0.1–0.4. Without occlusion the IBL lights the inside of cupboards as brightly as the open room.
 
@@ -103,14 +125,14 @@ function sunDirectionFromEquirect( image, envRotationY = 0, flipY = true ) {
 
 Ranked by cost and quality:
 
-| Technique | API (r187) | What it captures | Cost | When |
+| Technique | Exact r187 import & API | What it captures | Cost | When |
 |---|---|---|---|---|
-| Single SH probe | `LightProbe` + `LightProbeGenerator.fromCubeTexture()` / `.fromCubeRenderTarget()` | One L2 (9-coefficient) irradiance for the whole scene | ~free | Outdoor, open scenes |
-| **Probe grid (irradiance volume)** | `LightProbeGrid` (WebGPU) / `LightProbeGridWebGL` — `new LightProbeGrid( sizeX, sizeY, sizeZ, resX, resY, resZ )`, `probes.bake( renderer, scene, { cubemapSize: 32, near: 0.05, far: 20, bounces } )`, `scene.add( probes )` | Spatially varying diffuse bounce, colour bleeding; dynamic objects pick it up | Bake once (or on change); per-pixel trilinear SH lookup | **Interiors with moving objects.** r184+ |
+| Single SH probe | `'three/addons/lights/LightProbeGenerator.js'` — `LightProbeGenerator.fromCubeRenderTarget( renderer, cubeRT )` | One L2 (9-coefficient) irradiance for the whole scene | ~free | Outdoor, open scenes |
+| **Probe grid (irradiance volume)** | `'three/addons/lighting/LightProbeGrid.js'` (`LightProbeGridWebGL.js` on WebGL) — `new LightProbeGrid( width, height, depth, resX, resY, resZ )`, `probes.bake( renderer, scene, { cubemapSize: 32, near: 0.05, far: 20 } )`, `scene.add( probes )` | Spatially varying diffuse bounce, colour bleeding; dynamic objects pick it up | Bake once (or on change); per-pixel trilinear SH lookup | **Interiors with moving objects.** r184+ |
 | **Baked lightmaps** | `material.lightMap`, `lightMap.channel = 1` | Full multi-bounce diffuse GI + soft shadows at any quality | Zero runtime; VRAM + second UV set | **Static architecture: best quality per millisecond** |
-| In-browser lightmap bake | `LightMapper( renderer, resolution, irradianceFn )` + `unwrapUVs( scene, { resolution, padding } )`, fed by `lightProbeGridIrradiance` or `vxgiIrradiance` | Lightmaps generated on the client | Progressive, seconds | r187, experimental |
-| SSGI | `ssgi( color, depth, normal, camera )` (WebGPU) | One-bounce screen-space diffuse + AO | High: run at `resolutionScale = 0.5`, `sliceCount` 1–2, `stepCount` 8–12, with TRAA | Hero shots on desktop GPUs |
-| VXGI | `VXGIVolume` + `vxgiIrradiance( volume, { coneCount: 3 } )` | Voxel cone-traced diffuse | High | r186+, experimental |
+| In-browser lightmap bake | `'three/addons/lighting/LightMapper.js'` + `unwrapUVs` from `'three/addons/utils/UVsUtils.js'`, fed by `lightProbeGridIrradiance` or `vxgiIrradiance` | Lightmaps generated on the client | Progressive, seconds | r187, experimental (`WebGPURenderer`) |
+| SSGI | `'three/addons/tsl/display/SSGINode.js'` — `ssgi( color, depth, normal, camera )` | One-bounce screen-space diffuse + AO | High: run at `resolutionScale = 0.5`, `sliceCount` 1–2, `stepCount` 8–12, with TRAA | Hero shots on desktop GPUs (`WebGPURenderer`) |
+| VXGI | `'three/addons/lighting/VXGIVolume.js'` — `VXGIVolume` + `vxgiIrradiance( volume, { coneCount: 3 } )` | Voxel cone-traced diffuse | High | r186+, experimental (`WebGPURenderer`) |
 
 **Lightmap workflow from Blender (dual UV):**
 

@@ -20,7 +20,7 @@ export const f0FromIor = ( n ) => ( ( n - 1 ) / ( n + 1 ) ) ** 2;
 /** KHR_materials_dispersion / MeshPhysicalMaterial.dispersion from an Abbe number. */
 export const dispersionFromAbbe = ( abbe ) => 20 / abbe;
 
-/** three.js clamps MeshPhysicalMaterial.ior to [1, 2.333]. */
+/** MeshPhysicalMaterial.reflectivity clamps to [0, 1] (saturating above ior = 2.333); .ior itself is unclamped. */
 export const clampIor = ( n ) => Math.min( Math.max( n, 1 ), 2.333 );
 
 /** Exact IEC 61966-2-1 linear -> sRGB transfer for a scalar channel in [0, 1]. */

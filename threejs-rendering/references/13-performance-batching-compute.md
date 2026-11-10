@@ -17,6 +17,13 @@ Measure before changing geometry or shaders. Optimize the bottleneck the counter
 | **Compute dispatches (this frame)** | — | `renderer.info.compute.frameCalls` |
 | **Live GPU buffers / textures** | `info.memory.geometries`, `info.memory.textures` (counts) | Counts **plus** byte estimates: `info.memory.total`, `info.memory.texturesSize`, `info.memory.attributesSize` |
 
+For live pass-by-pass GPU timestamp profiling, TSL shader inspection, and VRAM audits on `WebGPURenderer`, attach Three's first-party `Inspector`:
+
+```js
+import { Inspector } from 'three/addons/inspector/Inspector.js';
+renderer.inspector = new Inspector(); // assign before await renderer.init()
+```
+
 ---
 
 ### 13.2 Choosing the right draw-call reducer
@@ -26,7 +33,10 @@ Each single-material `Mesh` costs 1 draw call per render pass (multiplied by sha
 | Technique | When to use | Culling & Picking |
 |---|---|---|
 | **`InstancedMesh`** | Many copies of **one geometry + one material** (trees, bolts, chairs, crowd props). | Single bounding sphere for the whole batch (`computeBoundingSphere()` after moving instances). Raycast returns `hit.instanceId`. |
-| **`BatchedMesh`** | Many **different geometries sharing one material** (modular kitbash walls, rocks, props). | Per-instance frustum culling (`perObjectFrustumCulled = true`) and depth sorting (`sortObjects = true`). Single multi-draw on WebGL2 (`WEBGL_multi_draw`). Raycast returns `hit.batchId`. |
+| **`BatchedMesh`** | Many **different geometries sharing one material** (modular kitbash walls, rocks, props). | Per-instance frustum culling (`perObjectFrustumCulled = true`) and depth sorting (`sortObjects = true`). Single multi-draw on WebGL2 (`WEBGL_multi_draw`). Pair with `computeBatchedBoundsTree` (`§12.5`); raycast returns `hit.batchId`. |
+| **`SceneOptimizer.toBatchedMesh()`** | Imported glTF/CAD hierarchies with dozens of separate child `Mesh` nodes sharing materials. | Automatically merges compatible static child meshes into `BatchedMesh` instances per material (**never** call `.toInstancingMesh()` on r187 — it throws `not implemented yet`). |
+| **`BundleGroup` (`three/webgpu`)** | Static sub-trees with **mixed materials** whose visibility/pipeline state rarely changes. | Records a reusable `GPURenderBundle` on WebGPU (slashes CPU command-encoding overhead; behaves as a normal `Group` on WebGL2). Increment `bundle.version ++` if children/materials change. |
+| **`NodeMaterialInstance` (`three/webgpu`)** | Dozens of meshes needing distinct per-object uniform/texture values without compiling duplicate shader pipelines. | Shares one compiled `NodeMaterial` pipeline across instances (`§4.7`). Use `reference('userData.x', ...)` on `mesh.userData` for shadow-casting `colorNode` props! |
 | **`BufferGeometryUtils.mergeGeometries`** | Static, non-interactive geometry clusters that never move individually. | All-or-nothing culling per merged chunk. Merge per room/sector, not across the entire world. |
 | **`THREE.LOD`** | High-poly hero meshes viewed across a wide distance range. | Same draw call count; cuts vertex/triangle shading cost at distance. |
 
@@ -81,6 +91,37 @@ for ( let i = 0; i < 500; i ++ ) {
 
 }
 ```
+
+#### Automatic hierarchy batching (`SceneOptimizer`), `BundleGroup`, and `NodeMaterialInstance` (r187)
+
+```js
+import * as THREE from 'three/webgpu'; // BundleGroup & NodeMaterialInstance live in 'three/webgpu', NOT 'three'
+import { reference, materialReference } from 'three/tsl';
+import { SceneOptimizer } from 'three/addons/utils/SceneOptimizer.js';
+
+// 1) Convert an imported static glTF sub-tree into BatchedMesh instances automatically:
+new SceneOptimizer( architecturalGroup ).toBatchedMesh(); // do NOT call .toInstancingMesh() (throws in r187)
+
+// 2) Record a static WebGPU render bundle across mixed-material meshes + NodeMaterialInstance:
+const baseMat = new THREE.MeshStandardNodeMaterial( { metalness: 0.25 } );
+baseMat.colorNode = reference( 'userData.tint', 'color' );           // Object3D ref survives ShadowMaterial override! (§4.7)
+baseMat.roughnessNode = materialReference( 'userData.rough', 'float' );
+
+const bundle = new THREE.BundleGroup();
+for ( let i = 0; i < 64; i ++ ) {
+
+	const instMat = new THREE.NodeMaterialInstance( baseMat );
+	instMat.userData.rough = 0.15 + ( i % 5 ) * 0.18;
+	const mesh = new THREE.Mesh( propGeo, instMat );
+	mesh.userData.tint = new THREE.Color().setHSL( i / 64, 0.7, 0.55 );
+	mesh.castShadow = true;
+	bundle.add( mesh );
+
+}
+scene.add( bundle ); // bump `bundle.version++` only if children or material pipelines change
+```
+
+> **Experimental GPU-driven WebGPU pipelines (r187):** For extreme GPU-culled million-triangle worlds on WebGPU-only targets, Three r187 also exposes `IndirectStorageBufferAttribute` (`three/webgpu`, compute-written `drawIndirect` / `drawIndexedIndirect` args) plus `MeshletDrawingPipeline` and `VisibilityBufferDrawingPipeline` (`three/addons/pipelines/*`). Keep `BatchedMesh` / `InstancedMesh` whenever WebGL2 fallback parity is required.
 
 ---
 
@@ -150,6 +191,29 @@ renderer.render( scene, camera );
 ```
 
 - **r187 gate (#34807):** Struct storage buffers in TSL are always arrays. Access members via `.element( i ).get( 'member' )` (or `.element( 0 ).get( 'member' )` for singletons), never `storage( buf, Struct ).get( 'member' )`.
+- **Workgroup shared memory, barriers, atomics & `StorageTexture` (WebGPU):** For tile reductions, prefix scans, fluid solvers, or procedural textures on `renderer.backend.isWebGPUBackend`, dispatch explicit `[gx, gy, gz]` total invocations and `[wx, wy, wz]` workgroup sizes:
+  ```js
+  import * as THREE from 'three/webgpu';
+  import { Fn, workgroupArray, workgroupBarrier, localId, globalId, atomicAdd, instancedArray, textureStore, float, uint, vec4, If } from 'three/tsl';
+
+  const outTex = new THREE.StorageTexture( 256, 256 );
+  const counter = instancedArray( 1, 'uint' ).toAtomic();
+
+  const writeTile = Fn( () => {
+
+    const shared = workgroupArray( 'float', 64 );
+    const lid = localId.x;
+    shared.element( lid ).assign( float( lid ).div( 64.0 ) );
+    workgroupBarrier(); // synchronize shared memory across the 64-thread workgroup (use storageBarrier() for storage buffers)
+
+    If( lid.equal( uint( 0 ) ), () => { atomicAdd( counter.element( 0 ), uint( 1 ) ); } );
+    const mirror = shared.element( uint( 63 ).sub( lid ) );
+    textureStore( outTex, globalId.xy, vec4( mirror, 0.5, 0.85, 1.0 ) );
+
+  } )().compute( [ 256, 256, 1 ], [ 64, 1, 1 ] );
+
+  await renderer.compute( writeTile ); // sample `outTex` in any NodeMaterial via `texture( outTex )`
+  ```
 - **WebGPU `Points` vs `Sprite` + `PointsNodeMaterial`:** WebGPU hardware renders `THREE.Points` at 1 px regardless of `size`. For sized point clouds or particles on `WebGPURenderer`, use `new THREE.Sprite( new THREE.PointsNodeMaterial( { positionNode, size } ) )` with `sprite.count = N`.
 - **WebGPU `LineLoop` & thick lines:** `LineLoop` is unsupported on `WebGPURenderer` (repeat the first vertex on a `THREE.Line`). For lines wider than 1 px, use `Line2` from `three/addons/lines/webgpu/Line2.js` with `Line2NodeMaterial` from `three/webgpu`.
 
@@ -161,6 +225,9 @@ renderer.render( scene, camera );
 |---|---|---|
 | `webgpuRenderer.info.render.calls` for per-frame draw calls | `webgpuRenderer.info.render.drawCalls` | On `WebGPURenderer`, `render.calls` is cumulative render passes since startup. |
 | `batchedMesh.addGeometry( geo )` without `addInstance` | `const id = batchedMesh.addGeometry( geo ); batchedMesh.addInstance( id );` | `BatchedMesh` draws only registered instances of added geometries (r166+). |
+| `new SceneOptimizer( group ).toInstancingMesh()` | `new SceneOptimizer( group ).toBatchedMesh()` | `.toInstancingMesh()` throws `not implemented yet` in r187. |
+| `import { BundleGroup } from 'three'` | `import { BundleGroup } from 'three/webgpu'` | `BundleGroup` and `NodeMaterialInstance` are exported from `'three/webgpu'`, not `'three'`. |
+| `materialReference(...)` inside `colorNode` on shadow-casting `NodeMaterialInstance` | `reference( 'userData.tint', 'color' )` on `mesh.userData` | Shadow pass swaps `state.material` to `ShadowMaterial`, making custom material properties `undefined` (`§4.7`). |
 | `new THREE.Points( geo, new THREE.PointsMaterial({ size: 8 }) )` on WebGPU | `new THREE.Sprite( new THREE.PointsNodeMaterial({ positionNode, size: 0.2 }) )` with `sprite.count = N` | WebGPU specification locks point primitives to 1.0 px. |
 | `storage( buf, MyStruct ).get( 'vel' )` | `storage( buf, MyStruct ).element( 0 ).get( 'vel' )` | r187 #34807 made struct storage buffers array-indexed. |
 | `renderer.compile( scene, camera )` | `await renderer.compileAsync( scene, camera )` | Sync `compile()` does not wait for parallel shader compilation to finish before first frame. |

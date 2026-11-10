@@ -116,6 +116,21 @@ mat.castShadowPositionNode = displace(); // keeps shadow map aligned with displa
   - `hit.instanceId` — index hit on an `InstancedMesh`
   - `hit.batchId` — instance hit on a `BatchedMesh`
   - `hit.face.normal` — object-space triangle normal (`hit.normal` is the interpolated vertex normal flipped toward the ray)
+- **Sub-millisecond raycasts on dense meshes & `BatchedMesh` (`three-mesh-bvh@0.9.18`):** Default `Mesh.raycast` linearly scans every triangle (`O(N)`). Patch `three-mesh-bvh` once at startup so raycasts traverse a Bounding Volume Hierarchy (`O(log N)`):
+  ```js
+  import { computeBoundsTree, disposeBoundsTree, computeBatchedBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
+
+  THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+  THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
+  THREE.BatchedMesh.prototype.computeBoundsTree = computeBatchedBoundsTree;
+  THREE.Mesh.prototype.raycast = acceleratedRaycast;
+  THREE.BatchedMesh.prototype.raycast = acceleratedRaycast;
+
+  heroMesh.geometry.computeBoundsTree();
+  batchedProps.computeBoundsTree();       // builds per-subgeometry BVHs; intersectObject returns hit.batchId
+  raycaster.firstHitOnly = true;          // stops at closest hit instead of collecting all intersections
+  // On teardown: geometry.disposeBoundsTree();
+  ```
 - **GPU-displaced meshes:** `Raycaster` tests CPU geometry and never sees `positionNode` displacement. Raycast against a simple invisible proxy (`mesh.layers.set( 1 )`) or replicate the math on CPU.
 
 ---
@@ -129,10 +144,55 @@ mat.castShadowPositionNode = displace(); // keeps shadow map aligned with displa
 | **`DragControls`** | Constructor: `new DragControls( objects, camera, renderer.domElement )`. Access properties via `dragControls.objects` and `dragControls.raycaster` (`getObjects()` / `getRaycaster()` / `activate()` were removed in r168; use `connect( domElement )` / `disconnect()`). |
 | **`PointerLockControls`** | Camera is `controls.object` (`getObject()` removed in r168). Call `controls.lock()` inside a user gesture (`click`). |
 | **`FlyControls` / `FirstPersonControls`** | **Must** pass `timer.getDelta()` to `controls.update( dt )`; calling `update()` with no argument produces `NaN` camera positions. |
+| **`camera-controls` (`camera-controls@3.1`)** | Production upgrade over `OrbitControls` when you need smooth programmatic framing (`controls.fitToBox( boxOrMesh, true )`, `controls.setLookAt( px, py, pz, tx, ty, tz, true )`), dolly-to-cursor, and boundary clamping. Call `CameraControls.install( { THREE } )` once and `controls.update( dt )` each frame. |
 
 ---
 
-### 12.7 Common mistakes
+### 12.7 WebXR (`XRButton`, foveation, hit-test, controllers & hands)
+
+`renderer.setAnimationLoop()` automatically switches from `window.requestAnimationFrame` to `XRSession.requestAnimationFrame` when an immersive VR/AR session starts:
+
+```js
+import { XRButton } from 'three/addons/webxr/XRButton.js';
+
+renderer.xr.enabled = true;
+renderer.xr.setReferenceSpaceType( 'local-floor' );
+renderer.xr.setFoveation( 1.0 ); // lowers peripheral shading rate on Quest / Vision Pro / Pico
+
+document.body.appendChild( XRButton.createButton( renderer, {
+	optionalFeatures: [ 'local-floor', 'bounded-floor', 'hand-tracking', 'hit-test', 'layers' ],
+} ) );
+
+// Rig rule: XR overwrites camera.position and camera.quaternion every frame from head pose.
+// Parent the camera to a rig Group for teleportation, snap-turn, or smooth locomotion:
+const rig = new THREE.Group();
+rig.add( camera );
+scene.add( rig );
+
+const controller0 = renderer.xr.getController( 0 ); // target-ray space for laser / UI pointing
+const hand0 = renderer.xr.getHand( 0 );             // articulated XRHand joints
+rig.add( controller0, hand0 );
+```
+
+- **AR surface placement (`hit-test`):** Request `session.requestReferenceSpace( 'viewer' )` and `session.requestHitTestSource( { space: viewerSpace } )` on `'sessionstart'`, then read `frame.getHitTestResults( hitTestSource )` inside `setAnimationLoop( ( time, frame ) => ... )`.
+- **XR performance discipline:** Stereo rendering doubles view passes (`2×` draw calls). Avoid multi-pass screen-space post chains in XR; prefer baked lightmaps / `LightProbeGrid`, `InstancedMesh` / `BatchedMesh`, KTX2 textures, and MSAA on the XR framebuffer.
+
+---
+
+### 12.8 Built-in physics & spatial helpers (`three/addons/*`)
+
+- **Zero-bundler physics addons:** For vanilla scenes (`InstancedMesh` rigid bodies + colliders), Three ships `RapierPhysics` (`'three/addons/physics/RapierPhysics.js'`) and `JoltPhysics` (`'three/addons/physics/JoltPhysics.js'`). Initialize via `const physics = await RapierPhysics(); physics.addScene( scene );`.
+- **Lightweight character collision (`Octree`):** When full rigid-body physics is overkill for first-person walkthroughs, build a static world `Octree` (`'three/addons/math/Octree.js'`) with `worldOctree.fromGraphNode( levelScene )` and resolve player `Capsule` (`'three/addons/math/Capsule.js'`) collisions via `worldOctree.capsuleIntersect( playerCapsule )`.
+- **Area-weighted surface scatter (`MeshSurfaceSampler`):** Sample uniform or vertex-weight-guided points and normals across terrain/props to populate `InstancedMesh` foliage or decals:
+  ```js
+  import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js';
+  const sampler = new MeshSurfaceSampler( terrainMesh ).setWeightAttribute( 'color' ).build();
+  sampler.sample( tmpPos, tmpNormal );
+  ```
+
+---
+
+### 12.9 Common mistakes
 
 | Wrong | Right (r187) | Why |
 |---|---|---|

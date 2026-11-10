@@ -1,46 +1,39 @@
 ---
 name: threejs-rendering
-description: >-
-  Make three.js and React Three Fiber scenes look right at 60 FPS: photoreal first (colour, tone mapping,
-  light units, HDRI, GI, shadows, physical materials, TSL, post, KTX2 assets), stylized looks (toon, anime,
-  outlines, pixel, stylized-real), animation, camera controls, raycasting, instancing/BatchedMesh, WebGPU
-  compute, GLSL-to-TSL shaders, R3F 9.8 + drei 10.7, and a gated quality loop. WebGL2 and WebGPU, r165–r187+.
-  Not for whole games (gemini-4-argon-3d-worlds). Trigger terms: three.js, WebGPU, TSL, photoreal, PBR, HDRI,
-  shadows, post-processing, toon shader, outlines, looks fake, quality loop, r187 migration, React Three Fiber,
-  R3F, drei, gltfjsx, AnimationMixer, SkeletonUtils, OrbitControls, TransformControls, raycasting, InstancedMesh,
-  BatchedMesh, compute shader, ShaderMaterial, onBeforeCompile, GLSL to TSL.
+description: "Build, debug, and polish 60 FPS Three.js and React Three Fiber scenes on WebGPU and WebGL2 (r165–r187+): photoreal PBR, colour/AgX/Neutral, HDRI/GI, fitted shadows, TSL shaders & compute, RenderPipeline/pmndrs post, OIT/TAAU/FSR1, stylized/toon/anime, glTF/KTX2/3DGS splats, instancing/BatchedMesh/BundleGroup/BVH, WebXR, and G0–G4 quality gates. Trigger terms: three.js, threejs, WebGPU, TSL, R3F, drei, PBR, shadows, postprocessing, 3DGS."
 ---
 
 # three.js rendering: photoreal-first, every look
 
-This skill is a rulebook plus verified code for three.js render quality. Photorealism is the default
-target. Stylized looks are deliberate departures, made one layer at a time (shading, edges, colour, post)
-on the same physically based pipeline.
+This skill is a rulebook plus verified code for three.js render quality and 60 FPS architecture. Photorealism is
+the default target. Stylized looks are deliberate departures, made one layer at a time (shading, edges, colour,
+post) on the same physically based pipeline. For hybrid headless-Blender world generation + Three.js games, see
+`gemini-4-argon-3d-worlds`.
 
-The references were checked against **three r187** (2026-10-31): source grep, the official examples,
-and GPU renders in headless Chrome on both the WebGPU and WebGL2 backends. three.js changes APIs every
-month, so **step 1 is always to check the project's installed version**.
+The references were checked against **three r187** (`0.187.0`): source reads, official examples, Node self-tests,
+and live GPU renders in headless Chrome on both the Metal WebGPU and WebGL2 (`forceWebGL` + `WebGLRenderer`)
+backends. three.js changes APIs every month, so **step 1 is always to check the project's installed version**.
 
 ## Reference map (`§n` in the references = file `0n-…`)
 
 | Need | Read |
 |---|---|
-| Which APIs exist in this version; renamed/removed classes | [00-version-gates.md](references/00-version-gates.md) |
-| Renderer setup, colour spaces, AgX/ACES/Neutral, exposure, light units | [01-color-tonemapping-units.md](references/01-color-tonemapping-units.md) |
-| HDRI + PMREM, sun extraction, direct lights, GI (probes, lightmaps, SSGI) | [02-ibl-lighting-gi.md](references/02-ibl-lighting-gi.md) |
-| Shadow filters, frustum fitting, bias math, CSM, contact shadows | [03-shadows.md](references/03-shadows.md) |
-| Physical materials, IOR table, metals, SSS, ORM, TSL/onBeforeCompile extension | [04-materials.md](references/04-materials.md) |
-| Post pipeline order and code (WebGPU RenderPipeline, pmndrs), DOF math, bloom | [05-post-processing.md](references/05-post-processing.md) |
-| Bevels and weighted normals, gltf-transform, KTX2 UASTC/ETC1S, disposal | [06-geometry-assets.md](references/06-geometry-assets.md) |
-| "Why does it look fake?" symptom → fix table | [07-diagnostics-photoreal.md](references/07-diagnostics-photoreal.md) |
-| Toon, anime, outlines, painterly, low-poly, pixel art, retro, stylized-real | [08-stylized-looks.md](references/08-stylized-looks.md) |
-| The enforceable rules in one list | [09-rulebook.md](references/09-rulebook.md) |
-| Evidence log for r187: scripts run, renders, open gaps | [10-evidence-r187.md](references/10-evidence-r187.md) |
-| Iterating a project to a fixed ceiling: probe, ceiling, gates G0–G4, stop rules | [11-quality-loop.md](references/11-quality-loop.md) |
-| Animation (`Timer`, `AnimationMixer`, crossfades, `SkeletonUtils.clone`, TSL vertex motion), controls & raycasting | [12-animation-interaction.md](references/12-animation-interaction.md) |
-| Performance profiling (`renderer.info`), `InstancedMesh`, `BatchedMesh`, `compileAsync` & WebGPU compute | [13-performance-batching-compute.md](references/13-performance-batching-compute.md) |
-| Custom shaders, GLSL ↔ TSL translation table, `*NodeMaterial` slots & `onBeforeCompile` | [14-shaders-tsl.md](references/14-shaders-tsl.md) |
-| React Three Fiber 9.8, `@react-three/drei` 10.7 WebGPU matrix, hooks & `gltfjsx` | [15-react-three-fiber.md](references/15-react-three-fiber.md) |
+| Which APIs exist in this version; renamed/removed classes & r187 runtime traps | [00-version-gates.md](references/00-version-gates.md) |
+| Renderer setup, colour spaces, AgX/ACES/Neutral, exposure, light units, `reversedDepthBuffer`, device loss | [01-color-tonemapping-units.md](references/01-color-tonemapping-units.md) |
+| HDRI + PMREM, `SkyMesh`, sun extraction, `ClusteredLighting`, GI (probes, lightmaps, SSGI, VXGI) | [02-ibl-lighting-gi.md](references/02-ibl-lighting-gi.md) |
+| Shadow filters, zero-import frustum fitting, bias math, CSM/`SunLight`/`TileShadowNode`, contact shadows | [03-shadows.md](references/03-shadows.md) |
+| Physical materials, IOR, 5-way transparency matrix, EON diffuse, normal-variance AA, `NodeMaterialInstance` | [04-materials.md](references/04-materials.md) |
+| Post pipelines (`RenderPipeline` & `pmndrs` + `n8ao`), `oitPass`, `taau`/`fsr1`, SSR, DOF math, bloom | [05-post-processing.md](references/05-post-processing.md) |
+| Bevels, `gltf-transform` CLI & programmatic JS, KTX2 UASTC/ETC1S, 3D Gaussian Splatting (`GaussianSplat`), disposal | [06-geometry-assets.md](references/06-geometry-assets.md) |
+| "Why does it look fake / broken?" symptom → fix table | [07-diagnostics-photoreal.md](references/07-diagnostics-photoreal.md) |
+| Toon, anime, outlines, painterly Kuwahara/halftone, low-poly, pixel art, retro, stylized-real | [08-stylized-looks.md](references/08-stylized-looks.md) |
+| All enforceable rules in one numbered list | [09-rulebook.md](references/09-rulebook.md) |
+| Evidence log for r187: scripts run, GPU renders, refutations, open boundaries | [10-evidence-r187.md](references/10-evidence-r187.md) |
+| Iterating a project to a fixed ceiling: probe, ceiling, gates G0–G4, `Inspector`, stop rules | [11-quality-loop.md](references/11-quality-loop.md) |
+| Animation (`Timer`, `AnimationMixer`, `SkeletonUtils.clone`, TSL vertex motion), `three-mesh-bvh`, controls & WebXR | [12-animation-interaction.md](references/12-animation-interaction.md) |
+| Profiling (`renderer.info`, `Inspector`), `InstancedMesh`, `BatchedMesh`, `SceneOptimizer`, `BundleGroup` & WebGPU compute | [13-performance-batching-compute.md](references/13-performance-batching-compute.md) |
+| Custom shaders, GLSL ↔ TSL table, `Fn` layouts/control flow, `Transpiler`, `*NodeMaterial` & `onBeforeCompile` | [14-shaders-tsl.md](references/14-shaders-tsl.md) |
+| React Three Fiber 9.8, `drei` 10.7 WebGPU matrix, TSL `RenderPipeline` in R3F, `<Bvh>`, Rapier v2, XR v6 & `gltfjsx` | [15-react-three-fiber.md](references/15-react-three-fiber.md) |
 
 Load only the files the task needs. A material question needs `04`, not the whole set.
 
@@ -55,15 +48,16 @@ node <skill>/scripts/check-three-api.mjs --root <project>
 node <skill>/scripts/check-three-api.mjs --root <project> three/addons/tsl/display/SSGINode.js:ssgi three/addons/lights/SunLight.js:SunLight
 ```
 
-It prints the revision, the version gates that apply (`PCFSoftShadowMap` removed in r186,
-`PostProcessing` → `RenderPipeline` in r183, `RGBELoader` → `HDRLoader` in r180, and so on) and any
-missing symbols. If pmndrs `postprocessing` is installed, it prints its declared three peer range: 6.39.5
-stops at `<0.187.0`. Write code for the version the project has, not the newest one. If the project is on
-a release newer than r187, re-check any gate the task depends on in that release's source.
+It prints the revision, active version gates (`PCFSoftShadowMap` removed in r186, `PostProcessing` →
+`RenderPipeline` in r183, `RGBELoader` → `HDRLoader` in r180, and so on) and any missing symbols. If pmndrs
+`postprocessing` is installed, it evaluates its `peerDependencies.three` range dynamically (`6.39.6` declares
+`>= 0.168.0 < 0.188.0`, compatible with r187; `6.39.5` stopped at `< 0.187.0`). Write code for the version the
+project has. For releases newer than r187, re-check gates in that release's source.
 
 Identify the renderer: `WebGLRenderer` (classic materials, `onBeforeCompile`, pmndrs post) or
-`WebGPURenderer` from `three/webgpu` (node materials, TSL, `RenderPipeline`; also runs on WebGL2 with
-`forceWebGL`). For new photoreal work on r183+, prefer `WebGPURenderer`.
+`WebGPURenderer` from `three/webgpu` (node materials, TSL, `RenderPipeline`, `BundleGroup`, compute, 3DGS;
+also runs on WebGL2 via automatic fallback or `forceWebGL`). For new photoreal work on r183+, prefer
+`WebGPURenderer`.
 
 ### 2. Classify the look
 
@@ -80,24 +74,27 @@ model), ask once. Otherwise default to photoreal.
 
 Each step depends on the one before it. Fixing a later step first wastes effort.
 
-1. **Units and colour:** 1 unit = 1 m. Albedo-class textures `SRGBColorSpace`; data maps left at
-   `NoColorSpace`; HDR `LinearSRGBColorSpace`; exactly one output transform. Pick the tone mapper:
-   AgX for photoreal HDR, Neutral for brand/product colour, `NoToneMapping` (values ≤ 1) for flat
-   stylized palettes.
-2. **Lighting:** `scene.environment` from a PMREM'd HDRI; one shadow-casting key light with intensity set
-   in physical units (`.power` in lumens, `decay = 2`); no ambient/hemisphere fill; GI from lightmaps,
-   `LightProbeGrid` or SSGI.
-3. **Shadows:** `PCFShadowMap` + `shadow.radius`. Fit the frustum with
+1. **Units, depth and colour (`01`):** 1 unit = 1 m. Albedo-class textures `SRGBColorSpace`; data maps left at
+   `NoColorSpace`; HDR `LinearSRGBColorSpace`; exactly one output transform. Pick AgX for photoreal HDR,
+   Neutral for brand/product colour, `NoToneMapping` (values ≤ 1) for flat stylized palettes. Use
+   `reversedDepthBuffer: true` for large worlds on `WebGPURenderer` + `RenderPipeline` (never with pmndrs
+   `EffectComposer`).
+2. **Lighting (`02`):** `scene.environment` from a PMREM'd HDRI or `SkyMesh` (`showSunDisc.value = 0` during
+   PMREM bake); one shadow-casting key light in physical units (`.power` in lumens, `decay = 2`); no
+   ambient/hemisphere fill; GI from lightmaps, `LightProbeGrid` or SSGI; `ClusteredLighting` for many lights.
+3. **Shadows (`03`):** `PCFShadowMap` + `shadow.radius`. Fit the frustum with
    [fit-shadow.mjs](scripts/fit-shadow.mjs) **before** touching bias. Take the starting `normalBias` and
    `bias` from `suggestShadowBias()`.
-4. **Materials:** change lighting *inputs* (albedo, roughness, metalness, normal, AO), never outputs.
-   Metals use the linear F0 table; glass uses `transmission` + `ior` + `thickness`. Get IOR and F0, Abbe →
-   dispersion, exposure and DOF numbers from [physical.mjs](scripts/physical.mjs) instead of guessing.
-5. **Post:** AO into indirect light only (`builtinAOContext`) → SSR → TRAA → DOF → bloom (linear HDR) →
-   `renderOutput()` → CA, vignette, grain, LUT (display space). Stylized post (pixelation, posterize,
-   dither, ink lines) follows `08`.
-6. **Assets:** UASTC for normals and ORM, ETC1S for colour, Meshopt geometry. Override `optimize`'s
-   simplify, join and palette defaults on hero assets. Dispose GPU resources.
+4. **Materials (`04`):** change lighting *inputs* (albedo, roughness, metalness, normal, AO), never outputs.
+   Pick transparency deliberately (`alphaTest`, `alphaHash`, `backdropNode`, `oitPass`, or `transmission` +
+   `ior` + `thickness` + `dispersion`). Derive numbers from [physical.mjs](scripts/physical.mjs).
+5. **Post (`05`):** AO into indirect light only (`builtinAOContext`) → SSR → TRAA / `taau()` → DOF → bloom
+   (linear HDR) → `renderOutput()` → CA, vignette, grain, LUT (display space). Wrap `oitPass` in
+   `vec4( scenePass )` before feeding post nodes. On pmndrs, keep `SMAAEffect` in a separate final `EffectPass`
+   from `ChromaticAberrationEffect` and set `n8ao.configuration.halfRes = false` on r187.
+6. **Assets & scale (`06`, `12`, `13`):** UASTC for normals/ORM, ETC1S for colour, Meshopt geometry, `GaussianSplat`
+   for first-party 3DGS, `InstancedMesh` / `BatchedMesh` / `SceneOptimizer.toBatchedMesh()` / `BundleGroup`
+   for draw calls, `three-mesh-bvh` for raycasting, and explicit GPU disposal.
 
 ### 4. Verify on a GPU (required before calling a look done)
 
@@ -107,15 +104,14 @@ Neither a clean build nor a silent console shows that a look works. Render it:
    and pipeline in `buildScene()`. Serve the project root (`python3 -m http.server 8765`) and install
    `playwright-core` as a dev dependency.
 2. Shoot both backends:
-   `node <skill>/scripts/render-check/shoot.mjs "http://localhost:8765/<path>/harness.html" webgpu.png`,
-   then again with `?webgl`. Read the printed console. Any `THREE.TSL:` error or `[pageerror]` is a
-   failure.
+   `node <skill>/scripts/render-check/shoot.mjs "http://localhost:8765/<path>/harness.html" webgpu.png --strict`,
+   then again with `?webgl`. Any `THREE.TSL:` error, `[error]`, `[pageerror]`, or `[timeout]` is a failure.
 3. **Look at the screenshots.** Check them against the diagnostics tables (`07`, `08` §8.7).
 4. **Ablate** each post stage with query flags and diff the images. Every effect should change only the
    pixels it is meant to change (GTAO: contact creases; SSR: reflective surfaces). With every stage off,
    the output must match a plain `renderer.render()`.
 5. Report what was rendered, on which backend, and what was not. Headless frame times are capped by the
-   display (about 16.7 ms), so measure GPU cost on target hardware with the Inspector or timer queries.
+   display (about 16.7 ms), so measure GPU cost on target hardware with `Inspector` or GPU timer queries.
 
 ### 5. Polishing an existing project: run the quality loop
 
@@ -140,21 +136,24 @@ When the user asks to polish, iterate or "make it as good as possible", run the 
    half-float buffers (overflow at 65,504).
 4. Fit the shadow frustum first. Then `normalBias ≈ 1 texel`, then a small `bias`. `bias × (far − near)`
    is the world-space offset.
-5. AO darkens indirect light only. Temporal resolve comes before DOF and bloom. Bloom runs on linear HDR.
-   Grain, CA, vignette and LUT run after tone mapping.
+5. AO darkens indirect light only. Temporal resolve (`traa` / `taau`) comes before DOF and bloom. Bloom runs on
+   linear HDR. Grain, CA, vignette and LUT run after tone mapping.
 6. In custom post nodes, convert depth with the **scene** camera's near/far
    (`reference( 'near', 'float', camera )` or `scenePass.getViewZNode()`). Global `cameraNear` and
-   `cameraFar` there resolve to the post quad and break every depth-based effect.
-7. r187 `chromaticAberration()`: pass `center` explicitly (`uniform( new Vector2( 0.5, 0.5 ) )`). The
-   documented `null` default crashes.
+   `cameraFar` resolve to the post quad. When chaining `oitPass` into post nodes, wrap `vec4( scenePass )`
+   so `convertToTexture` does not bypass `OITPassNode.setup()`.
+7. r187 post pitfalls: pass `center` explicitly to `chromaticAberration( node, strength, uniform( new Vector2( 0.5, 0.5 ) ) )`;
+   import `fsr1` from `'three/addons/tsl/display/FSR1Node.js'`; on pmndrs, never merge `ChromaticAberrationEffect`
+   with `SMAAEffect` in one `EffectPass`, keep `n8ao.configuration.halfRes = false`, and never enable
+   `reversedDepthBuffer: true` on `WebGLRenderer` + `EffectComposer`.
 8. Stylized: toon ramps use `NearestFilter`, no mipmaps. `toonOutlinePass` outlines only toon materials.
    Line widths scale with DPR. Pixel art uses an orthographic camera, frustum snapping and no AA.
 9. Never report a look as done without the GPU render check in step 4.
 10. Deterministic stepping: r187 `THREE.Timer.update( t )` subtracts a wall-clock `_startTime` from the
-    constructor. Zero it (`timer._startTime = 0`) or drive animation from a fixed-step counter, or two
-    identical runs will differ.
+    constructor. Zero it (`timer._startTime = 0`) or drive animation from a fixed-step counter.
 11. In a quality loop, the ceiling is fixed before pass one and expansions are proposals, never passes.
-12. Displace vertices on `positionLocal` (never `positionGeometry`) and sync shadow casters with
-    `castShadowPositionNode`. Clone rigged models with `SkeletonUtils.clone()`, add `TransformControls`
-    via `scene.add( tc.getHelper() )`, and use `shadows="percentage"` + `AgXToneMapping`/`NeutralToneMapping`
-    in React Three Fiber (`12`–`15`).
+12. Displace vertices on `positionLocal` (never `positionGeometry`) and sync shadows with
+    `castShadowPositionNode`. On shadow-casting `NodeMaterialInstance` meshes, read `colorNode` props via
+    `reference( 'userData.x', type )` on `mesh.userData` (never `materialReference`, which crashes on the
+    `ShadowMaterial` override pass). Clone rigged models with `SkeletonUtils.clone()`, add `TransformControls`
+    via `scene.add( tc.getHelper() )`, and pass `shadows="percentage"` in React Three Fiber (`12`–`15`).

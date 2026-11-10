@@ -67,7 +67,11 @@ node <skill>/scripts/quality/run-gates.mjs --url http://localhost:8765/quality/g
 - **G2 Resource & Lifecycle:**
   - GPU frame time (median of 10 timer queries), CPU frame time (median of 30), `renderer.info.render` (draw calls, triangles) and `renderer.info.memory` (geometries, textures, programs), all inside the ceiling.
   - Lifecycle soak: mount → render 120 frames → dispose → remount → render → dispose. Assert zero net delta on geometries, textures and programs.
-  - Timing from a software rasterizer is reported as pending; measure it on the target hardware.
+  - Timing from a software rasterizer is reported as pending; measure it on the target hardware. For interactive pass-by-pass GPU timing, live TSL node graph values, and VRAM breakdowns on `WebGPURenderer`, attach Three's first-party `Inspector`:
+    ```js
+    import { Inspector } from 'three/addons/inspector/Inspector.js';
+    renderer.inspector = new Inspector(); // mount before await renderer.init()
+    ```
 - **G3 Rendering:**
   - Automated: `renderer.outputColorSpace === SRGBColorSpace`; albedo/emissive/sheen/specular-colour maps `SRGBColorSpace`; every data map `NoColorSpace`; tone mapping not `NoToneMapping` unless the brief mandates unmapped (`"allowNoToneMapping": true`); every shadow-casting light has an allocated shadow map.
   - Material policy: enable EON rough diffuse (`diffuseRoughness`) only on hero dielectric assets already budgeted for `MeshPhysicalMaterial` with roughness above 0.5. Never upgrade background `MeshStandardMaterial` props if that threatens G2.

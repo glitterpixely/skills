@@ -1,6 +1,6 @@
-> Part of the `threejs-rendering` skill. Verified against three r187 (2026-10-31); re-check version gates in `00-version-gates.md` for newer releases. `§n` refers to reference file `0n-…`.
+> Part of the `threejs-rendering` skill. Verified against three r187 (`0.187.0`); re-check version gates in `00-version-gates.md` for newer releases. `§n` refers to reference file `0n-…`.
 
-# 1. Colour management, tone mapping and renderer architecture
+# 1. Colour management, tone mapping, units and renderer resilience
 
 ### 1.1 The linear workflow contract
 
@@ -11,7 +11,7 @@
 | Texture slot | `texture.colorSpace` |
 |---|---|
 | `map`, `emissiveMap`, `sheenColorMap`, `specularColorMap`, background JPG/PNG/AVIF | `SRGBColorSpace` |
-| `normalMap`, `roughnessMap`, `metalnessMap`, `aoMap`, ORM, `clearcoat*Map`, `transmissionMap`, `thicknessMap`, `iridescence*Map`, `anisotropyMap`, `displacementMap`, `diffuseRoughnessMap`, `specularIntensityMap` | `NoColorSpace` (default) |
+| `normalMap`, `roughnessMap`, `metalnessMap`, `aoMap`, `bumpMap`, `alphaMap`, `sheenRoughnessMap`, ORM, `clearcoat*Map`, `transmissionMap`, `thicknessMap`, `iridescence*Map`, `anisotropyMap`, `displacementMap`, `diffuseRoughnessMap`, `specularIntensityMap`, `gradientMap` | `NoColorSpace` (default) |
 | `.hdr` / `.exr` environments, float lightmaps | `LinearSRGBColorSpace` (`HDRLoader`/`EXRLoader` set it) |
 | 8-bit PNG lightmap saved from Blender with the "Standard" view transform | `SRGBColorSpace` |
 
@@ -24,6 +24,7 @@ const renderer = new THREE.WebGLRenderer( {
 	antialias: false,              // true only when rendering straight to screen with no post chain
 	powerPreference: 'high-performance',
 	stencil: false,
+	reversedDepthBuffer: false,    // keep false when using pmndrs EffectComposer (§1.6)
 } );
 renderer.setPixelRatio( Math.min( window.devicePixelRatio, 2 ) ); // cap: DPR 3 costs 2.25x the fragments of DPR 2
 renderer.setSize( innerWidth, innerHeight );
@@ -34,27 +35,39 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;       // PCFSoftShadowMap removed in r186
 ```
 
-`WebGLRenderer` applies tone mapping and the sRGB conversion **only when it renders to the screen** (render target `null`). With three's own `EffectComposer`, end the chain with `OutputPass`. With pmndrs, see §5.2.
+`WebGLRenderer` applies tone mapping and the sRGB conversion **only when it renders to the screen** (render target `null`). With three's own `EffectComposer`, end the chain with `OutputPass`. With pmndrs, see §5.2 and §5.4.
 
-### 1.3 `WebGPURenderer` setup
+### 1.3 `WebGPURenderer` setup and production resilience
 
 ```js
 import * as THREE from 'three/webgpu';
 
 const renderer = new THREE.WebGPURenderer( {
-	antialias: false,                       // MSAA conflicts with TRAA; use TRAA/SMAA in the pipeline
-	outputBufferType: THREE.HalfFloatType,  // default; keeps HDR headroom through the post chain
+	antialias: false,                       // MSAA conflicts with TRAA/TAAU; use TRAA/TAAU/SMAA in the pipeline
+	outputBufferType: THREE.HalfFloatType,  // default; universal HDR target type across mobile & desktop WebGPU
+	reversedDepthBuffer: true,              // zero-cost float32 1/z depth precision for large scenes (§1.6)
 	// forceWebGL: true                     // WebGL2 backend fallback, same node pipeline
 } );
-await renderer.init();                      // required before PMREM, KTX2 detectSupport, compile
+await renderer.init();                      // required before PMREM, KTX2 detectSupport, compileAsync, compute
+renderer.onDeviceLost = ( info ) => {
+
+	// Intentional renderer.dispose() fires reason === 'destroyed'; only recover on unexpected GPU resets
+	if ( info.reason === 'destroyed' ) return;
+	console.error( 'WebGPU device lost:', info );
+
+};
 renderer.setPixelRatio( Math.min( devicePixelRatio, 1.5 ) );
+renderer.setSize( innerWidth, innerHeight );
 renderer.toneMapping = THREE.AgXToneMapping;
 renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 ```
 
-With a `RenderPipeline`, tone mapping and the colour-space conversion run at the end of the pipeline when `renderPipeline.outputColorTransform === true` (the default). Set it to `false` and call `renderOutput()` yourself when display-space effects (grain, chromatic aberration, vignette, SMAA) must run **after** tone mapping. See §5.3.
+- **Pipeline output transform:** With `RenderPipeline`, tone mapping and colour-space conversion run automatically at the end when `renderPipeline.outputColorTransform === true` (default). Set `outputColorTransform = false` and call `renderOutput()` explicitly once when display-space effects (grain, chromatic aberration, vignette, LUT, FSR1, SMAA) must run **after** tone mapping (§5.3).
+- **Mobile HDR targets (`HalfFloatType` vs `FloatType`):** Linear filtering on 32-bit float textures (`FloatType`) requires the optional WebGPU feature `'float32-filterable'`, which many mobile GPUs omit. `HalfFloatType` (`rgba16float`) is universally filterable and renderable in WebGPU and uses half the bandwidth.
+- **Adapter limits (`requiredLimits`):** WebGPU's baseline guarantees only `maxStorageBuffersPerShaderStage = 8` (and `4` in WebGPU Compatibility Mode on older Android GLES devices). Never hardcode high `requiredLimits` blindly (`requestDevice` rejects if the adapter cannot meet them); inspect `adapter.limits` first or pack buffers into fewer array-of-struct bindings.
+- **Zero-copy media textures (r187):** Use `new THREE.VideoFrameTexture()` to upload WebCodecs `VideoFrame` objects directly to GPU textures without a 2D canvas readback, and `HTMLTexture` where HTML-in-Canvas is supported.
 
 ### 1.4 AgX vs ACES Filmic vs Khronos PBR Neutral
 
@@ -102,3 +115,13 @@ $$\text{exposure} = \frac{1}{1.2 \cdot 2^{EV_{100}}}$$
 - **Decay.** `decay = 2` (inverse square) is the default for `PointLight` and `SpotLight`. `distance = 0` means no cut-off. `distance > 0` multiplies by a smooth windowing function that reaches zero at `distance`. That is fine for culling as long as `distance` is well past the visible falloff.
 - **Why legacy setups look fake.** Before r155 the default mode multiplied punctual intensities by π. `useLegacyLights` was removed in r165. Old scenes ported verbatim (`decay: 1`, or a short `distance` used as the falloff) light up as linear gradients instead of inverse-square pools. You get flat walls with no hot spot near the lamp, and IBL-to-direct ratios that cannot be tuned consistently. Rule: never set `decay ≠ 2` on a photoreal light.
 - **Keep ratios, not absolutes** (*settled photometry*): direct sun to sky illuminance runs about 5:1 to 10:1. An interior lamp should overpower IBL only within its own falloff radius.
+
+### 1.6 Depth precision: `reversedDepthBuffer` vs `logarithmicDepthBuffer`
+
+Standard `[0, 1]` perspective depth packs almost all float32 precision right in front of `camera.near`, causing distant coplanar surfaces to z-fight whenever `far / near > 10_000`.
+
+| Option | How it works | Cost & compatibility (GPU-verified on r187) |
+|---|---|---|
+| **`reversedDepthBuffer: true`** (preferred on `WebGPURenderer`) | Maps `near → 1.0`, `far → 0.0` with `GreaterEqual` depth test (`EXT_clip_control` on WebGL2, native `[0, 1]` clip space on WebGPU), cancelling float32 `1/z` non-linearity. | **Zero per-fragment cost**; hardware early-Z stays intact. Works cleanly on `WebGPURenderer` + TSL `RenderPipeline` (including `oitPass`, `taau`, `fsr1`). **Three caveats:** (1) **Never** enable with `pmndrs` `EffectComposer` on `WebGLRenderer` (renders `#000000` black screen); (2) on `SkyMesh`, set `sky.renderOrder = -1e6; sky.material.depthTest = false;` (`§2.1`); (3) unsupported by experimental `MeshletDrawingPipeline`. |
+| **`logarithmicDepthBuffer: true`** | Writes `gl_FragDepth` / `frag_depth` per pixel in the fragment shader. | **Breaks hardware early-Z / Hi-Z** on every opaque pixel and slows fill-heavy scenes. Reserve only for planetary `1 mm → 10⁸ m` ranges where `EXT_clip_control` is unavailable. |
+| **Tight `camera.near`** | Raising `near` from `0.001` to `0.1` multiplies depth precision **100×** across the entire frustum. | Always do this first regardless of depth buffer mode. |
