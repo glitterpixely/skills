@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/hero-banner.png" alt="Creative AI Skills Studio — Minimalist pastel desk with film clapperboard, bunny notebook, and cassette tape" width="100%" />
+<img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/hero-banner.png" alt="Creative AI Skills Studio — Minimalist pastel desk with film clapperboard, bunny notebook, and cassette tape" width="100%" />
 
 # ✦ Creative AI Skills Studio ✦
 
@@ -9,23 +9,23 @@
 *Video direction · Multimodal reference workflows · Original songwriting · Deterministic prompt validation*
 
 <p>
-  <a href="#choose-a-skill"><img src="assets/badge-video.svg" alt="3 Video Studios" height="26" /></a>
-  <a href="#choose-a-skill"><img src="assets/badge-music.svg" alt="2 Music Studios" height="26" /></a>
-  <a href="#validation"><img src="assets/badge-validators.svg" alt="Python 3 Validators" height="26" /></a>
-  <a href="LICENSE"><img src="assets/badge-mit.svg" alt="MIT License" height="26" /></a>
+  <a href="#choose-a-skill"><img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/badge-video.svg" alt="3 Video Studios" height="26" /></a>
+  <a href="#choose-a-skill"><img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/badge-music.svg" alt="2 Music Studios" height="26" /></a>
+  <a href="#validation"><img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/badge-validators.svg" alt="Python 3 Validators" height="26" /></a>
+  <a href="LICENSE"><img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/badge-mit.svg" alt="MIT License" height="26" /></a>
 </p>
 
 <p>
-  <a href="https://www.instagram.com/glitterpixely"><img src="assets/badge-instagram.svg" alt="Instagram @glitterpixely" height="26" /></a>
-  <a href="https://x.com/glitterpixely"><img src="assets/badge-x.svg" alt="X @glitterpixely" height="26" /></a>
-  <a href="https://www.tiktok.com/@glitterpixely"><img src="assets/badge-tiktok.svg" alt="TikTok @glitterpixely" height="26" /></a>
+  <a href="https://www.instagram.com/glitterpixely"><img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/badge-instagram.svg" alt="Instagram @glitterpixely" height="26" /></a>
+  <a href="https://x.com/glitterpixely"><img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/badge-x.svg" alt="X @glitterpixely" height="26" /></a>
+  <a href="https://www.tiktok.com/@glitterpixely"><img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/badge-tiktok.svg" alt="TikTok @glitterpixely" height="26" /></a>
 </p>
 
 A curated studio collection by **[glitterpixely](https://github.com/glitterpixely)** ([Instagram](https://www.instagram.com/glitterpixely) · [X](https://x.com/glitterpixely) · [TikTok](https://www.tiktok.com/@glitterpixely)), built for directing video and music models through any AI assistant.
 
 [**Studio Desks**](#studio-desks) · [**Choose a Skill**](#choose-a-skill) · [**Model Guides**](#model-guides--research-lineage) · [**Install**](#installation) · [**Sample Briefs**](#example-briefs) · [**Validators**](#validation) · [**Contribute**](CONTRIBUTING.md)
 
-<img src="assets/divider-pastel.svg" alt="" width="100%" />
+<img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/divider-pastel.svg" alt="" width="100%" />
 
 </div>
 
@@ -34,9 +34,9 @@ A curated studio collection by **[glitterpixely](https://github.com/glitterpixel
 Five focused skills for turning ideas, scripts, character sheets, and audio references into structured video and music prompts. Each skill pairs a step-by-step directing workflow with model-specific references and standalone validators.
 
 <div align="center">
-  <a href="#video-direction-skills"><img src="assets/card-video-studio.svg" alt="Desk 01: Video Direction Studio" width="48%" /></a>
+  <a href="#video-direction-skills"><img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/card-video-studio.svg" alt="Desk 01: Video Direction Studio" width="48%" /></a>
   &nbsp;
-  <a href="#music--songcraft-skills"><img src="assets/card-music-studio.svg" alt="Desk 02: Music and Songcraft Studio" width="48%" /></a>
+  <a href="#music--songcraft-skills"><img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/card-music-studio.svg" alt="Desk 02: Music and Songcraft Studio" width="48%" /></a>
 </div>
 
 - **Direct the scene:** define physical action, camera trajectory, timing, reference bindings (`@Image`, `@Video`, `@Audio`), and continuity locks.
@@ -45,7 +45,7 @@ Five focused skills for turning ideas, scripts, character sheets, and audio refe
 - **Check the prompt:** run the zero-dependency Python 3 linters before generation to catch structural or reference-binding errors early.
 
 <div align="center">
-  <img src="assets/divider-pastel.svg" alt="" width="100%" />
+  <img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/divider-pastel.svg" alt="" width="100%" />
 </div>
 
 ## Choose a Skill
@@ -74,7 +74,7 @@ Start with the model you plan to generate in. Open its `SKILL.md` for the core r
 | **[`threejs-rendering`](threejs-rendering/SKILL.md)** | **Three.js (`r165–r187+`) & React Three Fiber 9.8** — Photoreal & stylized WebGPU/WebGL2 rendering, AgX/Neutral colour, HDRI/GI, fitted shadows, TSL shaders & compute, `RenderPipeline`/`pmndrs` post, OIT/TAAU/FSR1, 3DGS Gaussian splats, `BatchedMesh`/`BundleGroup`/BVH, WebXR, and gated quality loop (`G0`–`G4`) | [`00-version-gates.md`](threejs-rendering/references/00-version-gates.md), [`11-quality-loop.md`](threejs-rendering/references/11-quality-loop.md), [`14-shaders-tsl.md`](threejs-rendering/references/14-shaders-tsl.md), [`15-react-three-fiber.md`](threejs-rendering/references/15-react-three-fiber.md) | [`validate_coverage.py`](threejs-rendering/scripts/validate_coverage.py), [`physical.mjs`](threejs-rendering/scripts/physical.mjs), [`probe.mjs`](threejs-rendering/scripts/quality/probe.mjs), [`run-gates.mjs`](threejs-rendering/scripts/quality/run-gates.mjs) |
 
 <div align="center">
-  <img src="assets/divider-pastel.svg" alt="" width="100%" />
+  <img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/divider-pastel.svg" alt="" width="100%" />
 </div>
 
 ## Model Guides & Research Lineage
@@ -156,7 +156,7 @@ In addition to bilingual material limits (`@Image 1` / `@图片1`), reference ro
 </details>
 
 <div align="center">
-  <img src="assets/divider-pastel.svg" alt="" width="100%" />
+  <img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/divider-pastel.svg" alt="" width="100%" />
 </div>
 
 ## Installation
@@ -207,7 +207,7 @@ No CLI or agent runtime is required:
 2. Give your brief in plain language—the assistant will follow the workflow and rules in `SKILL.md`.
 
 <div align="center">
-  <img src="assets/divider-pastel.svg" alt="" width="100%" />
+  <img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/divider-pastel.svg" alt="" width="100%" />
 </div>
 
 ## Example Briefs
@@ -244,7 +244,7 @@ Give me a style prompt and complete lyrics in separate paste-ready blocks.
 For MiniMax Music, the [genre guide](minimax-music-30/references/genre-router.md) helps you navigate the [1,000-template library](minimax-music-30/templates). Adapt a template to the song’s premise, vocal character, and arrangement.
 
 <div align="center">
-  <img src="assets/divider-pastel.svg" alt="" width="100%" />
+  <img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/divider-pastel.svg" alt="" width="100%" />
 </div>
 
 ## Repository Layout
@@ -255,7 +255,6 @@ skills/
 ├── CONTRIBUTING.md            # Contribution & validator checklist
 ├── LICENSE                    # MIT License
 ├── README.md                  # Studio overview & quick-start guide
-├── assets/                    # Pastel stationery banner, cards, & badges
 ├── seedance-25/               # Seedance 2.5 video directing & linter
 ├── h3-prompt-writing/         # MiniMax H3 audiovisual directing & linter
 ├── kling-4-prompting/         # Kling 4.0 & Flash video directing
@@ -306,9 +305,9 @@ Released under the [MIT License](LICENSE).
 <div align="center">
   <br />
   <p>
-    <a href="https://www.instagram.com/glitterpixely"><img src="assets/badge-instagram.svg" alt="Instagram @glitterpixely" height="26" /></a>
-    <a href="https://x.com/glitterpixely"><img src="assets/badge-x.svg" alt="X @glitterpixely" height="26" /></a>
-    <a href="https://www.tiktok.com/@glitterpixely"><img src="assets/badge-tiktok.svg" alt="TikTok @glitterpixely" height="26" /></a>
+    <a href="https://www.instagram.com/glitterpixely"><img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/badge-instagram.svg" alt="Instagram @glitterpixely" height="26" /></a>
+    <a href="https://x.com/glitterpixely"><img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/badge-x.svg" alt="X @glitterpixely" height="26" /></a>
+    <a href="https://www.tiktok.com/@glitterpixely"><img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/badge-tiktok.svg" alt="TikTok @glitterpixely" height="26" /></a>
   </p>
-  <img src="assets/footer-stamp.svg" alt="crafted with care · glitterpixely studio" width="320" />
+  <img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/footer-stamp.svg" alt="crafted with care · glitterpixely studio" width="320" />
 </div>

@@ -4,7 +4,7 @@
 
 *Useful contributions make a skill easier to follow, more accurate, or more effective for a concrete creative task.*
 
-<img src="assets/divider-pastel.svg" alt="" width="100%" />
+<img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/divider-pastel.svg" alt="" width="100%" />
 
 </div>
 
@@ -39,5 +39,5 @@ Keep prompt lint results separate from rendered-video inspection or listening te
 
 <div align="center">
   <br />
-  <img src="assets/footer-stamp.svg" alt="crafted with care · glitterpixely studio" width="260" />
+  <img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/footer-stamp.svg" alt="crafted with care · glitterpixely studio" width="260" />
 </div>
