@@ -72,6 +72,7 @@ Start with the model you plan to generate in. Open its `SKILL.md` for the core r
 | Skill | Target Engine & Best Use | Key References | Automated Checks |
 | --- | --- | --- | --- |
 | **[`threejs-rendering`](threejs-rendering/SKILL.md)** | **Three.js (`r165–r187+`) & React Three Fiber 9.8** — Photoreal & stylized WebGPU/WebGL2 rendering, AgX/Neutral colour, HDRI/GI, fitted shadows, TSL shaders & compute, `RenderPipeline`/`pmndrs` post, OIT/TAAU/FSR1, 3DGS Gaussian splats, `BatchedMesh`/`BundleGroup`/BVH, WebXR, and gated quality loop (`G0`–`G4`) | [`00-version-gates.md`](threejs-rendering/references/00-version-gates.md), [`11-quality-loop.md`](threejs-rendering/references/11-quality-loop.md), [`14-shaders-tsl.md`](threejs-rendering/references/14-shaders-tsl.md), [`15-react-three-fiber.md`](threejs-rendering/references/15-react-three-fiber.md) | [`validate_coverage.py`](threejs-rendering/scripts/validate_coverage.py), [`physical.mjs`](threejs-rendering/scripts/physical.mjs), [`probe.mjs`](threejs-rendering/scripts/quality/probe.mjs), [`run-gates.mjs`](threejs-rendering/scripts/quality/run-gates.mjs) |
+| **[`blender-craft`](blender-craft/SKILL.md)** | **Blender 5.x (`5.0–5.1+`, `Python 3.13`, `bpy`/`bmesh`)** — Hero props, Geometry Nodes 5.x (Bundles, Closures, SDF Volume Grids, `Scene Time` FX, ecosystem scattering), EEVEE painterly/cel anime (`Shader to RGB` + depth haze + Kuwahara), `Ucupaint`/PBR baking, multi-angle AI-video graybox/turnaround plates, `+Z`→`+Y` `.glb` GPU instancing export, and `G1`–`G5` audit gates | [`00-blender5-api-and-gotchas.md`](blender-craft/references/00-blender5-api-and-gotchas.md), [`03-geometry-nodes-scatter-and-environments.md`](blender-craft/references/03-geometry-nodes-scatter-and-environments.md), [`04-materials-pbr-stylized-and-anime.md`](blender-craft/references/04-materials-pbr-stylized-and-anime.md), [`05-uvs-baking-and-glb-export.md`](blender-craft/references/05-uvs-baking-and-glb-export.md) | [`validate_coverage.py`](blender-craft/scripts/validate_coverage.py), [`blender_scene_audit.py`](blender-craft/scripts/blender_scene_audit.py) |
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/glitterpixely/skills/assets/divider-pastel.svg" alt="" width="100%" />
@@ -260,7 +261,8 @@ skills/
 ├── kling-4-prompting/         # Kling 4.0 & Flash video directing
 ├── minimax-music-30/          # MiniMax Music 3.0 + 1,000 templates & linter
 ├── suno-song-builder/         # Suno v6 songwriting, controls, & Studio workflow
-└── threejs-rendering/         # Three.js r187 & R3F 9.8 rendering, TSL, & GPU quality gates
+├── threejs-rendering/         # Three.js r187 & R3F 9.8 rendering, TSL, & GPU quality gates
+└── blender-craft/             # Blender 5.x modeling, Geometry Nodes, anime/PBR shading, & GLB/scene audit
 ```
 
 Inside each skill:
@@ -288,6 +290,7 @@ python3 seedance-25/scripts/validate_coverage.py
 python3 h3-prompt-writing/scripts/validate_coverage.py
 python3 minimax-music-30/scripts/validate_coverage.py
 python3 threejs-rendering/scripts/validate_coverage.py
+python3 blender-craft/scripts/validate_coverage.py
 ```
 
 Follow the chosen skill’s instructions for the correct mode, duration, input files, or runtime surface. A passing prompt check establishes structural compliance; the generated video or song still needs visual or listening review.
